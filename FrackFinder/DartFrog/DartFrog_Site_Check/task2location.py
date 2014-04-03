@@ -19,6 +19,7 @@ def print_usage():
     print("Usage: task.json task_run.json outfile.txt [options]")
     print("")
     print("Options:")
+    print("    --tr=file   -> Task runs file for use with --count")
     print("    --count     -> Include number of task runs for each location")
     print("    --delim=str -> Output text file delimiter for --count")
     print("    --qual=str  -> Output text qualifier for strings for --count")
@@ -82,6 +83,8 @@ def main(args):
             overwrite_outfile = True
         elif '--qual=' in arg or '--qualifier=' in arg:
             text_qualifier = arg.split('=')[1]
+        elif '--tr=' in arg or '--task-runs=' in arg:
+            task_runs_file = arg.split('=')[1]
 
         # These arguments are positional
         else:
@@ -89,8 +92,6 @@ def main(args):
             # Define input and output files
             if tasks_file is None:
                 tasks_file = arg
-            elif task_runs_file is None:
-                task_runs_file = arg
             elif output_file is None:
                 output_file = arg
 
@@ -106,14 +107,20 @@ def main(args):
         print("Overwriting outfile")
         os.remove(output_file)
 
+    # If there is no task run file, set the delimiter and qualifier to an empty string to make post-processing easier
+    if task_runs_file is None:
+        delimiter = ''
+        text_qualifier = ''
+
     # Make sure files do/don't exist and parameters are sane
     bail = False
     if tasks_file is None or not isfile(tasks_file) or not os.access(tasks_file, os.R_OK):
         print("ERROR: Can't access task file: %s" % str(tasks_file))
         bail = True
-    if task_runs_file is None or not isfile(task_runs_file) or not os.access(task_runs_file, os.R_OK):
-        print("ERROR: Can't access task run file: %s" % str(tasks_file))
-        bail = True
+    if task_runs_file is not None:
+        if not isfile(task_runs_file) or not os.access(task_runs_file, os.R_OK):
+            print("ERROR: Can't access task run file: %s" % str(tasks_file))
+            bail = True
     if output_file is None or isfile(output_file):
         print("ERROR: Output file exists: %s" % str(output_file))
         bail = True
@@ -184,15 +191,18 @@ def main(args):
     # Print stats
     print("")
     print("---== Stats ==---")
-    print("Num locations = %s" % str(num_locations))
-    print("Min task run count = %s" % str(min_task_run_count))
-    print("Max task run count = %s" % str(max_task_run_count))
-    print("Task run count histogram:")
-    histo_keys = task_run_count_histogram.keys()
-    histo_keys.sort()
-    for key in histo_keys:
-        print("  %s : %s" % (key, str(task_run_count_histogram[key])))
-    print("Histogram sum = %s" % str(sum(task_run_count_histogram.itervalues())))
+    if task_runs_file is None:
+        print("Num locations = %s" % str(num_locations))
+    else:
+        print("Task run count histogram:")
+        histo_keys = task_run_count_histogram.keys()
+        histo_keys.sort()
+        for key in histo_keys:
+            print("  %s : %s" % (key, str(task_run_count_histogram[key])))
+        print("Num locations = %s" % str(num_locations))
+        print("Histogram sum = %s" % str(sum(task_run_count_histogram.itervalues())))
+        print("Min task run count = %s" % str(min_task_run_count))
+        print("Max task run count = %s" % str(max_task_run_count))
     print("")
 
     # Successful
