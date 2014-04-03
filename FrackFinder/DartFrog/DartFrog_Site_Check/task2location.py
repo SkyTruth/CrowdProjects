@@ -166,12 +166,11 @@ def main(args):
                     max_task_run_count = num_task_runs
 
                 # Update histogram
-                snt = str(num_task_runs)  # Prevent typing the same long thing over and over
-                if str(num_task_runs) in task_run_count_histogram:
-                    new_count = task_run_count_histogram[snt] + 1
-                    task_run_count_histogram[snt] = new_count
+                if num_task_runs in task_run_count_histogram:
+                    new_count = task_run_count_histogram[num_task_runs] + 1
+                    task_run_count_histogram[num_task_runs] = new_count
                 else:
-                    task_run_count_histogram[str(num_task_runs)] = 1
+                    task_run_count_histogram[num_task_runs] = 1
             else:
                 line = ''.join([text_qualifier, task_location, text_qualifier, line_sep])
 
@@ -184,13 +183,15 @@ def main(args):
 
     # Print stats
     print("")
-    print("-- Stats --")
+    print("---== Stats ==---")
     print("Num locations = %s" % str(num_locations))
     print("Min task run count = %s" % str(min_task_run_count))
     print("Max task run count = %s" % str(max_task_run_count))
     print("Task run count histogram:")
-    for key in reversed(sorted(task_run_count_histogram, key=task_run_count_histogram.get)):
-        print("%s : %s" % (key, str(task_run_count_histogram[key])))
+    histo_keys = task_run_count_histogram.keys()
+    histo_keys.sort()
+    for key in histo_keys:
+        print("  %s : %s" % (key, str(task_run_count_histogram[key])))
     print("Histogram sum = %s" % str(sum(task_run_count_histogram.itervalues())))
     print("")
 
