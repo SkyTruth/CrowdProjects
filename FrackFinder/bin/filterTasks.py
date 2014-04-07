@@ -188,7 +188,7 @@ def get_unique_tasks(*task_groups):
     return unique_tasks
 
 
-def get_overlapping_tasks(*task_groups):
+def get_overlapping_tasks(task_groups):
 
     """
     Compare input JSON objects containing tasks and return tasks that
@@ -212,16 +212,17 @@ def get_overlapping_tasks(*task_groups):
         for task in group:
 
             # Figure out how many groups we need to check the task against and iterate through their indexes
-            for i in range(0, len(task_groups) - 1):
+            for check_index in range(0, len(task_groups)):
 
                 # Don't check the group we're working with in the outer loop - compare the indexes for a quick check
-                if group_index is not i:
+                if group_index is not check_index:
 
                     # Got a group we can check - see if the task exists in it
-                    if task in task_groups[group_index]:
+                    if task in task_groups[check_index]:
 
-                        # Hey, it exists - Append to the output container
-                        overlapping_tasks.append(task)
+                        # Hey, it exists - Append to the output container, but only if its not already in there
+                        if task not in overlapping_tasks:
+                            overlapping_tasks.append(task)
 
         # Iterate the group index in preparation for processing the next group
         group_index += 1
@@ -476,15 +477,16 @@ def main(args):
         print("  Parsing: %s" % file_path)
         with open(file_path, 'r') as f:
             json_content[file_path] = json.load(f)
+        print("  Found %s tasks" % str(len(json_content[file_path])))
 
     # == Compare Files == #
 
     # Update user
     num_total_tasks = 0
-    for input_file, task_list in json_content:
+    for input_file, task_list in json_content.iteritems():
         task_count = len(task_list)
         num_total_tasks += task_count
-        print("Found %s tasks in %s" % (str(task_count), input_file))
+    print("Found %s total tasks" % str(num_total_tasks))
 
     # Mode is set to overlap - find tasks that exist in all files
     if comparison == 'overlap':
@@ -508,16 +510,17 @@ def main(args):
     post_exclusion_filter_tasks = None
 
     # Inclusion files supplied - filter tasks to those that only appear in any of the inclusion files
-    if inclusion_files is not []:
+    if inclusion_files:
         print("Filtering %s tasks against %s inclusion files..." % (str(len(post_compare_tasks)), len(inclusion_files)))
         post_inclusion_filter_tasks = apply_task_inclusion_filter(post_compare_tasks, inclusion_files)
 
     # Exclusion files supplied - filter tasks to those that don't appear in any of the exclusion files
-    if exclusion_files is not []:
-        print("Filtering %s tasks against against %s")
+    if exclusion_files:
         # Adjust variables if the user didn't set an inclusion filter
         if post_inclusion_filter_tasks is None:
             post_inclusion_filter_tasks = post_compare_tasks
+        print("Filtering %s tasks against against %s exclusion files..." % (str(len(post_inclusion_filter_tasks)),
+                                                                            len(exclusion_files)))
         post_exclusion_filter_tasks = apply_task_exclusion_filter(post_inclusion_filter_tasks, exclusion_files)
 
     # == Adjust Variables Post Filtering == #
@@ -536,11 +539,11 @@ def main(args):
 
     # Store some information and trash potentially giant variables
     num_post_compare_tasks = len(post_compare_tasks)
-    if inclusion_files is not []:
+    if inclusion_files:
         num_post_inclusion_filter_tasks = len(post_inclusion_filter_tasks)
     else:
         num_post_inclusion_filter_tasks = None
-    if exclusion_files is not []:
+    if exclusion_files:
         num_post_exclusion_filter_tasks = len(post_exclusion_filter_tasks)
     else:
         num_post_exclusion_filter_tasks = None
@@ -553,10 +556,10 @@ def main(args):
     # Update user
     print("Started with %s tasks from %s files" % (str(num_total_tasks), len(compare_files)))
     print("Used '%s' comparison to find %s tasks" % (comparison, str(num_post_compare_tasks)))
-    if inclusion_files is not []:
+    if inclusion_files:
         print("Checked %s inclusion files - left with %s tasks" % (str(len(inclusion_files)),
                                                                    str(num_post_inclusion_filter_tasks)))
-    if exclusion_files is not []:
+    if exclusion_files:
         print("Checked %s exclusion files - left with %s tasks" % (str(len(exclusion_files)),
                                                                    str(num_post_exclusion_filter_tasks)))
     print("Final number of tasks: %s" % str(len(final_task_list)))
@@ -566,11 +569,11 @@ def main(args):
         print("Skipping write to outfile: %s" % outfile)
     else:
         print("Writing to output file: %s" % outfile)
-    try:
-        with open(outfile, 'w') as f:
-            json.dump(final_task_list, f)
-    except IOError:
-        print("ERROR: Could not write final tasks to: %s" % outfile)
+        try:
+            with open(outfile, 'w') as f:
+                json.dump(final_task_list, f)
+        except IOError:
+            print("ERROR: Could not write final tasks - check permissions: %s" % outfile)
 
     # Update user
     print("Done.")
