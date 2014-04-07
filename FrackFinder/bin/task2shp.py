@@ -257,7 +257,7 @@ def main(args):
 
     # Define fields
     print("Defining fields...")
-    fields_definitions = [('id', 10, ogr.OFTInteger),
+    fields_definitions = (('id', 10, ogr.OFTInteger),
                           ('site_id', 254, ogr.OFTString),
                           ('wms_url', 254, ogr.OFTString),
                           ('county', 254, ogr.OFTString),
@@ -270,7 +270,7 @@ def main(args):
                           ('crowd_sel', 254, ogr.OFTString),
                           ('qaqc', 254, ogr.OFTString),
                           ('p_crd_a', 10, ogr.OFTReal),
-                          ('p_s_crd_a', 254, ogr.OFTString)]
+                          ('p_s_crd_a', 254, ogr.OFTString))
 
     # Create fields
     for field in fields_definitions:
