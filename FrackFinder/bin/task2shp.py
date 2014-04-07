@@ -124,6 +124,7 @@ def print_help_info():
     print("  --help    -> More detailed description of this utility")
     print("  --usage   -> Arguments, parameters, flags, options, etc.")
     print("  --version -> Version and ownership information")
+    print("  --license -> License information")
     print("  ")
 
 
