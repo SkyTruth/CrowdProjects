@@ -356,47 +356,28 @@ def main(args):
 
         # Create the feature
         feature = ogr.Feature(layer.GetLayerDefn())
-        pdebug("Defined feature")
-        feature.SetField('id', task_attributes['id'])
-        pdebug("Set id")
-        feature.SetField('site_id', task_attributes['site_id'])
-        pdebug("Set site_id")
-        feature.SetField('wms_url', task_attributes['wms_url'])
-        pdebug("Set wms_url")
-        feature.SetField('county', task_attributes['county'])
-        pdebug("Set county")
-        feature.SetField('year', task_attributes['year'])
-        pdebug("Set year")
-        feature.SetField('location', task_attributes['location'])
-        pdebug("Set location")
-        feature.SetField('n_unk_res', task_attributes['n_unk_res'])
-        pdebug("Set n_unk_res")
-        feature.SetField('n_frk_res', task_attributes['n_frk_res'])
-        pdebug("Set n_frk_res")
-        feature.SetField('n_oth_res', task_attributes['n_oth_res'])
-        pdebug("Set n_oth_res")
-        feature.SetField('n_tot_res', task_attributes['n_tot_res'])
-        pdebug("Set n_tot_res")
-        feature.SetField('crowd_sel', task_attributes['crowd_sel'])
-        pdebug("Set crowd_sel")
-        # This is currently a manual process, thus there is no qaqc key in task_attributes
-        #feature.SetFID('qaqc', task_attributes['qaqc'])
-        #pdebug("Set qaqc")
-        feature.SetField('p_crd_a', task_attributes['p_crd_a'])
-        pdebug("Set p_crd_a")
-        feature.SetField('p_s_crd_a', task_attributes['p_s_crd_a'])
-        pdebug("Set p_s_crd_a")
+        field_values = [('id', task_attributes['id']),
+                        ('site_id', task_attributes['site_id']),
+                        ('wms_url', task_attributes['wms_url']),
+                        ('county', task_attributes['county']),
+                        ('year', task_attributes['year']),
+                        ('location', task_attributes['location']),
+                        ('n_unk_res', task_attributes['n_unk_res']),
+                        ('n_frk_res', task_attributes['n_frk_res']),
+                        ('n_oth_res', task_attributes['n_oth_res']),
+                        ('n_tot_res', task_attributes['n_tot_res']),
+                        ('crowd_sel', task_attributes['crowd_sel']),
+                        ('p_crd_a', task_attributes['p_crd_a']),
+                        ('p_s_crd_a', task_attributes['p_s_crd_a'])]
+        for field, value in field_values:
+            feature.SetField(field, value)
         wkt = "POINT(%f %f)" % (float(task_attributes['longitude']), float(task_attributes['latitude']))
         point = ogr.CreateGeometryFromWkt(wkt)
-        pdebug("Created geometry")
         feature.SetGeometry(point)
-        pdebug("Set geometry")
         layer.CreateFeature(feature)
-        pdebug("Created feature")
 
         # Cleanup
         feature.Destroy()
-        pdebug("Destroyed feature")
 
     # Cleanup shapefile
     data_source.Destroy()
