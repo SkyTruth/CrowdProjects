@@ -437,6 +437,8 @@ def main(args):
 
 
 if __name__ == '__main__':
+    print("WARNING: Deprecated.")
+    sys.exit(1)
     if len(sys.argv) is 1:
         sys.exit(print_usage())
     else:
