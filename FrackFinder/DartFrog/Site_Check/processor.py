@@ -15,7 +15,7 @@ def get_location(record, return_dict=False):
                 'lng': lng,
                 'year': year}
     else:
-        return str(lat) + str(lng) + '---' + str(year)
+        return str(lat) + str(lng) + '-' + str(year)
 
 
 def main(args):
