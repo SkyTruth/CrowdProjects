@@ -1,4 +1,4 @@
-#!/usr/bin env python
+#!/usr/bin/env python
 
 
 # See global __license__ variable for license information
@@ -88,6 +88,7 @@ def print_help():
     print("files and extract unique or non-unique tasks.")
     print("Exclusion and inclusion files can also be used to")
     print("further customize output.")
+    print("")
     return 1
 
 
@@ -106,8 +107,8 @@ def print_usage():
     print("  --help-info -> Print out a list of help related flags")
     print("  --unique    -> Write tasks that are unique in *.json files")
     print("  --overlap   -> Write tasks that exist in *.json files")
-    print("  --include|-i files -> Only include tasks in file")
-    print("  --exclude|-e files -> Exclude tasks in file")
+    print("  --include|-i files -> Only include tasks in any listed file")
+    print("  --exclude|-e files -> Exclude tasks in any listed file")
     print("")
     print("Utility defaults to --overlap mode")
     print("When using -i/-e the -i filtering happens before -e")
@@ -124,7 +125,8 @@ def print_version():
     """
 
     print("")
-    print('%s version %s - released %s' % (__docname__, __version__, __release__))
+    print("%s version %s - released %s" % (__docname__, __version__, __release__))
+    print(__copyright__)
     print("")
     return 1
 
@@ -149,7 +151,7 @@ def print_license():
     :rtype: int
     """
 
-    print('\n' + __license__ + '\n')
+    print(__license__)
     return 1
 
 
@@ -165,10 +167,20 @@ def get_unique_tasks(*task_groups):
 
     # Combine all sub-json objects into a single group
     unique_tasks = []
+
+    # Get a list of tasks from the list of groups
     for task_set in task_groups:
+
+        # Get a single task from the group of tasks we're currently working with
         for task in task_set:
+
+            # Append task to output if its not already in there
             if task not in unique_tasks:
                 unique_tasks.append(task)
+
+            # If task is already in the set of tasks that is supposed to be unique, its not unique - remove from output
+            else:
+                unique_tasks.remove(task)
 
     # Trash potentially giant input object to save memory
     task_groups = None
@@ -208,7 +220,7 @@ def get_overlapping_tasks(*task_groups):
                     # Got a group we can check - see if the task exists in it
                     if task in task_groups[group_index]:
 
-                        # Hey, it exists!  Append to the output container.
+                        # Hey, it exists - Append to the output container
                         overlapping_tasks.append(task)
 
         # Iterate the group index in preparation for processing the next group
@@ -218,6 +230,88 @@ def get_overlapping_tasks(*task_groups):
     task_groups = None
 
     return overlapping_tasks
+
+
+def apply_task_inclusion_filter(tasks, inclusion_files):
+
+    """
+    Check a set of input tasks against a set of files.  Only keep
+    the input tasks that DO appear in ANY of the inclusion_files
+
+    :param tasks: list of input task objects
+    :type tasks: list
+    :param inclusion_files: list of JSON files to check against
+    :type inclusion_files: list
+    :rtype: list
+    """
+
+    # Open the inclusion files and cache as JSON object
+    json_inclusion_files = []
+    for item in inclusion_files:
+        with open(item, 'r') as f:
+            json_inclusion_files.append(json.load(f))
+
+    # Loop through all tasks and see if they exist in ANY of the inclusion JSON objects
+    inclusion_tasks = []
+
+    # Get a task from the input set of tasks
+    for task in tasks:
+
+        # Get one file's worth of inclusion tasks
+        for inclusion_tasks in json_inclusion_files:
+
+            # See if the task from the outer loop exists in the current set of inclusion tasks
+            if task in inclusion_tasks:
+
+                # Hey, it's in there - Append to output list.
+                inclusion_tasks.append(task)
+
+    # Trash potentially giant input and cached objects
+    json_inclusion_files = None
+    tasks = None
+
+    return inclusion_tasks
+
+
+def apply_task_exclusion_filter(tasks, exclusion_files):
+
+    """
+    Check a set of input tasks against a set of files.  Only keep
+    the input tasks that DO NOT appear in ANY of the exclusion_files
+
+    :param tasks: list of input task objects
+    :type tasks: list
+    :param exclusion_files: list of JSON files to check against
+    :type exclusion_files: list
+    :rtype: list
+    """
+
+    # Open the exclusion files and cache as JSON object
+    json_exclusion_files = []
+    for item in exclusion_files:
+        with open(item, 'r') as f:
+            json_exclusion_files.append(json.load(f))
+
+    # Loop through all tasks and see if they exist in ANY of the exclusion JSON objects
+    exclusion_tasks = []
+
+    # Get a task from the input set of tasks
+    for task in tasks:
+
+        # Get one file's worth of exclusion tasks
+        for inclusion_tasks in json_exclusion_files:
+
+            # See if the task from the outer loop exists in the current set of exclusion tasks
+            if task not in inclusion_tasks:
+
+                # Task passed the filter, so append to output container
+                inclusion_tasks.append(task)
+
+    # Trash potentially giant input and cached objects
+    json_exclusion_files = None
+    tasks = None
+
+    return exclusion_tasks
 
 
 def main(args):
@@ -238,6 +332,7 @@ def main(args):
     comparison = 'overlap'
     exclusion_files = []
     inclusion_files = []
+    write_to_outfile = True
 
     # Set constraints
     comparison_modes = ('overlap', 'unique')
@@ -257,7 +352,7 @@ def main(args):
             if arg in ('--help-info', '-help-info', '--helpinfo', '-helpinfo', '-hi'):
                 return print_help()
             elif arg in ('--help', '-help', '-h'):
-                return print_help_info()
+                return print_help()
             elif arg in ('--usage', '-usage', '-u'):
                 return print_usage()
             elif arg in ('--version', '-version'):
@@ -289,16 +384,19 @@ def main(args):
             elif arg in ('--unique', '-unique'):
                 i += 1
                 comparison = 'unique'
-            elif ('--mode=', '-mode=') in arg:
+            elif '--mode=' in arg or '-mode=' in arg:
                 i += 1
                 comparison = arg.split('=', 1)[1]
+            elif arg == '--no-write':
+                i += 1
+                write_to_outfile = False
 
             # Set positional arguments
             else:
 
                 # Grab *.json files
-                while i < len(args) and arg[0] != '-':
-                    compare_files.append(arg)
+                while i < len(args) and args[i][0] != '-':
+                    compare_files.append(args[i])
                     i += 1
 
         # Done parsing arguments - grab the last compare_file and make it the output file
@@ -320,6 +418,12 @@ def main(args):
     elif isfile(outfile):
         print("ERROR: Outfile exists: %s" % outfile)
         bail = True
+    elif outfile in exclusion_files:
+        print("ERROR: Outfile can't be used as an exclusion file: %s" % outfile)
+        bail = True
+    elif outfile in inclusion_files:
+        print("ERROR: Outfile can't be used as an inclusion file: %s" % outfile)
+        bail = True
 
     # Make sure the comparison mode is allowed
     if comparison not in comparison_modes:
@@ -330,6 +434,9 @@ def main(args):
     # Make sure all input files exist
     if compare_files is []:
         print("ERROR: Need files to compare")
+        bail = True
+    elif len(compare_files) is 1:
+        print("ERROR: Need more than one file to compare")
         bail = True
     else:
         for item in compare_files:
@@ -363,20 +470,110 @@ def main(args):
     # == Open JSON Files == #
 
     # Cache all JSON files
-    print("Opening files to compare...")
+    print("Opening %s files for comparison..." % str(len(compare_files)))
     json_content = {}
-    for item in compare_files:
-        print("  Parsing: %s")
-        with open(item, 'r') as f:
-            json_content[item] = json.load(f)
+    for file_path in compare_files:
+        print("  Parsing: %s" % file_path)
+        with open(file_path, 'r') as f:
+            json_content[file_path] = json.load(f)
 
-    #
+    # == Compare Files == #
 
+    # Update user
+    num_total_tasks = 0
+    for input_file, task_list in json_content:
+        task_count = len(task_list)
+        num_total_tasks += task_count
+        print("Found %s tasks in %s" % (str(task_count), input_file))
 
+    # Mode is set to overlap - find tasks that exist in all files
+    if comparison == 'overlap':
+        print("Finding overlapping tasks...")
+        post_compare_tasks = get_overlapping_tasks(json_content.values())
 
+    # Mode is set to unique - find tasks that only appear once across all files
+    elif comparison == 'unique':
+        print("Finding unique tasks...")
+        post_compare_tasks = get_unique_tasks(json_content.values())
 
+    # Invalid mode - error out
+    else:
+        print("ERROR: Can't compare files - invalid comparison mode: %s" % str(comparison))
+        return 1
 
+    # == Apply Filters == #
 
+    # Cache containers to make some later logic a bit easier
+    post_inclusion_filter_tasks = None
+    post_exclusion_filter_tasks = None
+
+    # Inclusion files supplied - filter tasks to those that only appear in any of the inclusion files
+    if inclusion_files is not []:
+        print("Filtering %s tasks against %s inclusion files..." % (str(len(post_compare_tasks)), len(inclusion_files)))
+        post_inclusion_filter_tasks = apply_task_inclusion_filter(post_compare_tasks, inclusion_files)
+
+    # Exclusion files supplied - filter tasks to those that don't appear in any of the exclusion files
+    if exclusion_files is not []:
+        print("Filtering %s tasks against against %s")
+        # Adjust variables if the user didn't set an inclusion filter
+        if post_inclusion_filter_tasks is None:
+            post_inclusion_filter_tasks = post_compare_tasks
+        post_exclusion_filter_tasks = apply_task_exclusion_filter(post_inclusion_filter_tasks, exclusion_files)
+
+    # == Adjust Variables Post Filtering == #
+
+    # Since the exclusion filter happens after the inclusion filter, use its output for the post filter task set
+    if post_exclusion_filter_tasks is not None:
+        final_task_list = post_exclusion_filter_tasks
+
+    # User didn't specify an exclusion filter but did specify an inclusion filter - use the inclusion tasks
+    elif post_inclusion_filter_tasks is not None:
+        final_task_list = post_inclusion_filter_tasks
+
+    # User didn't specify any filters - use the post_compare tasks as the final task set
+    else:
+        final_task_list = post_compare_tasks
+
+    # Store some information and trash potentially giant variables
+    num_post_compare_tasks = len(post_compare_tasks)
+    if inclusion_files is not []:
+        num_post_inclusion_filter_tasks = len(post_inclusion_filter_tasks)
+    else:
+        num_post_inclusion_filter_tasks = None
+    if exclusion_files is not []:
+        num_post_exclusion_filter_tasks = len(post_exclusion_filter_tasks)
+    else:
+        num_post_exclusion_filter_tasks = None
+    post_inclusion_filter_tasks = None
+    post_exclusion_filter_tasks = None
+    post_compare_tasks = None
+
+    # == Update User and Print Stats == #
+
+    # Update user
+    print("Started with %s tasks from %s files" % (str(num_total_tasks), len(compare_files)))
+    print("Used '%s' comparison to find %s tasks" % (comparison, str(num_post_compare_tasks)))
+    if inclusion_files is not []:
+        print("Checked %s inclusion files - left with %s tasks" % (str(len(inclusion_files)),
+                                                                   str(num_post_inclusion_filter_tasks)))
+    if exclusion_files is not []:
+        print("Checked %s exclusion files - left with %s tasks" % (str(len(exclusion_files)),
+                                                                   str(num_post_exclusion_filter_tasks)))
+    print("Final number of tasks: %s" % str(len(final_task_list)))
+
+    # Write final tasks to output file
+    if not write_to_outfile:
+        print("Skipping write to outfile: %s" % outfile)
+    else:
+        print("Writing to output file: %s" % outfile)
+    try:
+        with open(outfile, 'w') as f:
+            json.dump(final_task_list, f)
+    except IOError:
+        print("ERROR: Could not write final tasks to: %s" % outfile)
+
+    # Update user
+    print("Done.")
 
     # Success
     return 0
