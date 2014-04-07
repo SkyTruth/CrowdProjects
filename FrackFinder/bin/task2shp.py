@@ -316,7 +316,7 @@ def main(args):
             type_caster = attributes[2]
             try:
                 task_attributes[attribute_name] = type_caster(task['info'][info_reference])
-            except TypeError:
+            except (TypeError, KeyError):
                 task_attributes[attributes[0]] = None
 
         # Get the crowd selection counts
