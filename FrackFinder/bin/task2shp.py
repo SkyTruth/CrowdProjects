@@ -332,8 +332,7 @@ def main(args):
         # Get crowd agreement levels
         task_attributes = dict(task_attributes.items()
                                + get_percent_crowd_agreement(task_attributes['crowd_sel'], crowd_selection_counts,
-                                                             task_attributes['n_tot_res'],
-                                                             map_selection_to_field).items())
+                                                             n_tot_res, map_selection_to_field).items())
 
         # Update user
         pdebug("  wms_url   = %s" % task_attributes['wms_url'][:40] + ' ...(truncated...)')
