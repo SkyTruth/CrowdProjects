@@ -5,8 +5,7 @@
 
 
 """
-Compare two task.json files from PyBossa and keep/remove
-unique/non-unique tasks.
+Compare two task.json files from PyBossa and keep/remove unique/non-unique tasks.
 """
 
 
@@ -56,9 +55,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 def print_help_info():
+
     """
     Print help flags
+
+    :rtype: int
     """
+
     print("")
     print("Help flags:")
     print("  --help    -> More detailed description of this utility")
@@ -70,9 +73,13 @@ def print_help_info():
 
 
 def print_help():
+
     """
     Print a more detailed description of the utility
+
+    :rtype: int
     """
+
     print("")
     print("%s Detailed Help" % __docname__)
     print("--------------" + "-" * len(__docname__))
@@ -85,9 +92,13 @@ def print_help():
 
 
 def print_usage():
+
     """
     Print out the commandline usage information
+
+    :rtype: int
     """
+
     print("")
     print("Usage: %s [options] *.json outfile.json" % __docname__)
     print("")
@@ -95,8 +106,8 @@ def print_usage():
     print("  --help-info -> Print out a list of help related flags")
     print("  --unique    -> Write tasks that are unique in *.json files")
     print("  --overlap   -> Write tasks that exist in *.json files")
-    print("  --include|-i file -> Only include tasks in file")
-    print("  --exclude|-e file -> Exclude tasks in file")
+    print("  --include|-i files -> Only include tasks in file")
+    print("  --exclude|-e files -> Exclude tasks in file")
     print("")
     print("Utility defaults to --overlap mode")
     print("When using -i/-e the -i filtering happens before -e")
@@ -105,9 +116,13 @@ def print_usage():
 
 
 def print_version():
+
     """
     Print version and ownership information
+
+    :rtype: int
     """
+
     print("")
     print('%s version %s - released %s' % (__docname__, __version__, __release__))
     print("")
@@ -115,22 +130,107 @@ def print_version():
 
 
 def print_short_version():
+
     """
     Just print the version number for commandline comparison purposes
+
+    :rtype: int
     """
+
     print(__version__)
     return 1
 
 
 def print_license():
+
     """
     Print licensing information
+
+    :rtype: int
     """
+
     print('\n' + __license__ + '\n')
     return 1
 
 
+def get_unique_tasks(*task_groups):
+
+    """
+    Compare input JSON objects containing tasks and return a unique set
+
+    :param json_objects: lists of task objects
+    :type json_objects: list
+    :rtype: list
+    """
+
+    # Combine all sub-json objects into a single group
+    unique_tasks = []
+    for task_set in task_groups:
+        for task in task_set:
+            if task not in unique_tasks:
+                unique_tasks.append(task)
+
+    # Trash potentially giant input object to save memory
+    task_groups = None
+
+    return unique_tasks
+
+
+def get_overlapping_tasks(*task_groups):
+
+    """
+    Compare input JSON objects containing tasks and return tasks that
+    only exist in all sets.
+
+    :param task_groups: lists of task objects
+    :type task_groups: list
+    :rtype: list
+    """
+
+    # Get a task from a group and make sure it exists in the other groups
+    # group_index is used to speed up the loop that searches for overlapping tasks
+    # No need to search the current group since that is where we got the task
+    overlapping_tasks = []
+    group_index = 0
+
+    # Get a group of tasks
+    for group in task_groups:
+
+        # Loop through all tasks in the group
+        for task in group:
+
+            # Figure out how many groups we need to check the task against and iterate through their indexes
+            for i in range(0, len(task_groups) - 1):
+
+                # Don't check the group we're working with in the outer loop - compare the indexes for a quick check
+                if group_index is not i:
+
+                    # Got a group we can check - see if the task exists in it
+                    if task in task_groups[group_index]:
+
+                        # Hey, it exists!  Append to the output container.
+                        overlapping_tasks.append(task)
+
+        # Iterate the group index in preparation for processing the next group
+        group_index += 1
+
+    # Trash potentially giant input object to save memory
+    task_groups = None
+
+    return overlapping_tasks
+
+
 def main(args):
+
+    """
+    Main routine
+
+    :param args: list of arguments from command line(sys.argv[1:])
+    :type args: dict
+    :rtype: int
+    """
+
+    # == Default Configuration and Containers == #
 
     # Set defaults
     outfile = None
@@ -138,6 +238,9 @@ def main(args):
     comparison = 'overlap'
     exclusion_files = []
     inclusion_files = []
+
+    # Set constraints
+    comparison_modes = ('overlap', 'unique')
 
     # == Parse Arguments == #
 
@@ -179,7 +282,7 @@ def main(args):
             # Additional options
             elif arg in ('--unique', '-unique'):
                 i += 1
-                mode = 'unique'
+                comparison = 'unique'
             elif arg in ('--overlap', '-overlap'):
                 i += 1
                 comparison = 'overlap'
@@ -209,7 +312,69 @@ def main(args):
 
     # == Validate Arguments and Settings == #
 
-    # Make sure files exist, arguments were populated, ranges check out, etc
+    # Make sure an outfile was given and that it exists
+    bail = False
+    if outfile is None:
+        print("ERROR: Need an outfile")
+        bail = True
+    elif isfile(outfile):
+        print("ERROR: Outfile exists: %s" % outfile)
+        bail = True
+
+    # Make sure the comparison mode is allowed
+    if comparison not in comparison_modes:
+        print("ERROR: Invalid comparison mode: %s" % comparison)
+        print("       Valid modes: %s" % str(comparison_modes))
+        bail = True
+
+    # Make sure all input files exist
+    if compare_files is []:
+        print("ERROR: Need files to compare")
+        bail = True
+    else:
+        for item in compare_files:
+            if not isfile(item):
+                print("ERROR: Can't find input file: %s" % item)
+                bail = True
+
+    # Make sure inclusion files exist, if any were given
+    if inclusion_files is not []:
+        for inclusion in inclusion_files:
+            if not os.access(inclusion, os.R_OK) or not isfile(inclusion):
+                print("ERROR: Can't access inclusion file: %s" % inclusion)
+                bail = True
+
+    # Make sure exclusion files exist, if any were given
+    if exclusion_files is not []:
+        for exclusion in exclusion_files:
+            if not os.access(exclusion, os.R_OK) or not isfile(exclusion):
+                print("ERROR: Can't access exclusion file: %s" % exclusion)
+                bail = True
+
+    # Check for argument errors
+    if arg_error:
+        print("ERROR: Did not successfully parse arguments")
+        bail = True
+
+    # If validation failed, return an error code
+    if bail:
+        return 1
+
+    # == Open JSON Files == #
+
+    # Cache all JSON files
+    print("Opening files to compare...")
+    json_content = {}
+    for item in compare_files:
+        print("  Parsing: %s")
+        with open(item, 'r') as f:
+            json_content[item] = json.load(f)
+
+    #
+
+
+
+
 
 
 
