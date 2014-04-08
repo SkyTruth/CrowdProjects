@@ -31,6 +31,7 @@
 # ========================================================================== #
 
 
+import os
 import json
 from os.path import isfile
 
@@ -45,3 +46,38 @@ def load_json(infile):
     :rtype: dict|list|False
     """
 
+    # Validate input
+    if not isfile(infile) or not os.access(infile, os.R_OK):
+        print("ERROR: Can't access: %s" % str(infile))
+        return False
+
+    # Perform conversion to JSON
+    with open(infile, 'r') as f:
+        output = json.load(f)
+    return f
+
+
+def get_task_runs(task, task_run_json, unique=True):
+
+    """
+    Search through items from task_run.json to find matching objects for input task
+
+    :param task: input task object
+    :type task: dict
+    :param task_run_json: task_run.json converted to a JSON object via json.load() or common.load_json()
+    :type task_run_json: list
+    :param unique: specifies whether output list will contain unique values or not
+    :type unique: bool
+    :rtype: list
+    """
+
+    # Perform comparison
+    output = []
+    task_id = task['id']
+    for task_run in task_run_json:
+        if task_id == task_run['task_id']:
+            output.append(task)
+    if unique:
+        return set(output)
+    else:
+        return output
