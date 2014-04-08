@@ -155,6 +155,27 @@ def print_license():
     return 1
 
 
+def get_location(task, lat_long_sep='', long_year_sep='---'):
+
+    """
+    Parse a task and return its unique, lat, long, year location key
+
+    :param task: task from task.json
+    :type task: dict
+    :param lat_long_sep: delimiter to be placed between lat/long in final output
+    :type lat_long_sep: str
+    :param long_year_sep: delimiter to be placed between long/year in final output
+    :type long_year_sep: str
+    :rtype: string
+    """
+
+    latitude = str(task['info']['latitude'])
+    longitude = str(task['info']['longitude'])
+    year = str(task['info']['year'])
+
+    return latitude + lat_long_sep + longitude + long_year_sep + year
+
+
 def get_unique_tasks(*task_groups):
 
     """
@@ -211,18 +232,26 @@ def get_overlapping_tasks(task_groups):
         # Loop through all tasks in the group
         for task in group:
 
-            # Figure out how many groups we need to check the task against and iterate through their indexes
-            for check_index in range(0, len(task_groups)):
+            # Check to make sure the task isn't already in the output overlapping_tasks list - speeds things up
+            if task not in overlapping_tasks:
 
-                # Don't check the group we're working with in the outer loop - compare the indexes for a quick check
-                if group_index is not check_index:
+                # Figure out how many groups we need to check the task against and iterate through their indexes
+                for check_index in range(0, len(task_groups)):
 
-                    # Got a group we can check - see if the task exists in it
-                    if task in task_groups[check_index]:
+                    # Don't check the group we're working with in the outer loop - compare the indexes for a quick check
+                    if group_index is not check_index:
 
-                        # Hey, it exists - Append to the output container, but only if its not already in there
-                        if task not in overlapping_tasks:
-                            overlapping_tasks.append(task)
+                        # Loop through tasks in a group and compare unique locations
+                        task_location = get_location(task)
+                        for check_task in task_groups[check_index]:
+
+                            # Get location and compare
+                            check_task_location = get_location(check_task)
+                            if task_location == check_task_location:
+
+                                # Hey, it exists - Append to the output container, but only if its not already in there
+                                if task not in overlapping_tasks:
+                                    overlapping_tasks.append(task)
 
         # Iterate the group index in preparation for processing the next group
         group_index += 1
