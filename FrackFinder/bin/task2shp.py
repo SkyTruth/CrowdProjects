@@ -191,7 +191,7 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
 
 
 def get_percent_crowd_agreement(crowd_selection, selection_counts, total_responses, map_selection_field,
-                                error_val=-1):
+                                error_val=None):
     """
     Figure out how well the crowd agreed and if two answers tied, figure out the agreement for both
     """
