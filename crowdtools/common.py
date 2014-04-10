@@ -54,7 +54,8 @@ def load_json(infile):
     # Perform conversion to JSON
     with open(infile, 'r') as f:
         output = json.load(f)
-    return f
+
+    return output
 
 
 def get_task_runs(task, task_run_json, unique=True):
@@ -81,3 +82,79 @@ def get_task_runs(task, task_run_json, unique=True):
         return set(output)
     else:
         return output
+
+
+def get_overlapping_tasks(compare_id=False, *task_groups):
+
+    """
+    Compare lists of input tasks and return the tasks that appear in all sets
+
+    :param compare_id: toggle whether or not the id tag should be used in the comparison
+    :type compare_id: bool
+    :param task_groups: lists of tasks from json.load(file.json) OR load_json()
+    :type task_groups: list
+    :rtype: bool|list
+    """
+
+    # Validate input
+    if len(task_groups) <= 1:
+        return False
+
+    # Get a task from a group and make sure it exists in the other groups
+    # group_index is used to speed up the loop that searches for overlapping tasks
+    # No need to search the current group since that is where we got the task
+    overlapping_tasks = []
+    group_index = 0
+
+    # Get a group of tasks
+    for group in task_groups:
+
+        # Loop through all tasks in the group
+        for task in group:
+
+            # Cache the task since we may be removing the id key in order to get a better comparison
+            task_cache = task
+            if not compare_id:
+                del task['id']
+
+            # Check to make sure the task isn't already in the output overlapping_tasks list - speeds things up
+            if task not in overlapping_tasks:
+
+                # Figure out how many groups we need to check the task against and iterate through their indexes
+                for check_index in range(0, len(task_groups)):
+
+                    # Don't check the group we're working with in the outer loop - compare the indexes for a quick check
+                    if group_index is not check_index:
+
+                        # Loop through tasks in a group and compare unique locations
+                        for check_task in task_groups[check_index]:
+
+                            # Remove the id key if necessary
+                            if not compare_id:
+                                del check_task['id']
+
+                            # Get location and compare
+                            if task == check_task:
+
+                                # Hey, it exists - Append to the output container, but only if its not already in there
+                                overlapping_tasks.append(task_cache)
+
+        # Iterate the group index in preparation for processing the next group
+        group_index += 1
+
+    # Trash potentially giant input object to save memory
+    task_groups = None
+
+    return overlapping_tasks
+
+
+def get_non_overlapping_tasks():
+    pass
+
+
+def get_unique_tasks(*task_groups):
+
+    """
+
+    """
+    pass
