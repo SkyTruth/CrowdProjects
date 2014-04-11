@@ -39,7 +39,8 @@ def main(args):
     public_task_runs = '../DartFrog/QAQC/complete-tasks/export/public/task_run.json'
     internal_tasks = '../DartFrog/QAQC/complete-tasks/export/first-internal/task.json'
     internal_task_runs = '../DartFrog/QAQC/complete-tasks/export/first-internal/task_run.json'
-    outfile = 'OVERLAPPING_TASKS.json'
+    pubic_overlapping_file = 'overlap/overlapping-public.json'
+    internal_overlapping_file = 'overlap/overlapping-internal.json'
 
     # Make sure the files exist
     for filepath in (public_tasks, public_task_runs, internal_tasks, internal_task_runs):
@@ -76,20 +77,27 @@ def main(args):
 
     # Compare completed tasks to find overlapping tasks
     print("Finding overlapping tasks...")
-    overlapping_tasks = []
+    public_overlapping_tasks = []
+    internal_overlapping_tasks = []
     for p_task in completed_public_tasks:
-        if p_task not in overlapping_tasks:
+        if p_task not in public_overlapping_tasks:
             p_task_location = get_location(p_task)
             for i_task in completed_internal_tasks:
                 i_task_location = get_location(i_task)
                 if p_task_location == i_task_location:
-                    overlapping_tasks.append(p_task)
-    print("  overlapping_tasks = %s" % len(overlapping_tasks))
+                    public_overlapping_tasks.append(p_task)
+                    internal_overlapping_tasks.append(i_task)
+    print("  public_overlapping_tasks = %s" % len(public_overlapping_tasks))
+    print("  internal_overlapping_tasks = %s" % len(internal_overlapping_tasks))
 
     # Write to file
     print("Writing overlapping tasks...")
-    with open(outfile, 'w') as f:
-        json.dump(overlapping_tasks, f)
+    print("  Public...")
+    with open(pubic_overlapping_file, 'w') as f:
+        json.dump(public_overlapping_tasks, f)
+    print("  Internal...")
+    with open(internal_overlapping_file, 'w') as f:
+        json.dump(internal_overlapping_tasks, f)
     print("Done.")
 
     # Successful
