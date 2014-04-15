@@ -158,7 +158,131 @@ def get_non_overlapping_tasks():
     pass
 
 
-def is_task_finished():
+def is_task_complete(task, task_runs, redundancy, task_id_field='id', task_run_id_field='task_id', error=None):
+
+    """
+    Checks to see if a task is complete.  Slightly more optimized than
+    doing: len(get_task_runs())
+
+    :param task: input task object
+    :type task: dict
+    :param task_runs: content from task_run.json
+    :type task_runs: list
+    :param redundancy: number of times a task must be completed
+    :type redundancy: int
+    :param task_id_field: the key used to get the unique task identifier
+    :type task_id_field: str
+    :param task_run_id_field: the key used to get the unique task_run identifier
+    :type task_run_id_field: str
+    :param error: the value that is returned when an error is encountered
+    :type error: any
+    :rtype: bool|None
+    """
+
+    # Validate input
+    if redundancy <= 0:
+        return error
+
+    # Loop and check
+    count = 0
+    task_id = task[task_id_field]
+    for tr in task_runs:
+        tr_id = tr[task_run_id_field]
+        if task_id == tr_id:
+            count += 1
+            if count >= redundancy:
+                return True
+    return False
+
+
+def get_crowd_selection_counts(task, task_runs, task_id_field='id', task_run_id_field='task_id'):
+
+    """
+    Figure out how many times the crowd selected each option
+
+    :param task: input task object
+    :type task: dict
+    :param task_runs: content from task_run.json
+    :type task_runs: list
+    :param task_id_field: the key used to get the unique task identifier
+    :type task_id_field: str
+    :param task_run_id_field: the key used to get the unique task_run identifier
+    :type task_run_id_field: str
+    :rtype: dict
+    """
+
+    # Container to aggregate results
+    counts = {}
+
+    # Loop through task runs and aggregate counts
+    task_id = task[task_id_field]
+    for tr in task_runs:
+
+        # Get the task_run id
+        tr_id = tr[task_run_id_field]
+        if task_id == tr_id:
+
+            # Get the selection from the task_run
+            selection = tr['info']['selection']
+
+            # Try iterating the selection's count
+            try:
+                counts[selection] += 1
+
+            # If the selection doesn't exist in the count container, add it and set it's value to 1
+            # This is the first time we found this selection
+            except KeyError:
+                counts[selection] = 1
+
+    # Success - return the container
+    return counts
+
+
+def get_crowd_selection(selection_counts, delimiter='|', error=None):
+    """
+    Figure out what the crowd actually selected
+
+    :param selection_counts: output from get_crowd_selection_counts()
+    :type selection_counts: dict
+    :param delimiter: character to place between tied responses - response1|response2
+    :type delimiter: str
+    :param error: value to return if an error is encountered, or if a selection can't be determined
+    :type error: any
+    :rtype: str
+    """
+
+    # Validate input
+    if selection_counts is {}:
+        return error
+
+    # Cache containers
+    crowd_selection = error
+
+    # Figure out what the maximum number of selections was
+    max_selection = max(selection_counts.values())
+
+    # Loop through all selections and determine a selection
+    for selection, count in selection_counts.iteritems():
+
+        # Check to see if the current selection's count matches the maximum number of responses
+        # If it does, then we found the crowd selection but we have to look at the rest of the responses to
+        # figure out if there are tied responses - which will be stitched together with the delimiter
+        if count is max_selection:
+
+            # If the crowd selection is set to error, then we can re-set it to be the actual selection value
+            # Setting the output container to the error value assures that an error is returned if something goes wrong
+            if crowd_selection == error:
+                crowd_selection = selection
+
+            # The crowd selection is not set to the error value, which means that we are dealing with a situation where
+            # two responses tied for the maximum number of responses - stitch it together with the delimiter
+            else:
+                crowd_selection += delimiter + selection
+
+    return crowd_selection
+
+
+def get_crowd_agreement_level(selection_counts, ):
     pass
 
 
