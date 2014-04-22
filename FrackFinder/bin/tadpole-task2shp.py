@@ -1,36 +1,6 @@
 #!/usr/bin/env python
 
 
-# See global __license__ variable for license information
-
-
-"""
-Convert a FrackFinder JSON export to a shapefile
-containing 1 point per pond and aggregated response
-metrics.
-"""
-
-
-import os
-import sys
-import json
-import inspect
-from os.path import isfile
-from os.path import basename
-import ogr
-import osr
-
-
-# Global parameters
-DEBUG = False
-
-
-# Build information
-__author__ = 'Kevin Wurster'
-__copyright__ = 'Copyright (c) 2014, SkyTruth'
-__version__ = '0.1'
-__release__ = '2014/04/07'
-__docname__ = basename(inspect.getfile(inspect.currentframe()))
 __license__ = """
 Copyright (c) 2014, SkyTruth
 All rights reserved.
@@ -60,6 +30,36 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
+
+
+import os
+import sys
+import json
+import inspect
+from os.path import isfile
+from os.path import basename
+import ogr
+import osr
+
+
+"""
+Convert a FrackFinder JSON export to a shapefile
+containing 1 point per pond and aggregated response
+metrics.
+"""
+
+
+# Global parameters
+DEBUG = False
+
+
+# Build information
+__author__ = 'Kevin Wurster'
+__copyright__ = 'Copyright (c) 2014, SkyTruth'
+__version__ = '0.1'
+__release__ = '2014/04/07'
+__docname__ = basename(inspect.getfile(inspect.currentframe()))
+
 
 
 def print_usage():
@@ -169,22 +169,25 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
     """
     Figure out how many times the crowd selected each option
     """
-    counts = {'n_frk_res': 0,
+    counts = {'n_nop_res': 0,
               'n_unk_res': 0,
-              'n_oth_res': 0,
+              'n_emp_res': 0,
+              'n_eqp_res': 0,
               'ERROR': 0}
     for task_run in task_runs_json_object:
         if input_id == task_run['task_id']:
             try:
-                selection = task_run['info']['selection']
+                selection = task_run['info']['type']
             except KeyError:
                 selection = 'ERROR'
-            if selection == 'fracking':
-                counts['n_frk_res'] += 1
+            if selection == 'nopad':
+                counts['n_nop_res'] += 1
             elif selection == 'unknown':
                 counts['n_unk_res'] += 1
-            elif selection == 'other':
-                counts['n_oth_res'] += 1
+            elif selection == 'empty':
+                counts['n_emp_res'] += 1
+            elif selection == 'equipment':
+                counts['n_eqp_res'] += 1
             else:
                 counts['ERROR'] += 1
     return counts
@@ -251,15 +254,17 @@ def main(args):
     outfile_epsg_code = 4326
 
     # Map field names to selections
-    map_field_to_selection = {'n_frk_res': 'fracking',
-                              'n_oth_res': 'other',
+    map_field_to_selection = {'n_nop_res': 'nopad',
+                              'n_emp_res': 'empty',
                               'n_unk_res': 'unknown',
+                              'n_eqp_res': 'equipment',
                               'ERROR': 'ERROR'}
 
     # Map selections to field names
-    map_selection_to_field = {'fracking': 'n_frk_res',
-                              'other': 'n_oth_res',
+    map_selection_to_field = {'nopad': 'n_nop_res',
+                              'empty': 'n_emp_res',
                               'unknown': 'n_unk_res',
+                              'equipment': 'n_eqp_res',
                               'ERROR': 'ERROR'}
 
     # Parse arguments
@@ -369,9 +374,10 @@ def main(args):
                           ('year', 10, ogr.OFTInteger),
                           ('location', 254, ogr.OFTString),
                           ('n_unk_res', 10, ogr.OFTInteger),
-                          ('n_frk_res', 10, ogr.OFTInteger),
-                          ('n_oth_res', 10, ogr.OFTInteger),
+                          ('n_nop_res', 10, ogr.OFTInteger),
+                          ('n_eqp_res', 10, ogr.OFTInteger),
                           ('n_tot_res', 10, ogr.OFTInteger),
+                          ('n_emp_res', 10, ogr.OFTInteger),
                           ('crowd_sel', 254, ogr.OFTString),
                           ('qaqc', 254, ogr.OFTString),
                           ('p_crd_a', 10, ogr.OFTReal),
@@ -449,8 +455,9 @@ def main(args):
         pdebug("  year      = %s" % str(task_attributes['year']))
         pdebug("  location  = %s" % task_attributes['location'])
         pdebug("  n_unk_res = %s" % str(task_attributes['n_unk_res']))
-        pdebug("  n_frk_res = %s" % str(task_attributes['n_frk_res']))
-        pdebug("  n_oth_res = %s" % str(task_attributes['n_oth_res']))
+        pdebug("  n_nop_res = %s" % str(task_attributes['n_nop_res']))
+        pdebug("  n_emp_res = %s" % str(task_attributes['n_emp_res']))
+        pdebug("  n_eqp_res = %s" % str(task_attributes['n_eqp_res']))
         pdebug("  n_tot_res = %s" % str(task_attributes['n_tot_res']))
         pdebug("  crowd_sel = %s" % task_attributes['crowd_sel'])
         #pdebug("  qaqc      = %s" % task_attributes['qaqc'])  # Currently a manual process so it has no key to populate
@@ -467,9 +474,10 @@ def main(args):
                         ('year', task_attributes['year']),
                         ('location', task_attributes['location']),
                         ('n_unk_res', task_attributes['n_unk_res']),
-                        ('n_frk_res', task_attributes['n_frk_res']),
-                        ('n_oth_res', task_attributes['n_oth_res']),
+                        ('n_nop_res', task_attributes['n_nop_res']),
+                        ('n_emp_res', task_attributes['n_emp_res']),
                         ('n_tot_res', task_attributes['n_tot_res']),
+                        ('n_eqp_res', task_attributes['n_eqp_res']),
                         ('crowd_sel', task_attributes['crowd_sel']),
                         ('p_crd_a', task_attributes['p_crd_a']),
                         ('p_s_crd_a', task_attributes['p_s_crd_a'])]
