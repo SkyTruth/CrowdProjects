@@ -1,3 +1,21 @@
 1) Downloaded all tasks into export
 2) Convert task.json/task_run.json to a shapefile with aggregated attributes via task2shp.py
 
+
+== Tadpole ==
+Sample 100 sites and make sure crowd response is sane.
+
+
+== MooreFrog ==
+Sample 100 random sites and test for the following:
+
+Omission:
+  Were any ponds not clicked on?
+  Were any ponds clicked on, but not enough times to generate a cluster?
+
+False Positives (Based on DartFrog input tasks):
+  Were an points not on ponds?
+
+
+== DartFrog ==
+Compare crowd's selection to manual QAQC
