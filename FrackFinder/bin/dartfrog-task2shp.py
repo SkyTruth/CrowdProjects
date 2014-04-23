@@ -62,6 +62,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 
+def pdebug(message):
+    """
+    Easily handle printing debug information
+    """
+    global DEBUG
+    if DEBUG is True:
+        print(message)
+
+
 def print_usage():
     """
     Command line usage information
@@ -75,15 +84,6 @@ def print_usage():
     print("  --epsg=int  -> EPSG code for coordinates in task.json - default=4326")
     print("")
     return 1
-
-
-def pdebug(message):
-    """
-    Easily handle printing debug information
-    """
-    global DEBUG
-    if DEBUG is True:
-        print(message)
 
 
 def print_license():
@@ -126,6 +126,7 @@ def print_help_info():
     print("  --version -> Version and ownership information")
     print("  --license -> License information")
     print("  ")
+    return 1
 
 
 def print_version():
