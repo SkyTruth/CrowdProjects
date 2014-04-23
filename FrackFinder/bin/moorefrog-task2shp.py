@@ -36,7 +36,16 @@ import os
 import sys
 import json
 import inspect
+from os import sep
+from os.path import isfile
 from os.path import basename
+
+try:
+    from osgeo import ogr
+    from osgeo import osr
+except ImportError:
+    import ogr
+    import osr
 
 
 # Build information
@@ -58,6 +67,7 @@ def print_usage():
     print("")
     print("Options:")
     print("  --help-info  -> Print out a list of help related flags")
+    print("  --overwrite  -> Overwrite output files")
     print("  --prefix=str -> Output filename prefix")
     print("  --wellpad-file-name=str -> Defaults to 'wellpad.shp")
     print("  --bbox-file-name=str -> Defaults to 'bbox.shp")
@@ -128,6 +138,176 @@ def print_version():
     return 1
 
 
+def create_bboxes(tasks, layer):
+
+    """
+    Add bounding boxes to input layer
+    """
+
+    # Update user
+    print("Creating bounding boxes")
+
+    # Define fields
+    print("  Defining bbox fields...")
+    fields_definitions = (('id', 10, ogr.OFTInteger),
+                          ('site_id', 254, ogr.OFTString),
+                          ('location', 254, ogr.OFTString),
+                          ('wms_url', 254, ogr.OFTString),
+                          ('county', 254, ogr.OFTString),
+                          ('year', 10, ogr.OFTInteger),
+                          ('qaqc', 254, ogr.OFTString))
+
+    # Create fields
+    for field_name, field_width, field_type in fields_definitions:
+        print("    " + field_name)
+        field_object = ogr.FieldDefn(field_name, field_type)
+        field_object.SetWidth(field_width)
+        layer.CreateField(field_object)
+
+    # Loop through tasks and create features
+    print("  Processing %s tasks..." % str(len(tasks)))
+    for task in tasks:
+
+        # Get field content
+        location = str(task['info']['latitude']) + str(task['info']['longitude']) + '---' + str(task['info']['year'])
+        field_values = {'id': int(task['id']),
+                        'site_id': str(task['info']['SiteID']),
+                        'location': str(location),
+                        'wms_url': str(task['info']['url']),
+                        'county': str(task['info']['county']),
+                        'year': int(task['info']['year'])}
+
+        # Get corner coordinates and assemble into a geometry
+        coordinates = task['info']['bbox'].split(',')
+        x_min = float(coordinates[2])
+        x_max = float(coordinates[0])
+        y_min = float(coordinates[1])
+        y_max = float(coordinates[3])
+        ring = ogr.Geometry(ogr.wkbLinearRing)
+        ring.AddPoint(x_min, y_max)
+        ring.AddPoint(x_min, y_min)
+        ring.AddPoint(x_max, y_min)
+        ring.AddPoint(x_max, y_max)
+        ring.CloseRings()
+
+        # Create a new feature and assign geometry and field values
+        rectangle = ogr.Geometry(ogr.wkbPolygon)
+        rectangle.AddGeometry(ring)
+        feature = ogr.Feature(layer.GetLayerDefn())
+        feature.SetGeometry(rectangle)
+        layer.CreateFeature(feature)
+        for field, value in field_values.iteritems():
+            feature.SetField(field, value)
+        rectangle.Destroy()
+        feature.Destroy()
+
+    # Update user
+    print("  Done")
+    return True
+
+
+def create_clicks(task_runs, layer):
+
+    """
+    Add click points to layer
+    """
+
+    # Update user
+    print("Creating clicks")
+
+    # Define fields
+    print("  Defining click fields...")
+    fields_definitions = (('id', 10, ogr.OFTInteger),
+                          ('task_id', 10, ogr.OFTInteger),
+                          ('qaqc', 254, ogr.OFTString))
+
+    # Create fields
+    for field_name, field_width, field_type in fields_definitions:
+        print("    " + field_name)
+        field_object = ogr.FieldDefn(field_name, field_type)
+        field_object.SetWidth(field_width)
+        layer.CreateField(field_object)
+
+    # Loop through tasks and create features
+    print("  Processing %s tasks..." % str(len(task_runs)))
+    for task_run in task_runs:
+
+        # Get field content
+        field_values = {'id': int(task_run['id']),
+                        'task_id': int(task_run['task_id'])}
+
+        # Get list of clicks
+        clicks = task_run['info']['positions']
+        for click in clicks:
+            feature = ogr.Feature(layer.GetLayerDefn())
+
+            # Set field attributes and geometry
+            point = ogr.CreateGeometryFromWkt("POINT(%f %f)" % (float(click['lon']), float(click['lat'])))
+            feature.SetGeometry(point)
+            for field, value in field_values.iteritems():
+                feature.SetField(field, value)
+            layer.CreateFeature(feature)
+            feature.Destroy()
+
+    # Update user
+    print("  Done")
+    return True
+
+
+def create_wellpads(tasks, layer):
+
+    """
+    Add click points to layer
+    """
+
+    # Update user
+    print("Creating wellpads")
+
+    # Define fields
+    print("  Defining layer fields...")
+    fields_definitions = (('id', 10, ogr.OFTInteger),
+                          ('site_id', 254, ogr.OFTString),
+                          ('location', 254, ogr.OFTString),
+                          ('wms_url', 254, ogr.OFTString),
+                          ('county', 254, ogr.OFTString),
+                          ('year', 10, ogr.OFTInteger),
+                          ('qaqc', 254, ogr.OFTString))
+
+    # Create fields
+    for field_name, field_width, field_type in fields_definitions:
+        print("    " + field_name)
+        field_object = ogr.FieldDefn(field_name, field_type)
+        field_object.SetWidth(field_width)
+        layer.CreateField(field_object)
+
+    # Loop through tasks and create features
+    print("  Processing %s tasks..." % str(len(tasks)))
+    for task in tasks:
+
+        # Get field content
+        location = str(task['info']['latitude']) + str(task['info']['longitude']) + '---' + str(task['info']['year'])
+        field_values = {'id': int(task['id']),
+                        'site_id': str(task['info']['SiteID']),
+                        'location': location,
+                        'wms_url': str(task['info']['url']),
+                        'county': str(task['info']['county']),
+                        'year': int(task['info']['year'])}
+
+        # Define and create feature
+        feature = ogr.Feature(layer.GetLayerDefn())
+        wkt = "POINT(%f %f)" % (float(task['info']['longitude']), float(task['info']['latitude']))
+        point = ogr.CreateGeometryFromWkt(wkt)
+        feature.SetGeometry(point)
+        for field, value in field_values.iteritems():
+            feature.SetField(field, value)
+        layer.CreateFeature(feature)
+        feature.Destroy()
+
+    # Update user
+    print("  Done")
+    return True
+
+
 def main(args):
 
     # Containers
@@ -137,9 +317,12 @@ def main(args):
     output_prefix = ''
 
     # Defaults
+    overwrite = False
     bbox_file_name = 'bbox.shp'
-    well_pad_file_name = 'wellpads.shp'
+    wellpad_file_name = 'wellpads.shp'
     clicks_file_name = 'clicks.shp'
+    epsg_code = 4326
+    vector_driver = 'ESRI Shapefile'
 
     # Parse arguments
     arg_error = False
@@ -161,9 +344,13 @@ def main(args):
         elif '--bbox-file-name=' in arg:
             bbox_file_name = arg.split('=', 1)[1]
         elif '--wellpad-file-name=' in arg or '--well-pad-file-name=' in arg:
-            well_pad_file_name = arg.split('=', 1)[1]
+            wellpad_file_name = arg.split('=', 1)[1]
         elif '--clicks-file-name=' in arg:
             clicks_file_name = arg.split('=', 1)[1]
+        elif '--epsg=' in arg:
+            epsg_code = arg.split('=', 1)[1]
+        elif arg == '--overwrite':
+            overwrite = True
 
         # Ignore empty arguments
         elif arg == '':
@@ -189,6 +376,11 @@ def main(args):
                 print("ERROR: Invalid argument: %s" % str(arg))
                 arg_error = True
 
+    # Define output file paths
+    clicks_file_path = sep.join([output_directory, output_prefix + clicks_file_name])
+    bbox_file_path = sep.join([output_directory, output_prefix + bbox_file_name])
+    wellpad_file_path = sep.join([output_directory, output_prefix + wellpad_file_name])
+
     # Validate
     bail = False
     if arg_error:
@@ -202,6 +394,16 @@ def main(args):
         bail = True
     if task_run_file_path is None or not os.access(task_run_file_path, os.R_OK):
         print("ERROR: Can't access task run file: %s" % task_run_file_path)
+        bail = True
+    if not overwrite:
+        for filepath in [clicks_file_path, bbox_file_path, wellpad_file_path]:
+            if isfile(filepath):
+                print("ERROR: Output file exists: %s" % filepath)
+                bail = True
+    try:
+        epsg_code = int(epsg_code)
+    except ValueError:
+        print("ERROR: EPSG code must be an int: %s" % str(epsg_code))
         bail = True
     if bail:
         return 1
@@ -220,18 +422,64 @@ def main(args):
     print("  Num tasks: %s" % str(len(task_json)))
     print("  Num task runs: %s" % str(len(task_run_json)))
 
-    # Create
+    # Get SRS and driver objects
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(epsg_code)
+    driver = ogr.GetDriverByName(vector_driver)
 
-    from pprint import pprint
-    print("")
-    pprint(task_json[0])
-    print("")
+    # Delete existing files if in overwrite mode
+    if overwrite:
+        print("Overwriting existing files...")
+        for filepath in [clicks_file_path, bbox_file_path, wellpad_file_path]:
+            if isfile(filepath):
+                driver.DeleteDataSource(filepath)
+                print("  Deleted %s" % filepath)
 
-    # Cleanup OGR datasources
+    # Create clicks file OGR object
+    clicks_layer_name = clicks_file_name.split('.', 1)[0]
+    print("Creating empty clicks outfile...")
+    print("  Path: %s" % clicks_file_path)
+    print("  Layer: %s" % clicks_layer_name)
+    clicks_datasource = driver.CreateDataSource(clicks_file_path)
+    clicks_layer = clicks_datasource.CreateLayer(clicks_layer_name, srs, ogr.wkbPoint)
 
+    # Create bounding box OGR object
+    bbox_layer_name = bbox_file_name.split('.', 1)[0]
+    print("Creating empty bbox outfile...")
+    print("  Path: %s" % bbox_file_path)
+    print("  Layer: %s" % bbox_layer_name)
+    bbox_datasource = driver.CreateDataSource(bbox_file_path)
+    bbox_layer = bbox_datasource.CreateLayer(bbox_layer_name, srs, ogr.wkbPolygon)
 
+    # Create wellpad OGR object
+    wellpad_layer_name = wellpad_file_name.split('.', 1)[0]
+    print("Creating empty wellpad outfile...")
+    print("  Path: %s" % wellpad_file_path)
+    print("  Layer: %s" % wellpad_layer_name)
+    wellpad_datasource = driver.CreateDataSource(wellpad_file_path)
+    wellpad_layer = wellpad_datasource.CreateLayer(wellpad_layer_name, srs, ogr.wkbPoint)
+
+    # == Create Files == #
+    if not create_bboxes(task_json, bbox_layer):
+        print("ERROR: Problem creating bounding boxes")
+    if not create_clicks(task_run_json, clicks_layer):
+        print("ERROR: Problem creating clicks")
+    if not create_wellpads(task_json, wellpad_layer):
+        print("ERROR: Problem creating wellpads")
+
+    # Cleanup OGR data sources
+    print("Cleaning up...")
+    srs = None
+    driver = None
+    clicks_layer = None
+    bbox_layer = None
+    wellpad_layer = None
+    clicks_datasource.Destroy()
+    bbox_datasource.Destroy()
+    wellpad_datasource.Destroy()
 
     # Success
+    print("Done.")
     return 0
 
 
