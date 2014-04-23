@@ -376,8 +376,8 @@ def main(args):
                           ('n_unk_res', 10, ogr.OFTInteger),
                           ('n_nop_res', 10, ogr.OFTInteger),
                           ('n_eqp_res', 10, ogr.OFTInteger),
-                          ('n_tot_res', 10, ogr.OFTInteger),
                           ('n_emp_res', 10, ogr.OFTInteger),
+                          ('n_tot_res', 10, ogr.OFTInteger),
                           ('crowd_sel', 254, ogr.OFTString),
                           ('qaqc', 254, ogr.OFTString),
                           ('p_crd_a', 10, ogr.OFTReal),
@@ -419,16 +419,19 @@ def main(args):
                              ('longitude', 'longitude', str),
                              ('wms_url', 'url', str),
                              ('county', 'county', str),
-                             ('site_id', 'SiteID', str),
+                             ('site_id', 'siteID', str),
                              ('year', 'year', int)]
         for attributes in initial_task_grab:
             attribute_name = attributes[0]
             info_reference = attributes[1]
             type_caster = attributes[2]
-            try:
-                task_attributes[attribute_name] = type_caster(task['info'][info_reference])
-            except (TypeError, KeyError):
-                task_attributes[attributes[0]] = None
+            if attribute_name == 'id':
+                task_attributes['id'] = int(task['id'])
+            else:
+                try:
+                    task_attributes[attribute_name] = type_caster(task['info'][info_reference])
+                except (TypeError, KeyError):
+                    task_attributes[attributes[0]] = None
 
         # Get the crowd selection counts
         crowd_selection_counts = get_crowd_selection_counts(input_task_id, task_runs_json)
@@ -460,7 +463,7 @@ def main(args):
         pdebug("  n_eqp_res = %s" % str(task_attributes['n_eqp_res']))
         pdebug("  n_tot_res = %s" % str(task_attributes['n_tot_res']))
         pdebug("  crowd_sel = %s" % task_attributes['crowd_sel'])
-        #pdebug("  qaqc      = %s" % task_attributes['qaqc'])  # Currently a manual process so it has no key to populate
+        # pdebug("  qaqc      = %s" % task_attributes['qaqc'])  # Currently a manual process so it has no key to populate
         pdebug("  p_crd_a   = %s" % str(task_attributes['p_crd_a']))
         pdebug("  p_s_crd_a = %s" % str(task_attributes['p_s_crd_a']))
         pdebug("")
