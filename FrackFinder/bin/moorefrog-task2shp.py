@@ -453,7 +453,7 @@ def main(args):
         pdebug("  n_oth_res = %s" % str(task_attributes['n_oth_res']))
         pdebug("  n_tot_res = %s" % str(task_attributes['n_tot_res']))
         pdebug("  crowd_sel = %s" % task_attributes['crowd_sel'])
-        #pdebug("  qaqc      = %s" % task_attributes['qaqc'])  # Currently a manual process so it has no key to populate
+        # pdebug("  qaqc      = %s" % task_attributes['qaqc'])  # Currently a manual process so it has no key to populate
         pdebug("  p_crd_a   = %s" % str(task_attributes['p_crd_a']))
         pdebug("  p_s_crd_a = %s" % str(task_attributes['p_s_crd_a']))
         pdebug("")
