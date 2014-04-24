@@ -68,14 +68,17 @@ def print_usage():
     print("Options:")
     print("  --help-info  -> Print out a list of help related flags")
     print("  --overwrite  -> Overwrite output files")
-    print("  --prefix=str -> Output filename prefix")
+    print("  --prefix=str -> Output filename prefix - defaults to 'MooreFrog-'")
     print("  --wellpad-file-name=str -> Defaults to 'wellpad.shp")
-    print("  --bbox-file-name=str -> Defaults to 'bbox.shp")
-    print("  --clicks-file-name=str -> Defaults to 'clicks.shp")
+    print("  --bbox-file-name=str    -> Defaults to 'bbox.shp")
+    print("  --clicks-file-name=str  -> Defaults to 'clicks.shp")
+    print("  --no-bbox    -> Don't generate bounding boxes file")
+    print("  --no-click   -> Don't generate clicks file")
+    print("  --no-wellpad -> Don't generate wellpads file")
     print("")
     print("OGR Options:")
-    print("  --of=driver  -> Output driver name/file type - default='ESRI Shapefile'")
-    print("  --epsg=int   -> EPSG code for coordinates in task.json - default=4326")
+    print("  --of=driver -> Output driver name/file type - default='ESRI Shapefile'")
+    print("  --epsg=int  -> EPSG code for coordinates in task.json - default=4326")
     print("")
 
     return 1
@@ -195,9 +198,9 @@ def create_bboxes(tasks, layer):
         rectangle.AddGeometry(ring)
         feature = ogr.Feature(layer.GetLayerDefn())
         feature.SetGeometry(rectangle)
-        layer.CreateFeature(feature)
         for field, value in field_values.iteritems():
             feature.SetField(field, value)
+        layer.CreateFeature(feature)
         rectangle.Destroy()
         feature.Destroy()
 
@@ -314,7 +317,7 @@ def main(args):
     task_file_path = None
     task_run_file_path = None
     output_directory = None
-    output_prefix = ''
+    output_prefix = 'MooreFrog-'
 
     # Defaults
     overwrite = False
@@ -323,6 +326,9 @@ def main(args):
     clicks_file_name = 'clicks.shp'
     epsg_code = 4326
     vector_driver = 'ESRI Shapefile'
+    generate_bbox = True
+    generate_clicks = True
+    generate_wellpads = True
 
     # Parse arguments
     arg_error = False
@@ -338,7 +344,15 @@ def main(args):
         elif arg in ('--version', '-version'):
             return print_version()
 
-        # Additional options
+        # Configure output
+        elif arg in ('--no-clicks', '--no-click'):
+            generate_clicks = False
+        elif arg in ('--no-bbox', '--no-bboxes'):
+            generate_bbox = False
+        elif arg in ('--no-wellpads', '--no-wellpad'):
+            generate_wellpads = False
+
+        # Configure file names
         elif '--prefix=' in arg:
             output_prefix = arg.split('=', 1)[1]
         elif '--bbox-file-name=' in arg:
@@ -347,8 +361,14 @@ def main(args):
             wellpad_file_name = arg.split('=', 1)[1]
         elif '--clicks-file-name=' in arg:
             clicks_file_name = arg.split('=', 1)[1]
+
+        # OGR output options
         elif '--epsg=' in arg:
             epsg_code = arg.split('=', 1)[1]
+        elif '--of=' in arg:
+            vector_driver = arg.split('=', 1)[1]
+
+        # Additional options
         elif arg == '--overwrite':
             overwrite = True
 
@@ -460,12 +480,15 @@ def main(args):
     wellpad_layer = wellpad_datasource.CreateLayer(wellpad_layer_name, srs, ogr.wkbPoint)
 
     # == Create Files == #
-    if not create_bboxes(task_json, bbox_layer):
-        print("ERROR: Problem creating bounding boxes")
-    if not create_clicks(task_run_json, clicks_layer):
-        print("ERROR: Problem creating clicks")
-    if not create_wellpads(task_json, wellpad_layer):
-        print("ERROR: Problem creating wellpads")
+    if generate_bbox:
+        if not create_bboxes(task_json, bbox_layer):
+            print("ERROR: Problem creating bounding boxes")
+    if generate_clicks:
+        if not create_clicks(task_run_json, clicks_layer):
+            print("ERROR: Problem creating clicks")
+    if generate_wellpads:
+        if not create_wellpads(task_json, wellpad_layer):
+            print("ERROR: Problem creating wellpads")
 
     # Cleanup OGR data sources
     print("Cleaning up...")
