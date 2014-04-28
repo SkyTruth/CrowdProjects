@@ -1,0 +1,30 @@
+flowback amount for marcellus shale wells
+how often do they cart it off
+figure out number of gallons that has to be at the site at any time
+assume a specific volume
+calculate surface area
+
+
+== NEED ==
+Number of ponds from the DartFrog sampling that were re-classified as fracking
+Add radius/area to app
+
+
+== Digitizer ==
+Public completed tasks where agreement >= 80 AND classification = fracking
+Internal tasks with agreement < 100 OR classification is fracking
+
+
+
+
+Distance analysis for tasks with high degree of certainty to determine a look radius for finding fracking ponds
+
+
+
+Deliver final
+
+
+
+1) Assemble final task list
+2) Distance matrix for fracking points to clustered permits
+3) Use distance to determine which classes classified as other 
