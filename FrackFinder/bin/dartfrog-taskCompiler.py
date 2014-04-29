@@ -12,8 +12,7 @@ import json
 import inspect
 from os.path import isfile
 from os.path import basename
-import ogr
-import osr
+from pprint import pprint
 
 
 # Global parameters
@@ -71,12 +70,17 @@ def print_usage():
     Command line usage information
     """
     print("")
-    print("Usage: %s [options] task.json task_run.json outfile.shp" % __docname__)
+    print("Usage: %s --help-info [options]" % __docname__)
     print("")
-    print("Options:")
-    print("  --help-info -> Print out a list of help related flags")
-    print("  --of=driver -> Output driver name/file type - default='ESRI Shapefile'")
-    print("  --epsg=int  -> EPSG code for coordinates in task.json - default=4326")
+    print("Required:")
+    print("    --pt=str    -> Public task.json")
+    print("    --ptr=str   -> Public task_run.json")
+    print("    --fit=str   -> First Internal task.json")
+    print("    --fitr=str  -> First Internal task_run.json")
+    print("    --fint=str  -> Final Internal task.json")
+    print("    --fintr=str -> Final Internal task_run.json")
+    print("    --st=str    -> Sweeper task.json")
+    print("    --str=str   -> Sweeper task_run.json")
     print("")
     return 1
 
@@ -96,16 +100,6 @@ def print_help():
     print("")
     print("%s Detailed Help" % __docname__)
     print("--------------" + "-" * len(__docname__))
-    print("PyBossa exports tasks in two ways: task.json and task_run.json")
-    print("This utility looks at each task in task.json and sifts through")
-    print("its matching task_run.json to calculate a variety of metrics,")
-    print("like how many times the task was shown, how many times the crowd,")
-    print("how many times the crowd picked each possible answer, and how")
-    print("confident the crowd was in its decision.")
-    print("")
-    print("It is possible for the crowd to be split and pick two different")
-    print("choices an equal number of times.  The output for these cases")
-    print("is pipe delimited.")
     print("")
     return 1
 
@@ -167,14 +161,18 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
     """
     counts = {'n_frk_res': 0,
               'n_unk_res': 0,
-              'n_oth_res': 0,
-              'ERROR': 0}
+              'n_oth_res': 0}
+    #counts = {'n_frk_res': 0,
+    #          'n_unk_res': 0,
+    #          'n_oth_res': 0,
+    #          'ERROR': 0}
     for task_run in task_runs_json_object:
         if input_id == task_run['task_id']:
             try:
                 selection = task_run['info']['selection']
             except KeyError:
-                selection = 'ERROR'
+                #selection = 'ERROR'
+                pass
             if selection == 'fracking':
                 counts['n_frk_res'] += 1
             elif selection == 'unknown':
@@ -182,7 +180,8 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
             elif selection == 'other':
                 counts['n_oth_res'] += 1
             else:
-                counts['ERROR'] += 1
+                print("WARNING: Bad selection for task ID: %s" % str(input_id))
+                #counts['ERROR'] += 1
     return counts
 
 
@@ -249,6 +248,20 @@ def get_locations(tasks):
     return output_set
 
 
+def get_task_runs(task_id, task_runs_json):
+
+    """
+    Search through all task runs to get the set matching the input task id
+    """
+
+    output_list = []
+    for tr in task_runs_json:
+        if task_id == tr['task_id']:
+            output_list.append(tr)
+
+    return output_list
+
+
 def main(args):
 
     """
@@ -270,7 +283,8 @@ def main(args):
                               'ERROR': 'ERROR'}
 
     # Containers for storing input and output files
-    output_csv = None
+    compiled_output_csv = None
+    scrubbed_output_csv = None
     public_tasks = None
     public_task_runs = None
     first_internal_tasks = None
@@ -296,11 +310,40 @@ def main(args):
         elif arg in ('--help-info', '-help-info', '--helpinfo', '--helpinfo'):
             return print_help_info()
 
-        # Outfile specific options
-        elif '--of=' in arg:
-            outfile_driver = arg.split('=', 1)[1]
-        elif '--epsg=' in arg:
-            outfile_epsg_code = int(arg.split('=', 1)[1])
+        # Public JSON files
+        elif '--pt=' in arg:
+            public_tasks = arg.split('=', 1)[1]
+        elif '--ptr=' in arg:
+            public_task_runs = arg.split('=', 1)[1]
+
+        # First internal JSON files
+        elif '--fit=' in arg:
+            first_internal_tasks = arg.split('=', 1)[1]
+        elif '--fitr=' in arg:
+            first_internal_task_runs = arg.split('=', 1)[1]
+
+        # Final internal JSON files
+        elif '--fint=' in arg:
+            final_internal_tasks = arg.split('=', 1)[1]
+        elif '--fintr=' in arg:
+            final_internal_task_runs = arg.split('=', 1)[1]
+
+        # Sweeper JSON files
+        elif '--st=' in arg:
+            sweeper_tasks = arg.split('=', 1)[1]
+        elif '--str=' in arg:
+            sweeper_task_runs = arg.split('=', 1)[1]
+
+        # Compiled output CSV
+        elif '--co=' in arg:
+            compiled_output_csv = arg.split('=', 1)[1]
+
+        # Scrubbed output CSV
+        elif '--so=' in arg:
+            scrubbed_output_csv = arg.split('=', 1)[1]
+
+
+
 
         # Additional options
         elif arg == '--debug':
@@ -320,12 +363,19 @@ def main(args):
     if arg_error:
         print("ERROR: Did not successfully parse arguments")
         bail = True
-    if output_csv is None:
-        print("ERROR: No output CSV supplied")
+    if compiled_output_csv is None:
+        print("ERROR: No compiled output CSV supplied")
         bail = True
     else:
-        if isfile(output_csv):
-            print("ERROR: Output CSV exists: %s" % output_csv)
+        if isfile(compiled_output_csv):
+            print("ERROR: Compiled output CSV exists: %s" % compiled_output_csv)
+            bail = True
+    if scrubbed_output_csv is None:
+        print("ERROR: No scrubbed output CSV supplied")
+        bail = True
+    else:
+        if isfile(scrubbed_output_csv):
+            print("ERROR: Scrubbed output CSV exists: %s" % scrubbed_output_csv)
             bail = True
     if public_tasks is None or not os.access(public_tasks, os.R_OK):
         print("ERROR: Can't access public task file: %s" % public_tasks)
@@ -356,137 +406,143 @@ def main(args):
 
     # == Load Data == #
 
-    # Load public task.json and task_run.json
-    print("Loading: %s" % public_tasks)
+    # Public
+    print("Loading public tasks: %s" % public_tasks)
     with open(public_tasks, 'r') as f:
         public_tasks = json.load(f)
-    print("Loading: %s" % public_task_runs)
+    print("  %s" % str(len(public_tasks)))
+    print("Loading public task runs: %s" % public_task_runs)
     with open(public_task_runs, 'r') as f:
         public_task_runs = json.load(f)
-    print("Loading: %s" % first_internal_tasks)
+    print("  %s" % str(len(public_task_runs)))
+
+    # First internal
+    print("Loading first internal tasks: %s" % first_internal_tasks)
     with open(first_internal_tasks, 'r') as f:
         first_internal_tasks = json.load(f)
-    print("Loading: %s" % first_internal_task_runs)
+    print("  %s" % str(len(first_internal_tasks)))
+    print("Loading first internal task runs: %s" % first_internal_task_runs)
     with open(first_internal_task_runs, 'r') as f:
         first_internal_task_runs = json.load(f)
-    print("Loading: %s" % final_internal_tasks)
+    print("  %s" % str(len(first_internal_task_runs)))
+
+    # Final internal
+    print("Loading final internal tasks: %s" % final_internal_tasks)
     with open(final_internal_tasks, 'r') as f:
         final_internal_tasks = json.load(f)
-    print("Loading: %s" % final_internal_task_runs)
+    print("  %s" % str(len(final_internal_tasks)))
+    print("Loading final internal task runs: %s" % final_internal_task_runs)
     with open(final_internal_task_runs, 'r') as f:
         final_internal_task_runs = json.load(f)
-    print("Loading: %s" % sweeper_tasks)
+    print("  %s" % str(len(final_internal_task_runs)))
+
+    # Sweeper
+    print("Loading sweeper internal tasks: %s" % sweeper_tasks)
     with open(sweeper_tasks, 'r') as f:
         sweeper_tasks = json.load(f)
-    print("Loading: %s" % sweeper_task_runs)
+    print("  %s" % str(len(sweeper_tasks)))
+    print("Loading sweeper internal task runs: %s" % sweeper_task_runs)
     with open(sweeper_task_runs, 'r') as f:
         sweeper_task_runs = json.load(f)
+    print("  %s" % str(len(sweeper_task_runs)))
+
+    # == Get a set of locations to analyze == #
+
+    # Get list
+    print("Getting list of unique locations...")
+    location_list = get_locations(public_tasks)
+    print("Found %s locations" % str(len(location_list)))
+    stats_template = {'n_unk_res': None,
+                      'n_frk_res': None,
+                      'n_oth_res': None,
+                      'n_tot_res': None,
+                      'crowd_sel': None,
+                      'p_crd_a': None,
+                      'p_s_crd_a': None}
+    location_template = {'latitude': None,
+                         'longitude': None,
+                         'year': None,
+                         'wms_url': None,
+                         'county': None,
+                         'n_unk_res': None,
+                         'n_frk_res': None,
+                         'n_oth_res': None,
+                         'n_tot_res': None,
+                         'crowd_sel': None,
+                         'comp_loc': None,
+                         'p_crd_a': None,
+                         'p_s_crd_a': None,
+                         'public': stats_template.copy(),
+                         'fi_intern': stats_template.copy(),
+                         'fn_intern': stats_template.copy(),
+                         'sw_intern': stats_template.copy()}
+    locations = {}
+    for location in location_list:
+        locations[location] = location_template
+
+    # == Analyze Public Tasks == #
+
+    # Loop through tasks and collect public attributes
+    print("Analyzing public tasks...")
+    for task in public_tasks:
+
+        # Cache important identifiers
+        task_location = get_locations([task])[0]
+        task_id = task['id']
+
+        # Store the easy stuff first
+        locations[task_location]['latitude'] = task['info']['latitude']
+        locations[task_location]['longitude'] = task['info']['longitude']
+        locations[task_location]['year'] = task['info']['year']
+        locations[task_location]['wms_url'] = task['info']['url']
+        locations[task_location]['county'] = task['info']['county']
+        locations[task_location]['comp_loc'] = 'public'
+
+        # Get selection counts
+        task_stats = stats_template.copy()
+        selection_counts = get_crowd_selection_counts(task_id, public_task_runs)
+        total_responses = sum(selection_counts.values())
+        crowd_selection = get_crowd_selection(selection_counts, map_field_to_selection)
+        crowd_agreement = get_percent_crowd_agreement(crowd_selection, selection_counts,
+                                                      len(get_task_runs(task_id, public_task_runs)),
+                                                      map_selection_to_field)
+        task_stats = dict(task_stats.items() + selection_counts.items())
+        task_stats = dict(task_stats.items() + crowd_agreement.items())
+        task_stats['n_tot_res'] = total_responses
+        task_stats['crowd_sel'] = crowd_selection
+
+        for key, val in task_stats.iteritems():
+            locations[task_location][key] = val
+            locations[task_location]['public'][key] = val
 
 
-    # == Examine Task.json File == #
+        pprint(locations[task_location])
+        return 0
 
-    # Loop through all task.json tasks
-    len_tasks_json = len(tasks_json)
-    i = 0
-    print("Analyzing tasks...")
-    for task in tasks_json:
 
-        # Print some debug stuff
-        i += 1
-        pdebug("Processing task %s of %s" % (str(i), str(len_tasks_json)))
 
-        # Cache some information
-        input_task_id = task['id']
-        task_location = ''.join([str(task['info']['latitude']), str(task['info']['longitude']),
-                                 '---', str(task['info']['year'])])
 
-        # Get initial set of attributes from task body
-        # First value in the tuple goes into task_attributes, and second references the info block within the task
-        # The third value in the tuple is the type object to be used
-        task_attributes = {'location': task_location}
-        initial_task_grab = [['id', 'id', str],
-                             ['latitude', 'latitude', str],
-                             ('longitude', 'longitude', str),
-                             ('wms_url', 'url', str),
-                             ('county', 'county', str),
-                             ('site_id', 'SiteID', str),
-                             ('year', 'year', int)]
-        for attributes in initial_task_grab:
-            attribute_name = attributes[0]
-            info_reference = attributes[1]
-            type_caster = attributes[2]
-            try:
-                task_attributes[attribute_name] = type_caster(task['info'][info_reference])
-            except (TypeError, KeyError):
-                task_attributes[attributes[0]] = None
 
-        # Get the crowd selection counts
-        crowd_selection_counts = get_crowd_selection_counts(input_task_id, task_runs_json)
-        task_attributes = dict(task_attributes.items() + crowd_selection_counts.items())
 
-        # Figure out what the crowd actually selected and the total number of responses
-        n_tot_res = int(sum(crowd_selection_counts.values()))
-        task_attributes['n_tot_res'] = n_tot_res
-        crowd_selection = get_crowd_selection(crowd_selection_counts, map_field_to_selection)
-        task_attributes['crowd_sel'] = crowd_selection
 
-        # Get crowd agreement levels
-        task_attributes = dict(task_attributes.items()
-                               + get_percent_crowd_agreement(task_attributes['crowd_sel'], crowd_selection_counts,
-                                                             n_tot_res, map_selection_to_field).items())
 
-        # Update user
-        pdebug("  wms_url   = %s" % task_attributes['wms_url'][:40] + ' ...(truncated...)')
-        pdebug("  latitude  = %s" % str(task_attributes['latitude']))
-        pdebug("  longitude = %s" % str(task_attributes['longitude']))
-        pdebug("  id        = %s" % task_attributes['id'])
-        pdebug("  site_id   = %s" % task_attributes['site_id'])
-        pdebug("  county    = %s" % task_attributes['county'])
-        pdebug("  year      = %s" % str(task_attributes['year']))
-        pdebug("  location  = %s" % task_attributes['location'])
-        pdebug("  n_unk_res = %s" % str(task_attributes['n_unk_res']))
-        pdebug("  n_frk_res = %s" % str(task_attributes['n_frk_res']))
-        pdebug("  n_oth_res = %s" % str(task_attributes['n_oth_res']))
-        pdebug("  n_tot_res = %s" % str(task_attributes['n_tot_res']))
-        pdebug("  crowd_sel = %s" % task_attributes['crowd_sel'])
-        #pdebug("  qaqc      = %s" % task_attributes['qaqc'])  # Currently a manual process so it has no key to populate
-        pdebug("  p_crd_a   = %s" % str(task_attributes['p_crd_a']))
-        pdebug("  p_s_crd_a = %s" % str(task_attributes['p_s_crd_a']))
-        pdebug("")
 
-        # Create the feature
-        feature = ogr.Feature(layer.GetLayerDefn())
-        field_values = [('id', task_attributes['id']),
-                        ('site_id', task_attributes['site_id']),
-                        ('wms_url', task_attributes['wms_url']),
-                        ('county', task_attributes['county']),
-                        ('year', task_attributes['year']),
-                        ('location', task_attributes['location']),
-                        ('n_unk_res', task_attributes['n_unk_res']),
-                        ('n_frk_res', task_attributes['n_frk_res']),
-                        ('n_oth_res', task_attributes['n_oth_res']),
-                        ('n_tot_res', task_attributes['n_tot_res']),
-                        ('crowd_sel', task_attributes['crowd_sel']),
-                        ('p_crd_a', task_attributes['p_crd_a']),
-                        ('p_s_crd_a', task_attributes['p_s_crd_a'])]
-        for field, value in field_values:
-            feature.SetField(field, value)
-        wkt = "POINT(%f %f)" % (float(task_attributes['longitude']), float(task_attributes['latitude']))
-        point = ogr.CreateGeometryFromWkt(wkt)
-        feature.SetGeometry(point)
-        layer.CreateFeature(feature)
+        response_counts = get_crowd_selection_counts(task_id, public_task_runs)
+        stats_cache = response_counts
 
-        # Cleanup
-        feature.Destroy()
 
-    # Cleanup shapefile
-    data_source.Destroy()
+        content_cache['crowd_sel'] = get_crowd_selection_counts(task_id, public_task_runs)
 
-    # Update user
-    print("Done.")
 
-    # Everything executed properly
+
+        content_cache['p_crd_a'] = get_percent_crowd_agreement(response_counts['crowd_sel'], )
+        for response, count in response_counts:
+            locations[task_location][response] = count
+            locations[task_location]['public'][response] = count
+
+    # Success
     return 0
+
 
 if __name__ == '__main__':
     if len(sys.argv) is 1:
