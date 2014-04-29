@@ -81,6 +81,9 @@ def print_usage():
     print("    --fintr=str -> Final Internal task_run.json")
     print("    --st=str    -> Sweeper task.json")
     print("    --str=str   -> Sweeper task_run.json")
+    print("    --co=str    -> Target compiled output.csv")
+    print("    --so=str    -> Target scrubbed output.csv")
+    print("    --cj=str    -> Target compiled output.json")
     print("")
     return 1
 
@@ -159,9 +162,9 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
     """
     Figure out how many times the crowd selected each option
     """
-    counts = {'n_frk_res': 0,
-              'n_unk_res': 0,
-              'n_oth_res': 0}
+    counts = {'n_frk_res': None,
+              'n_unk_res': None,
+              'n_oth_res': None}
     #counts = {'n_frk_res': 0,
     #          'n_unk_res': 0,
     #          'n_oth_res': 0,
@@ -174,11 +177,20 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
                 #selection = 'ERROR'
                 pass
             if selection == 'fracking':
-                counts['n_frk_res'] += 1
+                if counts['n_frk_res'] is None:
+                    counts['n_frk_res'] = 1
+                else:
+                    counts['n_frk_res'] += 1
             elif selection == 'unknown':
-                counts['n_unk_res'] += 1
+                if counts['n_unk_res'] is None:
+                    counts['n_unk_res'] = 1
+                else:
+                    counts['n_unk_res'] += 1
             elif selection == 'other':
-                counts['n_oth_res'] += 1
+                if counts['n_oth_res'] is None:
+                    counts['n_oth_res'] = 1
+                else:
+                    counts['n_oth_res'] += 1
             else:
                 print("WARNING: Bad selection for task ID: %s" % str(input_id))
                 #counts['ERROR'] += 1
@@ -272,13 +284,9 @@ def load_json(input_file):
     return output_json
 
 
-def main(args):
+def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key):
 
-    """
-    Main routine
-    """
-
-    global DEBUG
+    # == Analyze Public Tasks == #
 
     # Map field names to selections
     map_field_to_selection = {'n_frk_res': 'fracking',
@@ -292,8 +300,79 @@ def main(args):
                               'unknown': 'n_unk_res',
                               'ERROR': 'ERROR'}
 
+    # Loop through tasks and collect public attributes
+    print("Analyzing %s tasks..." % comp_loc)
+    i = 0
+    tot_tasks = len(tasks)
+    for task in tasks[:100]:
+
+        # Update user
+        i += 1
+        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(tot_tasks)))
+        sys.stdout.flush()
+
+        # Cache important identifiers
+        task_location = get_locations([task])[0]
+        task_id = task['id']
+
+        # Make sure the task location is actually in the master list - if not, delete it
+        if task_location not in locations:
+            print("Dropped location: %s" % task_location)
+
+        else:
+
+            # Store the easy stuff first
+            locations[task_location]['lat'] = task['info']['latitude']
+            locations[task_location]['lng'] = task['info']['longitude']
+            locations[task_location]['year'] = task['info']['year']
+            locations[task_location]['wms_url'] = task['info']['url']
+            locations[task_location]['county'] = task['info']['county']
+            locations[task_location]['comp_loc'] = comp_loc
+
+            # Get selection counts
+            task_stats = {'n_unk_res': None,
+                          'n_frk_res': None,
+                          'n_oth_res': None,
+                          'n_tot_res': None,
+                          'crowd_sel': None,
+                          'p_crd_a': None,
+                          'p_s_crd_a': None}
+            selection_counts = get_crowd_selection_counts(task_id, task_runs)
+            if None in selection_counts.values():
+                total_responses = None
+            else:
+                total_responses = sum(selection_counts.values())
+            crowd_selection = get_crowd_selection(selection_counts, map_field_to_selection)
+            crowd_agreement = get_percent_crowd_agreement(crowd_selection, selection_counts,
+                                                          len(get_task_runs(task_id, task_runs)),
+                                                          map_selection_to_field)
+            task_stats = dict(task_stats.items() + selection_counts.items())
+            task_stats = dict(task_stats.items() + crowd_agreement.items())
+            task_stats['n_tot_res'] = total_responses
+            task_stats['crowd_sel'] = crowd_selection
+
+            # Add everything to the general task, public subsection
+            for key, val in task_stats.iteritems():
+                locations[task_location][key] = val
+                locations[task_location][comp_key][key] = val
+
+    # Done with public
+    print("  Done")
+    return locations
+
+
+def main(args):
+
+    """
+    Main routine
+    """
+
+    global DEBUG
+
     # Containers for storing input and output files
     compiled_output_csv_file = None
+    compiled_output_json_file = None
+    scrubbed_output_csv_file = None
     public_tasks_file = None
     public_task_runs_file = None
     first_internal_tasks_file = None
@@ -347,6 +426,14 @@ def main(args):
         elif '--co=' in arg:
             compiled_output_csv_file = arg.split('=', 1)[1]
 
+        # Scrubbed output CSV
+        elif '--so=' in arg:
+            scrubbed_output_csv_file = arg.split('=', 1)[1]
+
+        # Compiled output JSON
+        elif '--cj=' in arg:
+            compiled_output_json_file = arg.split('=', 1)[1]
+
         # Additional options
         elif arg == '--debug':
             DEBUG = True
@@ -371,6 +458,20 @@ def main(args):
     else:
         if isfile(compiled_output_csv_file):
             print("ERROR: Compiled output CSV exists: %s" % compiled_output_csv_file)
+            bail = True
+    if compiled_output_json_file is None:
+        print("ERROR: No compiled output JSON supplied")
+        bail = True
+    else:
+        if isfile(compiled_output_json_file):
+            print("ERROR: Compiled output JSON exists: %s" % compiled_output_json_file)
+            bail = True
+    if scrubbed_output_csv_file is None:
+        print("ERROR: No scrubbed output CSV supplied")
+        bail = True
+    else:
+        if isfile(scrubbed_output_csv_file):
+            print("ERROR: Scrubbed output CSV exists: %s" % scrubbed_output_csv_file)
             bail = True
     if public_tasks_file is None or not os.access(public_tasks_file, os.R_OK):
         print("ERROR: Can't access public task file: %s" % public_tasks_file)
@@ -518,219 +619,34 @@ def main(args):
     for location in location_list:
         locations[location] = location_template.copy()
 
-    # == Analyze Public Tasks == #
+    # == Analyze Tasks == #
 
-    # Loop through tasks and collect public attributes
-    print("Analyzing public tasks...")
-    i = 0
-    tot_tasks = len(public_tasks)
-    for task in public_tasks[:100]:
+    # Public tasks
+    locations = analyze_tasks(locations, public_tasks, public_task_runs, 'public', 'public')
 
-        # Update user
-        i += 1
-        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(tot_tasks)))
-        sys.stdout.flush()
+    # First internal tasks
+    locations = analyze_tasks(locations, first_internal_tasks, first_internal_task_runs, 'first_internal', 'fi_intern')
 
-        # Cache important identifiers
-        task_location = get_locations([task])[0]
-        task_id = task['id']
+    # Final internal tasks
+    locations = analyze_tasks(locations, final_internal_tasks, first_internal_task_runs, 'final_internal', 'fn_intern')
 
-        # Make sure the task location is actually in the master list - if not, delete it
-        if task_location not in locations:
-            print("Dropped location: %s" % task_location)
+    # Sweeper internal tasks
+    locations = analyze_tasks(locations, sweeper_tasks, sweeper_task_runs, 'sweeper_internal', 'sw_intern')
 
-        else:
+    # == Write the Compiled JSON Output == #
 
-            # Store the easy stuff first
-            locations[task_location]['lat'] = task['info']['latitude']
-            locations[task_location]['lng'] = task['info']['longitude']
-            locations[task_location]['year'] = task['info']['year']
-            locations[task_location]['wms_url'] = task['info']['url']
-            locations[task_location]['county'] = task['info']['county']
-            locations[task_location]['comp_loc'] = 'public'
-
-            # Get selection counts
-            task_stats = stats_template.copy()
-            selection_counts = get_crowd_selection_counts(task_id, public_task_runs)
-            total_responses = sum(selection_counts.values())
-            crowd_selection = get_crowd_selection(selection_counts, map_field_to_selection)
-            crowd_agreement = get_percent_crowd_agreement(crowd_selection, selection_counts,
-                                                          len(get_task_runs(task_id, public_task_runs)),
-                                                          map_selection_to_field)
-            task_stats = dict(task_stats.items() + selection_counts.items())
-            task_stats = dict(task_stats.items() + crowd_agreement.items())
-            task_stats['n_tot_res'] = total_responses
-            task_stats['crowd_sel'] = crowd_selection
-
-            # Add everything to the general task, public subsection
-            for key, val in task_stats.iteritems():
-                locations[task_location][key] = val
-                locations[task_location]['public'][key] = val
-
-    # Done with public
-    print("  Done")
-
-    # == Analyze First Internal Tasks == #
-
-    # Loop through tasks and collect first internal attributes
-    print("Analyzing first internal tasks...")
-    i = 0
-    tot_tasks = len(first_internal_tasks)
-    for task in first_internal_tasks[:100]:
-
-        # Update user
-        i += 1
-        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(tot_tasks)))
-        sys.stdout.flush()
-
-        # Cache important identifiers
-        task_location = get_locations([task])[0]
-        task_id = task['id']
-
-        # Make sure the task location is actually in the master list - if not, delete it
-        if task_location not in locations:
-            print("  Dropped location: %s" % task_location)
-
-        else:
-
-            # Store the easy stuff first
-            locations[task_location]['lat'] = task['info']['latitude']
-            locations[task_location]['lng'] = task['info']['longitude']
-            locations[task_location]['year'] = task['info']['year']
-            locations[task_location]['wms_url'] = task['info']['url']
-            locations[task_location]['county'] = task['info']['county']
-            locations[task_location]['comp_loc'] = 'first_internal'
-
-            # Get selection counts
-            task_stats = stats_template.copy()
-            selection_counts = get_crowd_selection_counts(task_id, first_internal_task_runs)
-            total_responses = sum(selection_counts.values())
-            crowd_selection = get_crowd_selection(selection_counts, map_field_to_selection)
-            crowd_agreement = get_percent_crowd_agreement(crowd_selection, selection_counts,
-                                                          len(get_task_runs(task_id, first_internal_task_runs)),
-                                                          map_selection_to_field)
-            task_stats = dict(task_stats.items() + selection_counts.items())
-            task_stats = dict(task_stats.items() + crowd_agreement.items())
-            task_stats['n_tot_res'] = total_responses
-            task_stats['crowd_sel'] = crowd_selection
-
-            # Add everything to the general task, first internal subsection
-            for key, val in task_stats.iteritems():
-                locations[task_location][key] = val
-                locations[task_location]['fi_intern'][key] = val
-
-    # Done with first internal
-    print("  Done")
-
-    # == Analyze Final Internal Tasks == #
-
-    # Loop through tasks and collect final internal attributes
-    print("Analyzing final internal tasks...")
-    i = 0
-    tot_tasks = len(final_internal_tasks)
-    for task in final_internal_tasks[:100]:
-
-        # Update user
-        i += 1
-        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(tot_tasks)))
-        sys.stdout.flush()
-
-        # Cache important identifiers
-        task_location = get_locations([task])[0]
-        task_id = task['id']
-
-        # Make sure the task location is actually in the master list - if not, delete it
-        if task_location not in locations:
-            print("  Dropped location: %s" % task_location)
-
-        else:
-
-            # Store the easy stuff first
-            locations[task_location]['lat'] = task['info']['latitude']
-            locations[task_location]['lng'] = task['info']['longitude']
-            locations[task_location]['year'] = task['info']['year']
-            locations[task_location]['wms_url'] = task['info']['url']
-            locations[task_location]['county'] = task['info']['county']
-            locations[task_location]['comp_loc'] = 'final_internal'
-
-            # Get selection counts
-            task_stats = stats_template.copy()
-            selection_counts = get_crowd_selection_counts(task_id, final_internal_task_runs)
-            total_responses = sum(selection_counts.values())
-            crowd_selection = get_crowd_selection(selection_counts, map_field_to_selection)
-            crowd_agreement = get_percent_crowd_agreement(crowd_selection, selection_counts,
-                                                          len(get_task_runs(task_id, final_internal_task_runs)),
-                                                          map_selection_to_field)
-            task_stats = dict(task_stats.items() + selection_counts.items())
-            task_stats = dict(task_stats.items() + crowd_agreement.items())
-            task_stats['n_tot_res'] = total_responses
-            task_stats['crowd_sel'] = crowd_selection
-
-            # Add everything to the general task, final internal subsection
-            for key, val in task_stats.iteritems():
-                locations[task_location][key] = val
-                locations[task_location]['fn_intern'][key] = val
-
-    # Done with final internal
-    print("  Done")
-
-    # == Analyze Sweeper Internal Tasks == #
-
-    # Loop through tasks and collect sweeper internal attributes
-    print("Analyzing sweeper internal tasks...")
-    i = 0
-    tot_tasks = len(sweeper_tasks)
-    for task in sweeper_tasks[:100]:
-
-        # Update user
-        i += 1
-        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(tot_tasks)))
-        sys.stdout.flush()
-
-        # Cache important identifiers
-        task_location = get_locations([task])[0]
-        task_id = task['id']
-
-        # Make sure the task location is actually in the master list - if not, delete it
-        if task_location not in locations:
-            print("  Dropped location: %s" % task_location)
-
-        else:
-
-            # Store the easy stuff first
-            locations[task_location]['lat'] = task['info']['latitude']
-            locations[task_location]['lng'] = task['info']['longitude']
-            locations[task_location]['year'] = task['info']['year']
-            locations[task_location]['wms_url'] = task['info']['url']
-            locations[task_location]['county'] = task['info']['county']
-            locations[task_location]['comp_loc'] = 'sweeper_internal'
-
-            # Get selection counts
-            task_stats = stats_template.copy()
-            selection_counts = get_crowd_selection_counts(task_id, sweeper_task_runs)
-            total_responses = sum(selection_counts.values())
-            crowd_selection = get_crowd_selection(selection_counts, map_field_to_selection)
-            crowd_agreement = get_percent_crowd_agreement(crowd_selection, selection_counts,
-                                                          len(get_task_runs(task_id, sweeper_task_runs)),
-                                                          map_selection_to_field)
-            task_stats = dict(task_stats.items() + selection_counts.items())
-            task_stats = dict(task_stats.items() + crowd_agreement.items())
-            task_stats['n_tot_res'] = total_responses
-            task_stats['crowd_sel'] = crowd_selection
-
-            # Add everything to the general task, sweeper internal subsection
-            for key, val in task_stats.iteritems():
-                locations[task_location][key] = val
-                locations[task_location]['fn_intern'][key] = val
-
-    # Done with sweeper internal
-    print("  Done")
-
-    # == Write the Normal Output == #
-
-    print("Writing compiled output CSV...")
-    with open(compiled_output_csv_file, 'w') as f:
+    print("Writing compiled JSON output...")
+    with open(compiled_output_json_file, 'w') as f:
         json.dump(locations, f)
+
+    # == Write the Compiled CSV Output == #
+
+
+    # Convert compiled output to lines
+    header = ['wms_url', 'lat', 'lng', 'year', 'location', 'county', 'comp_loc', 'n_frk_res', 'n_oth_res',
+              'n_unk_res', 'n_tot_res', 'p_crd_a', 'p_s_crd_a']
+
+
 
     # Success
     print("Done.")
