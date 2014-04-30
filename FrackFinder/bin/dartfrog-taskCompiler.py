@@ -3,6 +3,19 @@
 
 """
 Compile disparate DartFrog tasks into a single cohesive dataset
+
+Sample command:
+
+./dartfrog-taskCompiler.py \
+  --pt=../Global_QAQC/dartfrog/transform/public/tasks/task.json \
+  --ptr=../Global_QAQC/dartfrog/transform/public/tasks/task_run.json \
+  --fit=../Global_QAQC/dartfrog/transform/first-internal/tasks/task.json \
+  --fitr=../Global_QAQC/dartfrog/transform/first-internal/tasks/task_run.json \
+  --fint=../Global_QAQC/dartfrog/transform/final-internal/tasks/task.json \
+  --fintr=../Global_QAQC/dartfrog/transform/final-internal/tasks/task_run.json \
+  --st=../Global_QAQC/dartfrog/transform/sweeper-internal/tasks/task.json \
+  --str=../Global_QAQC/dartfrog/transform/sweeper-internal/tasks/task_run.json \
+  --co=CO_CSV.csv --so=SO_CSV.csv --cj=CO_JSON.json \
 """
 
 
@@ -10,6 +23,7 @@ import os
 import sys
 import json
 import inspect
+from os import linesep
 from os.path import isfile
 from os.path import basename
 from pprint import pprint
@@ -17,6 +31,7 @@ from pprint import pprint
 
 # Global parameters
 DEBUG = False
+ERROR_COUNT = 0
 
 
 # Build information
@@ -85,6 +100,9 @@ def print_usage():
     print("    --so=str    -> Target scrubbed output.csv")
     print("    --cj=str    -> Target compiled output.json")
     print("")
+    print("Optional:")
+    print("    --sample=int -> Sample number of tasks to process")
+    print("")
     return 1
 
 
@@ -138,7 +156,7 @@ def get_crowd_selection(selection_count, selection_map):
     """
 
     # Cache containers
-    crowd_selection = 'NONE'
+    crowd_selection = None
 
     # Figure out what the maximum number of selections was
     max_selection = max(selection_count.values())
@@ -149,7 +167,7 @@ def get_crowd_selection(selection_count, selection_map):
     else:
         for selection, count in selection_count.iteritems():
             if count is max_selection:
-                if crowd_selection == 'NONE':
+                if crowd_selection is None:
                     crowd_selection = selection_map[selection]
                 else:
                     crowd_selection += '|' + selection_map[selection]
@@ -158,24 +176,21 @@ def get_crowd_selection(selection_count, selection_map):
     return crowd_selection
 
 
-def get_crowd_selection_counts(input_id, task_runs_json_object):
+def get_crowd_selection_counts(input_id, task_runs_json_object, location):
     """
     Figure out how many times the crowd selected each option
     """
+    global ERROR_COUNT
     counts = {'n_frk_res': None,
               'n_unk_res': None,
               'n_oth_res': None}
-    #counts = {'n_frk_res': 0,
-    #          'n_unk_res': 0,
-    #          'n_oth_res': 0,
-    #          'ERROR': 0}
     for task_run in task_runs_json_object:
         if input_id == task_run['task_id']:
             try:
                 selection = task_run['info']['selection']
             except KeyError:
-                #selection = 'ERROR'
-                pass
+                print("  -  task_id KeyError for get_crowd_selection_counts(): %s" % location)
+                ERROR_COUNT += 1
             if selection == 'fracking':
                 if counts['n_frk_res'] is None:
                     counts['n_frk_res'] = 1
@@ -192,8 +207,10 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
                 else:
                     counts['n_oth_res'] += 1
             else:
-                print("WARNING: Bad selection for task ID: %s" % str(input_id))
-                #counts['ERROR'] += 1
+                raise ValueError("get_crowd_selection_counts()")
+    if counts.values() == [None, None, None]:
+        print("  -  No task runs in get_crowd_selection_counts(): %s" % location)
+        ERROR_COUNT += 1
     return counts
 
 
@@ -284,27 +301,35 @@ def load_json(input_file):
     return output_json
 
 
-def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key):
+def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key, sample=None):
+
+    """
+    Do DartFrog specific stuff
+    """
+
+    global ERROR_COUNT
 
     # == Analyze Public Tasks == #
+
+    # Get a sample if necessary
+    if sample is not None:
+        tasks = tasks[:sample]
 
     # Map field names to selections
     map_field_to_selection = {'n_frk_res': 'fracking',
                               'n_oth_res': 'other',
-                              'n_unk_res': 'unknown',
-                              'ERROR': 'ERROR'}
+                              'n_unk_res': 'unknown'}
 
     # Map selections to field names
     map_selection_to_field = {'fracking': 'n_frk_res',
                               'other': 'n_oth_res',
-                              'unknown': 'n_unk_res',
-                              'ERROR': 'ERROR'}
+                              'unknown': 'n_unk_res'}
 
     # Loop through tasks and collect public attributes
     print("Analyzing %s tasks..." % comp_loc)
     i = 0
     tot_tasks = len(tasks)
-    for task in tasks[:100]:
+    for task in tasks:
 
         # Update user
         i += 1
@@ -317,8 +342,8 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key):
 
         # Make sure the task location is actually in the master list - if not, delete it
         if task_location not in locations:
-            print("Dropped location: %s" % task_location)
-
+            print("  -  Dropped location: %s" % task_location)
+            ERROR_COUNT += 1
         else:
 
             # Store the easy stuff first
@@ -337,11 +362,10 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key):
                           'crowd_sel': None,
                           'p_crd_a': None,
                           'p_s_crd_a': None}
-            selection_counts = get_crowd_selection_counts(task_id, task_runs)
-            if None in selection_counts.values():
+            selection_counts = get_crowd_selection_counts(task_id, task_runs, task_location)
+            total_responses = sum([sc for sc in selection_counts.values() if sc is not None])
+            if total_responses is 0:
                 total_responses = None
-            else:
-                total_responses = sum(selection_counts.values())
             crowd_selection = get_crowd_selection(selection_counts, map_field_to_selection)
             crowd_agreement = get_percent_crowd_agreement(crowd_selection, selection_counts,
                                                           len(get_task_runs(task_id, task_runs)),
@@ -357,7 +381,7 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key):
                 locations[task_location][comp_key][key] = val
 
     # Done with public
-    print("  Done")
+    print("  -  Done")
     return locations
 
 
@@ -367,7 +391,8 @@ def main(args):
     Main routine
     """
 
-    global DEBUG
+    # Default
+    sample_size = None
 
     # Containers for storing input and output files
     compiled_output_csv_file = None
@@ -434,9 +459,9 @@ def main(args):
         elif '--cj=' in arg:
             compiled_output_json_file = arg.split('=', 1)[1]
 
-        # Additional options
-        elif arg == '--debug':
-            DEBUG = True
+        # Process a sample set
+        elif '--sample=' in arg:
+            sample_size = int(arg.split('=', 1)[1])
 
         # Catch errors
         elif arg == '':
@@ -622,16 +647,20 @@ def main(args):
     # == Analyze Tasks == #
 
     # Public tasks
-    locations = analyze_tasks(locations, public_tasks, public_task_runs, 'public', 'public')
+    locations = analyze_tasks(locations, public_tasks, public_task_runs,
+                              'public', 'public', sample=sample_size)
 
     # First internal tasks
-    locations = analyze_tasks(locations, first_internal_tasks, first_internal_task_runs, 'first_internal', 'fi_intern')
+    locations = analyze_tasks(locations, first_internal_tasks, first_internal_task_runs,
+                              'first_internal', 'fi_intern', sample=sample_size)
 
     # Final internal tasks
-    locations = analyze_tasks(locations, final_internal_tasks, first_internal_task_runs, 'final_internal', 'fn_intern')
+    locations = analyze_tasks(locations, final_internal_tasks, final_internal_task_runs,
+                              'final_internal', 'fn_intern', sample=sample_size)
 
     # Sweeper internal tasks
-    locations = analyze_tasks(locations, sweeper_tasks, sweeper_task_runs, 'sweeper_internal', 'sw_intern')
+    locations = analyze_tasks(locations, sweeper_tasks, sweeper_task_runs,
+                              'sweeper_internal', 'sw_intern', sample=sample_size)
 
     # == Write the Compiled JSON Output == #
 
@@ -639,16 +668,33 @@ def main(args):
     with open(compiled_output_json_file, 'w') as f:
         json.dump(locations, f)
 
-    # == Write the Compiled CSV Output == #
-
+    # == Write the Scrubbed CSV Output == #
 
     # Convert compiled output to lines
-    header = ['wms_url', 'lat', 'lng', 'year', 'location', 'county', 'comp_loc', 'n_frk_res', 'n_oth_res',
+    header = ['location', 'wms_url', 'lat', 'lng', 'year', 'county', 'comp_loc', 'n_frk_res', 'n_oth_res',
               'n_unk_res', 'n_tot_res', 'p_crd_a', 'p_s_crd_a']
+    scrubbed_lines = []
+    for location, attributes in locations.iteritems():
+        line = ['' for i in header]
+        for item in header:
+            if item == 'location':
+                line[header.index(item)] = '"' + location + '"'
+            else:
+                content = attributes[item]
+                if content is None:
+                    content = ''
+                line[header.index(item)] = '"' + str(content) + '"'
+        scrubbed_lines.append(line)
 
-
+    # Write lines
+    print("Writing scrubbed output CSV...")
+    with open(scrubbed_output_csv_file, 'w') as f:
+        f.write(', '.join(['"' + i + '"' for i in header]) + linesep)
+        for line in scrubbed_lines:
+            f.write(','.join(line) + linesep)
 
     # Success
+    print("Total errors: %s" % str(ERROR_COUNT))
     print("Done.")
     return 0
 
