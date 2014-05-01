@@ -206,6 +206,7 @@ def main(args):
     # == Check For Missing Task Runs == #
 
     # Check public
+    missing_json = []
     print("")
     print("Checking public for missing task runs...")
     missing_public_locations = []
@@ -213,6 +214,11 @@ def main(args):
         if not does_task_have_task_runs(task, public_task_runs):
             missing_public_locations.append(get_location(task))
     print("  Found %s" % str(len(missing_public_locations)))
+    for location in missing_public_locations:
+        missing_json.append(location2task(location, public_tasks))
+    with open('/Users/kwurster/Desktop/WTF_Tasks.json', 'w') as f:
+        json.dump(missing_json, f)
+    exit()
 
     # If there are any missing public locations, figure out WTF they went
     if len(missing_public_locations) > 0:
