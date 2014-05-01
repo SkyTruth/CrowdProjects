@@ -15,7 +15,11 @@ Sample command:
   --fintr=../Global_QAQC/dartfrog/transform/final-internal/tasks/task_run.json \
   --st=../Global_QAQC/dartfrog/transform/sweeper-internal/tasks/task.json \
   --str=../Global_QAQC/dartfrog/transform/sweeper-internal/tasks/task_run.json \
-  --co=CO_CSV.csv --so=SO_CSV.csv --cj=CO_JSON.json \
+  --mt=../Global_QAQC/dartfrog/transform/missing_tasks/tasks/task.json \
+  --mtr=../Global_QAQC/dartfrog/transform/missing_tasks/tasks/task_run.json \
+  --co=CO_CSV.csv \
+  --so=SO_CSV.csv \
+  --cj=CO_JSON.json
 """
 
 
@@ -415,6 +419,7 @@ def main(args):
 
     # Default
     sample_size = None
+    validate_tasks = False
 
     # Containers for storing input and output files
     compiled_output_csv_file = None
@@ -428,6 +433,8 @@ def main(args):
     final_internal_task_runs_file = None
     sweeper_tasks_file = None
     sweeper_task_runs_file = None
+    missing_tasks_file = None
+    missing_task_runs_file = None
 
     # Parse arguments
     arg_error = False
@@ -469,6 +476,12 @@ def main(args):
         elif '--str=' in arg:
             sweeper_task_runs_file = arg.split('=', 1)[1]
 
+        # Missing tasks JSON files
+        elif '--mt=' in arg:
+            missing_tasks_file = arg.split('=', 1)[1]
+        elif '--mtr=' in arg:
+            missing_task_runs_file = arg.split('=', 1)[1]
+
         # Compiled output CSV
         elif '--co=' in arg:
             compiled_output_csv_file = arg.split('=', 1)[1]
@@ -484,6 +497,10 @@ def main(args):
         # Process a sample set
         elif '--sample=' in arg:
             sample_size = int(arg.split('=', 1)[1])
+
+        # Include time consuming validation step
+        elif arg == '--validate':
+            validate_tasks = True
 
         # Catch errors
         elif arg == '':
@@ -589,6 +606,16 @@ def main(args):
     sweeper_task_runs = load_json(sweeper_task_runs_file)
     print("  %s" % str(len(sweeper_task_runs)))
 
+    # Missing task.json
+    print("Loading missing internal tasks: %s" % missing_tasks_file)
+    missing_tasks = load_json(missing_tasks_file)
+    print("  %s" % str(len(missing_tasks)))
+
+    # Missing task_runs.json
+    print("Loading missing internal task_runs...")
+    missing_task_runs = load_json(missing_task_runs_file)
+    print("  %s" % str(len(missing_task_runs)))
+
     # == Get a set of locations to analyze == #
 
     # Get list
@@ -602,7 +629,8 @@ def main(args):
     p_missing = 0
     fi_missing = 0
     fn_missing = 0
-    s_missing = 0
+    sw_missing = 0
+    mt_missing = 0
     print("Validating public locations...")
     for task in public_tasks:
         location = get_locations([task])[0]
@@ -629,80 +657,103 @@ def main(args):
         location = get_locations([task])[0]
         if location not in location_list:
             drop_locations.append(location)
-            s_missing += 1
+            sw_missing += 1
+            v_error = True
+    print("Validating missing internal locations...")
+    for task in missing_tasks:
+        location = get_locations([task])[0]
+        if location not in location_list:
+            drop_locations.append(location)
+            mt_missing += 1
             v_error = True
     if v_error:
         print("  Missing Public: %s" % str(p_missing))
         print("  Missing First Internal: %s" % str(fi_missing))
         print("  Missing Final Internal: %s" % str(fn_missing))
-        print("  Missing Sweeper: %s" % str(s_missing))
+        print("  Missing Sweeper: %s" % str(sw_missing))
+        print("  Missing missing: %s" % str(mt_missing))
 
     # Validate task runs
-    locations_no_task_runs = []
-    p_missing = 0
-    fi_missing = 0
-    fn_missing = 0
-    s_missing = 0
-    v_error = False
-    print("Validating public task runs...")
-    for task in public_tasks:
-        if len(get_task_runs(task['id'], public_task_runs)) is 0:
-            p_missing += 1
-            v_error = True
-            task_location = get_locations([task])
-            if task_location not in locations_no_task_runs:
-                locations_no_task_runs.append(task_location)
-    print("Validating first internal task runs...")
-    for task in first_internal_tasks:
-        if len(get_task_runs(task['id'], first_internal_task_runs)) is 0:
-            fi_missing += 1
-            v_error = True
-            if task_location not in locations_no_task_runs:
-                locations_no_task_runs.append(task_location)
-    print("Validating final internal task runs...")
-    for task in final_internal_tasks:
-        if len(get_task_runs(task['id'], final_internal_task_runs)) is 0:
-            fn_missing += 1
-            v_error = True
-            if task_location not in locations_no_task_runs:
-                locations_no_task_runs.append(task_location)
-    print("Validating sweeper internal runs...")
-    for task in sweeper_tasks:
-        if len(get_task_runs(task['id'], sweeper_task_runs)) is 0:
-            s_missing += 1
-            v_error = True
-            if task_location not in locations_no_task_runs:
-                locations_no_task_runs.append(task_location)
-    if v_error:
-        print("  Public with no task runs: %s" % str(p_missing))
-        print("  First internal with no task runs: %s" % str(fi_missing))
-        print("  Final internal with no task runs: %s" % str(fn_missing))
-        print("  Sweeper internal with no task runs: %s" % str(s_missing))
-        print("  Total unique with locations no task runs: %s " % str(len(locations_no_task_runs)))
+    if validate_tasks:
+        locations_no_task_runs = []
+        p_missing = 0
+        fi_missing = 0
+        fn_missing = 0
+        sw_missing = 0
+        mt_missing = 0
+        v_error = False
+        print("Validating public task runs...")
+        for task in public_tasks:
+            if len(get_task_runs(task['id'], public_task_runs)) is 0:
+                p_missing += 1
+                v_error = True
+                task_location = get_locations([task])
+                if task_location not in locations_no_task_runs:
+                    locations_no_task_runs.append(task_location)
+        print("Validating first internal task runs...")
+        for task in first_internal_tasks:
+            if len(get_task_runs(task['id'], first_internal_task_runs)) is 0:
+                fi_missing += 1
+                v_error = True
+                if task_location not in locations_no_task_runs:
+                    locations_no_task_runs.append(task_location)
+        print("Validating final internal task runs...")
+        for task in final_internal_tasks:
+            if len(get_task_runs(task['id'], final_internal_task_runs)) is 0:
+                fn_missing += 1
+                v_error = True
+                if task_location not in locations_no_task_runs:
+                    locations_no_task_runs.append(task_location)
+        print("Validating sweeper internal runs...")
+        for task in sweeper_tasks:
+            if len(get_task_runs(task['id'], sweeper_task_runs)) is 0:
+                sw_missing += 1
+                v_error = True
+                if task_location not in locations_no_task_runs:
+                    locations_no_task_runs.append(task_location)
+        print("Validating missing internal runs...")
+        for task in missing_tasks:
+            if len(get_task_runs(task['id'], missing_tasks)) is 0:
+                mt_missing += 1
+                v_error = True
+                if task_location not in locations_no_task_runs:
+                    locations_no_task_runs.append(task_location)
+        if v_error:
+            print("  Public with no task runs: %s" % str(p_missing))
+            print("  First internal with no task runs: %s" % str(fi_missing))
+            print("  Final internal with no task runs: %s" % str(fn_missing))
+            print("  Sweeper internal with no task runs: %s" % str(sw_missing))
+            print("  Missing internal with no task runs: %s" % str(mt_missing))
+            print("  Total unique with locations no task runs: %s " % str(len(locations_no_task_runs)))
 
-    # Figure out if a location with no task runs was actually completed somewhere
-    still_bad = []
-    print("Looking for locations without task runs in public...")
-    for location in locations_no_task_runs:
-        if location not in still_bad:
-            if not is_location_complete(location, public_tasks, public_task_runs):
-                still_bad.append(location)
-    print("Looking for locations without task runs in first internal...")
-    for location in locations_no_task_runs:
-        if location not in still_bad:
-            if not is_location_complete(location, first_internal_tasks, first_internal_task_runs):
-                still_bad.append(location)
-    print("Looking for locations without task runs in final internal...")
-    for location in locations_no_task_runs:
-        if location not in still_bad:
-            if not is_location_complete(location, final_internal_tasks, final_internal_task_runs):
-                still_bad.append(location)
-    print("Looking for locations without task runs in sweeper internal...")
-    for location in locations_no_task_runs:
-        if location not in still_bad:
-            if not is_location_complete(location, sweeper_tasks, sweeper_task_runs):
-                still_bad.append(location)
-    print("  Still bad: %s" % len(still_bad))
+        # Figure out if a location with no task runs was actually completed somewhere
+        still_bad = []
+        print("Looking for locations without task runs in public...")
+        for location in locations_no_task_runs:
+            if location not in still_bad:
+                if not is_location_complete(location, public_tasks, public_task_runs):
+                    still_bad.append(location)
+        print("Looking for locations without task runs in first internal...")
+        for location in locations_no_task_runs:
+            if location not in still_bad:
+                if not is_location_complete(location, first_internal_tasks, first_internal_task_runs):
+                    still_bad.append(location)
+        print("Looking for locations without task runs in final internal...")
+        for location in locations_no_task_runs:
+            if location not in still_bad:
+                if not is_location_complete(location, final_internal_tasks, final_internal_task_runs):
+                    still_bad.append(location)
+        print("Looking for locations without task runs in sweeper internal...")
+        for location in locations_no_task_runs:
+            if location not in still_bad:
+                if not is_location_complete(location, sweeper_tasks, sweeper_task_runs):
+                    still_bad.append(location)
+        print("Looking for locations without task runs in missing internal...")
+        for location in locations_no_task_runs:
+            if location not in still_bad:
+                if not is_location_complete(location, missing_tasks, missing_task_runs):
+                    still_bad.append(location)
+        print("  Still bad: %s" % len(still_bad))
 
     # Convert the location list into a dictionary based on the templates below
     stats_template = {'n_unk_res': None,
@@ -728,7 +779,8 @@ def main(args):
                          'public': stats_template.copy(),
                          'fi_intern': stats_template.copy(),
                          'fn_intern': stats_template.copy(),
-                         'sw_intern': stats_template.copy()}
+                         'sw_intern': stats_template.copy(),
+                         'mt_intern': stats_template.copy()}
     locations = {}
     for location in location_list:
         locations[location] = location_template.copy()
@@ -750,6 +802,10 @@ def main(args):
     # Sweeper internal tasks
     locations = analyze_tasks(locations, sweeper_tasks, sweeper_task_runs,
                               'sweeper_internal', 'sw_intern', sample=sample_size)
+
+    # Missing internal tasks
+    locations = analyze_tasks(locations, missing_tasks, missing_task_runs,
+                              'missing_internal', 'mt_intern', sample=sample_size)
 
     # == Write the Compiled JSON Output == #
 
