@@ -385,6 +385,28 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key, sample=None):
     return locations
 
 
+def is_location_complete(location, tasks, task_runs):
+
+    """
+    Figure out if a given location was completed in a given tas/task_run set
+    """
+
+    # Translate location to a task.json ID
+    task_id = None
+    for task in tasks:
+        if location == get_locations([task]):
+            task_id = task['id']
+            break
+    else:
+        print("ERROR: is_location_complete(): No task id for: %s" % location)
+        return False
+
+    # Get task_runs
+    for task_run in task_runs:
+        if str(task_id) == str(task_run['task_id']):
+            return True
+
+
 def main(args):
 
     """
@@ -614,6 +636,73 @@ def main(args):
         print("  Missing First Internal: %s" % str(fi_missing))
         print("  Missing Final Internal: %s" % str(fn_missing))
         print("  Missing Sweeper: %s" % str(s_missing))
+
+    # Validate task runs
+    locations_no_task_runs = []
+    p_missing = 0
+    fi_missing = 0
+    fn_missing = 0
+    s_missing = 0
+    v_error = False
+    print("Validating public task runs...")
+    for task in public_tasks:
+        if len(get_task_runs(task['id'], public_task_runs)) is 0:
+            p_missing += 1
+            v_error = True
+            task_location = get_locations([task])
+            if task_location not in locations_no_task_runs:
+                locations_no_task_runs.append(task_location)
+    print("Validating first internal task runs...")
+    for task in first_internal_tasks:
+        if len(get_task_runs(task['id'], first_internal_task_runs)) is 0:
+            fi_missing += 1
+            v_error = True
+            if task_location not in locations_no_task_runs:
+                locations_no_task_runs.append(task_location)
+    print("Validating final internal task runs...")
+    for task in final_internal_tasks:
+        if len(get_task_runs(task['id'], final_internal_task_runs)) is 0:
+            fn_missing += 1
+            v_error = True
+            if task_location not in locations_no_task_runs:
+                locations_no_task_runs.append(task_location)
+    print("Validating sweeper internal runs...")
+    for task in sweeper_tasks:
+        if len(get_task_runs(task['id'], sweeper_task_runs)) is 0:
+            s_missing += 1
+            v_error = True
+            if task_location not in locations_no_task_runs:
+                locations_no_task_runs.append(task_location)
+    if v_error:
+        print("  Public with no task runs: %s" % str(p_missing))
+        print("  First internal with no task runs: %s" % str(fi_missing))
+        print("  Final internal with no task runs: %s" % str(fn_missing))
+        print("  Sweeper internal with no task runs: %s" % str(s_missing))
+        print("  Total unique with locations no task runs: %s " % str(len(locations_no_task_runs)))
+
+    # Figure out if a location with no task runs was actually completed somewhere
+    still_bad = []
+    print("Looking for locations without task runs in public...")
+    for location in locations_no_task_runs:
+        if location not in still_bad:
+            if not is_location_complete(location, public_tasks, public_task_runs):
+                still_bad.append(location)
+    print("Looking for locations without task runs in first internal...")
+    for location in locations_no_task_runs:
+        if location not in still_bad:
+            if not is_location_complete(location, first_internal_tasks, first_internal_task_runs):
+                still_bad.append(location)
+    print("Looking for locations without task runs in final internal...")
+    for location in locations_no_task_runs:
+        if location not in still_bad:
+            if not is_location_complete(location, final_internal_tasks, final_internal_task_runs):
+                still_bad.append(location)
+    print("Looking for locations without task runs in sweeper internal...")
+    for location in locations_no_task_runs:
+        if location not in still_bad:
+            if not is_location_complete(location, sweeper_tasks, sweeper_task_runs):
+                still_bad.append(location)
+    print("  Still bad: %s" % len(still_bad))
 
     # Convert the location list into a dictionary based on the templates below
     stats_template = {'n_unk_res': None,
