@@ -408,9 +408,9 @@ def main(args):
         # Get initial set of attributes from task body
         # First value in the tuple goes into task_attributes, and second references the info block within the task
         # The third value in the tuple is the type object to be used
-        task_attributes = {'location': task_location}
-        initial_task_grab = [('id', 'id', str),
-                             ('latitude', 'latitude', str),
+        task_attributes = {'location': task_location,
+                           'id': task['id']}
+        initial_task_grab = [('latitude', 'latitude', str),
                              ('longitude', 'longitude', str),
                              ('wms_url', 'url', str),
                              ('county', 'county', str),
