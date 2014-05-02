@@ -422,19 +422,19 @@ def main(args):
     validate_tasks = False
 
     # Containers for storing input and output files
-    compiled_output_csv_file = None
-    compiled_output_json_file = None
-    scrubbed_output_csv_file = None
-    public_tasks_file = None
-    public_task_runs_file = None
-    first_internal_tasks_file = None
-    first_internal_task_runs_file = None
-    final_internal_tasks_file = None
-    final_internal_task_runs_file = None
-    sweeper_tasks_file = None
-    sweeper_task_runs_file = None
-    missing_tasks_file = None
-    missing_task_runs_file = None
+    compiled_output_csv_file = 'Compiled_Output.csv'
+    compiled_output_json_file = 'Compiled_Output.json'
+    scrubbed_output_csv_file = 'Scrubbed_Output.csv'
+    public_tasks_file = '../Global_QAQC/dartfrog/transform/public/tasks/task.json'
+    public_task_runs_file = '../Global_QAQC/dartfrog/transform/public/tasks/task_run.json'
+    first_internal_tasks_file = '../Global_QAQC/dartfrog/transform/first-internal/tasks/task.json'
+    first_internal_task_runs_file = '../Global_QAQC/dartfrog/transform/first-internal/tasks/task_run.json'
+    final_internal_tasks_file = '../Global_QAQC/dartfrog/transform/final-internal/tasks/task.json'
+    final_internal_task_runs_file = '../Global_QAQC/dartfrog/transform/final-internal/tasks/task_run.json'
+    sweeper_tasks_file = '../Global_QAQC/dartfrog/transform/sweeper-internal/tasks/task.json'
+    sweeper_task_runs_file = '../Global_QAQC/dartfrog/transform/sweeper-internal/tasks/task_run.json'
+    missing_tasks_file = '../Global_QAQC/dartfrog/transform/missing_tasks/tasks/task.json'
+    missing_task_runs_file = '../Global_QAQC/dartfrog/transform/missing_tasks/tasks/task_run.json'
 
     # Parse arguments
     arg_error = False
@@ -845,7 +845,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) is 1:
-        sys.exit(print_usage())
-    else:
-        sys.exit(main(sys.argv[1:]))
+    sys.exit(main(sys.argv[1:]))
