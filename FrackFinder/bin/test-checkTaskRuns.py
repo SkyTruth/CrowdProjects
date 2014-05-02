@@ -3,6 +3,7 @@
 
 import sys
 import json
+from pprint import pprint
 
 
 PRECISION = 8
@@ -82,7 +83,9 @@ def find_missing_task_runs(missing_locations=None,
                            final_internal_tasks=None,
                            final_internal_task_runs=None,
                            sweeper_tasks=None,
-                           sweeper_task_runs=None):
+                           sweeper_task_runs=None,
+                           missing_tasks=None,
+                           missing_task_runs=None):
 
     # Validate
     if missing_locations is None:
@@ -99,15 +102,21 @@ def find_missing_task_runs(missing_locations=None,
         raise ValueError("Need sweeper_tasks")
     if sweeper_task_runs is None:
         raise ValueError("Need sweeper_task_runs")
+    if missing_tasks is None:
+        raise ValueError("Need missing_tasks")
+    if missing_task_runs is None:
+        raise ValueError("Need missing_task_runs")
 
     # Track where everything was found
     matched_first_internal_locations = []
     matched_final_internal_locations = []
     matched_sweeper_locations = []
+    matched_missing_internal_locations = []
     found_public = []
     found_first_internal = []
     found_final_internal = []
-    found_sweeper = []
+    found_sweeper_internal = []
+    found_missing_internal = []
 
     # Look in first internal for missing locations
     print("  Searching for missing task runs in first internal...")
@@ -116,8 +125,8 @@ def find_missing_task_runs(missing_locations=None,
         if fi_task is not None:
             matched_first_internal_locations.append(missing_location)
             if len(get_task_runs(fi_task, first_internal_task_runs)) > 0:
-                if missing_location not in found_public:
-                    found_public.append(missing_location)
+                if missing_location not in found_first_internal:
+                    found_first_internal.append(missing_location)
     print("    Matched locations: %s" % str(len(matched_first_internal_locations)))
     print("    Found %s in first internal" % str(len(found_first_internal)))
 
@@ -127,10 +136,9 @@ def find_missing_task_runs(missing_locations=None,
         fn_task = location2task(missing_location, final_internal_tasks)
         if fn_task is not None:
             matched_final_internal_locations.append(missing_location)
-            if len(get_task_runs(fn_task, final_internal_task_runs)) is 0:
-                print("  No task runs: %s" % missing_location)
-                if missing_location not in found_first_internal:
-                    found_first_internal.append(missing_location)
+            if len(get_task_runs(fn_task, final_internal_task_runs)) > 0:
+                if missing_location not in found_final_internal:
+                    found_final_internal.append(missing_location)
     print("    Matched locations: %s" % str(len(matched_final_internal_locations)))
     print("    Found %s in final internal" % str(len(found_final_internal)))
 
@@ -140,12 +148,23 @@ def find_missing_task_runs(missing_locations=None,
         sw_task = location2task(missing_location, sweeper_tasks)
         if sw_task is not None:
             matched_sweeper_locations.append(missing_location)
-            if len(get_task_runs(sw_task, sweeper_task_runs)) is 0:
-                print("  No task runs: %s" % missing_location)
-                if missing_location not in found_sweeper:
-                    found_final_internal.append(found_sweeper)
+            if len(get_task_runs(sw_task, sweeper_task_runs)) > 0:
+                if missing_location not in found_sweeper_internal:
+                    found_sweeper_internal.append(missing_location)
     print("    Matched locations: %s" % str(len(matched_sweeper_locations)))
-    print("    Found %s in sweeper internal" % str(len(found_sweeper)))
+    print("    Found %s in sweeper internal" % str(len(found_sweeper_internal)))
+
+    # Look in missing for missing locations
+    print("  Searching for missing task runs in missing internal...")
+    for missing_location in missing_locations:
+        mi_task = location2task(missing_location, missing_tasks)
+        if mi_task is not None:
+            matched_missing_internal_locations.append(missing_location)
+            if len(get_task_runs(mi_task, missing_task_runs)) > 0:
+                if missing_location not in found_missing_internal:
+                    found_missing_internal.append(missing_location)
+    print("    Matched locations: %s" % str(len(matched_missing_internal_locations)))
+    print("    Found %s in missing internal" % str(len(found_missing_internal)))
 
     # Success
     return True
@@ -162,6 +181,8 @@ def main(args):
     final_internal_task_runs_file = '../Global_QAQC/dartfrog/transform/final-internal/tasks/task_run.json'
     sweeper_tasks_file = '../Global_QAQC/dartfrog/transform/sweeper-internal/tasks/task.json'
     sweeper_task_runs_file = '../Global_QAQC/dartfrog/transform/sweeper-internal/tasks/task_run.json'
+    missing_tasks_file = '../Global_QAQC/dartfrog/transform/missing_tasks/tasks/task.json'
+    missing_task_runs_file = '../Global_QAQC/dartfrog/transform/missing_tasks/tasks/task_run.json'
 
     # Load public task.json
     print("Loading public tasks...")
@@ -203,6 +224,16 @@ def main(args):
     sweeper_task_runs = load_json(sweeper_task_runs_file)
     print("  %s" % str(len(sweeper_task_runs)))
 
+    # Load missing internal task.json
+    print("Loading missing internal tasks...")
+    missing_tasks = load_json(missing_tasks_file)
+    print("  %s" % str(len(missing_tasks)))
+
+    # Load missing internal task_run.json
+    print("Loading missing internal task runs...")
+    missing_task_runs = load_json(missing_task_runs_file)
+    print("  %s" % str(len(missing_task_runs)))
+
     # == Check For Missing Task Runs == #
 
     # Check public
@@ -216,9 +247,6 @@ def main(args):
     print("  Found %s" % str(len(missing_public_locations)))
     for location in missing_public_locations:
         missing_json.append(location2task(location, public_tasks))
-    with open('/Users/kwurster/Desktop/WTF_Tasks.json', 'w') as f:
-        json.dump(missing_json, f)
-    exit()
 
     # If there are any missing public locations, figure out WTF they went
     if len(missing_public_locations) > 0:
@@ -228,7 +256,9 @@ def main(args):
                                final_internal_tasks=final_internal_tasks,
                                final_internal_task_runs=final_internal_task_runs,
                                sweeper_tasks=sweeper_tasks,
-                               sweeper_task_runs=sweeper_task_runs)
+                               sweeper_task_runs=sweeper_task_runs,
+                               missing_tasks=missing_tasks,
+                               missing_task_runs=missing_task_runs)
 
     # Check first internal
     print("")
@@ -247,7 +277,9 @@ def main(args):
                                final_internal_tasks=final_internal_tasks,
                                final_internal_task_runs=final_internal_task_runs,
                                sweeper_tasks=sweeper_tasks,
-                               sweeper_task_runs=sweeper_task_runs)
+                               sweeper_task_runs=sweeper_task_runs,
+                               missing_tasks=missing_tasks,
+                               missing_task_runs=missing_task_runs)
 
     # check final internal
     print("")
@@ -266,7 +298,9 @@ def main(args):
                                final_internal_tasks=final_internal_tasks,
                                final_internal_task_runs=final_internal_task_runs,
                                sweeper_tasks=sweeper_tasks,
-                               sweeper_task_runs=sweeper_task_runs)
+                               sweeper_task_runs=sweeper_task_runs,
+                               missing_tasks=missing_tasks,
+                               missing_task_runs=missing_task_runs)
 
     # Check sweeper internal
     print("")
@@ -285,7 +319,28 @@ def main(args):
                                final_internal_tasks=final_internal_tasks,
                                final_internal_task_runs=final_internal_task_runs,
                                sweeper_tasks=sweeper_tasks,
-                               sweeper_task_runs=sweeper_task_runs)
+                               sweeper_task_runs=sweeper_task_runs,
+                               missing_tasks=missing_tasks,
+                               missing_task_runs=missing_task_runs)
+
+    # Check missing internal
+    print("")
+    print("Checking missing internal for missing task runs...")
+    missing_sweeper_locations = []
+    for task in missing_tasks:
+        if not does_task_have_task_runs(task, missing_task_runs):
+            missing_sweeper_locations.append(get_location(task))
+    print("  Found %s" % str(len(missing_sweeper_locations)))
+
+    # If there are any missing public locations, figure out WTF they went
+    if len(missing_sweeper_locations) > 0:
+        find_missing_task_runs(missing_locations=missing_sweeper_locations,
+                               first_internal_tasks=first_internal_tasks,
+                               first_internal_task_runs=first_internal_task_runs,
+                               final_internal_tasks=final_internal_tasks,
+                               final_internal_task_runs=final_internal_task_runs,
+                               missing_tasks=missing_tasks,
+                               missing_task_runs=missing_task_runs)
 
     # Success
     print("")
