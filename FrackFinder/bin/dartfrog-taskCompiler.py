@@ -418,6 +418,7 @@ def main(args):
     """
 
     # Default
+    overwrite_outfiles = False
     sample_size = None
     validate_tasks = False
 
@@ -502,6 +503,10 @@ def main(args):
         elif arg == '--validate':
             validate_tasks = True
 
+        # Overwrite output files
+        elif arg == '--overwrite':
+            overwrite_outfiles = True
+
         # Catch errors
         elif arg == '':
             pass
@@ -520,21 +525,21 @@ def main(args):
         print("ERROR: No compiled output CSV supplied")
         bail = True
     else:
-        if isfile(compiled_output_csv_file):
+        if isfile(compiled_output_csv_file) and not overwrite_outfiles:
             print("ERROR: Compiled output CSV exists: %s" % compiled_output_csv_file)
             bail = True
     if compiled_output_json_file is None:
         print("ERROR: No compiled output JSON supplied")
         bail = True
     else:
-        if isfile(compiled_output_json_file):
+        if isfile(compiled_output_json_file) and not overwrite_outfiles:
             print("ERROR: Compiled output JSON exists: %s" % compiled_output_json_file)
             bail = True
     if scrubbed_output_csv_file is None:
         print("ERROR: No scrubbed output CSV supplied")
         bail = True
     else:
-        if isfile(scrubbed_output_csv_file):
+        if isfile(scrubbed_output_csv_file) and not overwrite_outfiles:
             print("ERROR: Scrubbed output CSV exists: %s" % scrubbed_output_csv_file)
             bail = True
     if public_tasks_file is None or not os.access(public_tasks_file, os.R_OK):
@@ -560,6 +565,12 @@ def main(args):
         bail = True
     if sweeper_task_runs_file is None or not os.access(sweeper_task_runs_file, os.R_OK):
         print("ERROR: Can't access sweeper task runs: %s" % sweeper_task_runs_file)
+        bail = True
+    if missing_tasks_file is None or not os.access(missing_tasks_file, os.R_OK):
+        print("ERROR: Can't access missing tasks: %s" % missing_tasks_file)
+        bail = True
+    if missing_task_runs_file is None or not os.access(missing_task_runs_file, os.R_OK):
+        print("ERROR: Can't access missing task runs: %s" % missing_task_runs_file)
         bail = True
     if bail:
         return 1
