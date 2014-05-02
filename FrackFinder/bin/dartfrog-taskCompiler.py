@@ -26,6 +26,7 @@ Sample command:
 import os
 import sys
 import json
+import copy
 import inspect
 from os import linesep
 from os.path import isfile
@@ -34,8 +35,8 @@ from pprint import pprint
 
 
 # Global parameters
-DEBUG = False
 ERROR_COUNT = 0
+VERBOSE = False
 
 
 # Build information
@@ -75,15 +76,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 
-def pdebug(message):
-    """
-    Easily handle printing debug information
-    """
-    global DEBUG
-    if DEBUG is True:
-        print(message)
-
-
 def print_usage():
     """
     Command line usage information
@@ -106,6 +98,9 @@ def print_usage():
     print("")
     print("Optional:")
     print("    --sample=int -> Sample number of tasks to process")
+    print("    --validate   -> Perform a time consuming task run validation")
+    print("    --overwrite  -> Overwrite all output files")
+    print("    --verbose    -> Print out additional errors")
     print("")
     return 1
 
@@ -184,7 +179,10 @@ def get_crowd_selection_counts(input_id, task_runs_json_object, location):
     """
     Figure out how many times the crowd selected each option
     """
+
+    global VERBOSE
     global ERROR_COUNT
+
     counts = {'n_frk_res': None,
               'n_unk_res': None,
               'n_oth_res': None}
@@ -193,7 +191,8 @@ def get_crowd_selection_counts(input_id, task_runs_json_object, location):
             try:
                 selection = task_run['info']['selection']
             except KeyError:
-                print("  -  task_id KeyError for get_crowd_selection_counts(): %s" % location)
+                if VERBOSE:
+                    print("  -  task_id KeyError for get_crowd_selection_counts(): %s" % location)
                 ERROR_COUNT += 1
             if selection == 'fracking':
                 if counts['n_frk_res'] is None:
@@ -213,9 +212,10 @@ def get_crowd_selection_counts(input_id, task_runs_json_object, location):
             else:
                 raise ValueError("get_crowd_selection_counts()")
     if counts.values() == [None, None, None]:
-        print("  -  No task runs in get_crowd_selection_counts(): %s" % location)
+        if VERBOSE:
+            print("  -  No task runs in get_crowd_selection_counts(): %s" % location)
         ERROR_COUNT += 1
-    return counts
+    return copy.deepcopy(counts)
 
 
 def get_percent_crowd_agreement(crowd_selection, selection_counts, total_responses, map_selection_field,
@@ -228,6 +228,7 @@ def get_percent_crowd_agreement(crowd_selection, selection_counts, total_respons
     # The try/except blocks are for situations where tasks have never been viewed, which yields zero total_responses
     per_crowd_agreement = None
     split_per_crowd_agreement = None
+    o_dict = {}
 
     # Make sure the crowd actually made a selection
     if crowd_selection is None:
@@ -260,7 +261,11 @@ def get_percent_crowd_agreement(crowd_selection, selection_counts, total_respons
             # Make sure the percent crowd agreement field is None when there is a split response
             per_crowd_agreement = error_val
 
-    return {'p_crd_a': per_crowd_agreement, 'p_s_crd_a': split_per_crowd_agreement}
+    # Construct output and return
+    o_dict['p_crd_a'] = per_crowd_agreement
+    o_dict['p_s_crd_a'] = split_per_crowd_agreement
+
+    return copy.deepcopy(o_dict)
 
 
 def get_locations(tasks):
@@ -311,6 +316,7 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key, sample=None):
     Do DartFrog specific stuff
     """
 
+    global VERBOSE
     global ERROR_COUNT
 
     # == Analyze Public Tasks == #
@@ -346,7 +352,8 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key, sample=None):
 
         # Make sure the task location is actually in the master list - if not, delete it
         if task_location not in locations:
-            print("  -  Dropped location: %s" % task_location)
+            if VERBOSE:
+                print("  -  Dropped location: %s" % task_location)
             ERROR_COUNT += 1
         else:
 
@@ -359,13 +366,14 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key, sample=None):
             locations[task_location]['comp_loc'] = comp_loc
 
             # Get selection counts
-            task_stats = {'n_unk_res': None,
-                          'n_frk_res': None,
-                          'n_oth_res': None,
-                          'n_tot_res': None,
-                          'crowd_sel': None,
-                          'p_crd_a': None,
-                          'p_s_crd_a': None}
+            task_stats_template = {'n_unk_res': None,
+                                   'n_frk_res': None,
+                                   'n_oth_res': None,
+                                   'n_tot_res': None,
+                                   'crowd_sel': None,
+                                   'p_crd_a': None,
+                                   'p_s_crd_a': None}
+            task_stats = copy.deepcopy(task_stats_template)
             selection_counts = get_crowd_selection_counts(task_id, task_runs, task_location)
             total_responses = sum([sc for sc in selection_counts.values() if sc is not None])
             if total_responses is 0:
@@ -386,7 +394,7 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key, sample=None):
 
     # Done with public
     print("  -  Done")
-    return locations
+    return copy.deepcopy(locations)
 
 
 def is_location_complete(location, tasks, task_runs):
@@ -417,15 +425,17 @@ def main(args):
     Main routine
     """
 
+    global VERBOSE
+
     # Default
     overwrite_outfiles = False
     sample_size = None
     validate_tasks = False
 
     # Containers for storing input and output files
-    compiled_output_csv_file = 'Compiled_Output.csv'
-    compiled_output_json_file = 'Compiled_Output.json'
-    scrubbed_output_csv_file = 'Scrubbed_Output.csv'
+    compiled_output_csv_file = '../Global_QAQC/dartfrog/Compiled_Output.csv'
+    compiled_output_json_file = '../Global_QAQC/dartfrog/Compiled_Output.json'
+    scrubbed_output_csv_file = '../Global_QAQC/dartfrog/Scrubbed_Output.csv'
     public_tasks_file = '../Global_QAQC/dartfrog/transform/public/tasks/task.json'
     public_task_runs_file = '../Global_QAQC/dartfrog/transform/public/tasks/task_run.json'
     first_internal_tasks_file = '../Global_QAQC/dartfrog/transform/first-internal/tasks/task.json'
@@ -506,6 +516,10 @@ def main(args):
         # Overwrite output files
         elif arg == '--overwrite':
             overwrite_outfiles = True
+
+        # Print out additional error messages
+        elif arg == '--verbose':
+            VERBOSE = True
 
         # Catch errors
         elif arg == '':
@@ -787,14 +801,14 @@ def main(args):
                          'comp_loc': None,
                          'p_crd_a': None,
                          'p_s_crd_a': None,
-                         'public': stats_template.copy(),
-                         'fi_intern': stats_template.copy(),
-                         'fn_intern': stats_template.copy(),
-                         'sw_intern': stats_template.copy(),
-                         'mt_intern': stats_template.copy()}
+                         'public': copy.deepcopy(stats_template),
+                         'fi_intern': copy.deepcopy(stats_template),
+                         'fn_intern': copy.deepcopy(stats_template),
+                         'sw_intern': copy.deepcopy(stats_template),
+                         'mt_intern': copy.deepcopy(stats_template)}
     locations = {}
     for location in location_list:
-        locations[location] = location_template.copy()
+        locations[location] = copy.deepcopy(location_template)
 
     # == Analyze Tasks == #
 
@@ -849,8 +863,92 @@ def main(args):
         for line in scrubbed_lines:
             f.write(','.join(line) + linesep)
 
+    # == Write the Compiled Output CSV == #
+
+    # Define the header and output container
+    compiled_lines = []
+    header = [# Location information
+              'location', 'wms_url', 'lat', 'lng', 'year', 'county', 'comp_loc',
+              # Final answer information
+              'n_frk_res', 'n_oth_res', 'n_unk_res', 'n_tot_res',
+              'p_crd_a', 'p_s_crd_a',
+              # Public responses
+              'p_n_frk_res', 'p_n_oth_res', 'p_n_unk_res', 'p_n_tot_res', 'p_crowd_sel', 'p_p_crd_a', 'p_p_s_crd_a',
+              # First internal responses
+              'fi_n_frk_res', 'fi_n_oth_res', 'fi_n_unk_res', 'fi_n_tot_res', 'fi_crowd_sel', 'fi_p_crd_a', 'fi_p_s_crd_a',
+              # Final internal responses
+              'fn_n_frk_res', 'fn_n_oth_res', 'fn_n_unk_res', 'fn_n_tot_res', 'fn_crowd_sel', 'fn_p_crd_a', 'fn_p_s_crd_a',
+              # Sweeper internal responses
+              'sw_n_frk_res', 'sw_n_oth_res', 'sw_n_unk_res', 'sw_n_tot_res', 'sw_crowd_sel', 'sw_p_crd_a', 'sw_p_s_crd_a',
+              # Missing internal responses
+              'mt_n_frk_res', 'mt_n_oth_res', 'mt_n_unk_res', 'mt_n_tot_res', 'mt_crowd_sel', 'mt_p_crd_a', 'mt_p_s_crd_a']
+
+    # Loop through the compiled JSON object and populate stuff
+    for location, attributes in locations.iteritems():
+
+        # Define a container for this specific line - default values are empty, which allows any value that is not
+        # found in the compiled JSON object to be populated as NULL
+        line = ['' for i in header]
+
+        # Loop through the header and populate attributes in the line
+        for item in header:
+
+            # Get the easy stuff into the line first - all the final answers and location information
+            if item in attributes:
+                content = attributes[item]
+                if content is None:
+                    content = ''
+                line[header.index(item)] = '"' + str(content) + '"'
+
+            # Location is a special case since its part of what we're iterating over in the outer loop
+            elif item == 'location':
+                line[header.index(item)] = '"' + location + '"'
+
+            # Everything else is application specific responses
+            else:
+
+                # Figure out which application to pull values from and specify identifying information
+                if item[:2] == 'p_':
+                    app_key = 'public'
+                    field_prefix = 'p_'
+                elif item[:3] == 'fi_':
+                    app_key = 'fi_intern'
+                    field_prefix = 'fi_'
+                elif item[:3] == 'fn_':
+                    app_key = 'fn_intern'
+                    field_prefix = 'fn_'
+                elif item[:3] == 'sw_':
+                    app_key = 'sw_intern'
+                    field_prefix = 'sw_'
+                elif item[:3] == 'mt_':
+                    app_key = 'mt_intern'
+                    field_prefix = 'mt_'
+                else:
+                    raise ValueError("Can't pull values for item: %s" % item)
+
+                # Pull values and populate line
+                for app_attr, app_val in attributes[app_key].iteritems():
+                    app_item = field_prefix + app_attr
+                    app_content = app_val
+                    if app_content is None:
+                        app_content = ''
+
+                    # Stick the field prefix back on
+                    line[header.index(app_item)] = '"' + str(app_content) + '"'
+
+        # Line is fully constructed
+        compiled_lines.append(line)
+
+    # Write lines
+    print("Writing compiled output CSV...")
+    with open(compiled_output_csv_file, 'w') as f:
+        f.write(', '.join(['"' + i + '"' for i in header]) + linesep)
+        for line in compiled_lines:
+            f.write(','.join(line) + linesep)
+
     # Success
-    print("Total errors: %s" % str(ERROR_COUNT))
+    if VERBOSE:
+        print("Total errors: %s" % str(ERROR_COUNT))
     print("Done.")
     return 0
 
