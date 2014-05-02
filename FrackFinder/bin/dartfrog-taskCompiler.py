@@ -842,7 +842,7 @@ def main(args):
 
     # Convert compiled output to lines
     header = ['location', 'wms_url', 'lat', 'lng', 'year', 'county', 'comp_loc', 'n_frk_res', 'n_oth_res',
-              'n_unk_res', 'n_tot_res', 'p_crd_a', 'p_s_crd_a']
+              'n_unk_res', 'n_tot_res', 'crowd_sel', 'p_crd_a', 'p_s_crd_a']
     scrubbed_lines = []
     for location, attributes in locations.iteritems():
         line = ['' for i in header]
