@@ -868,10 +868,9 @@ def main(args):
     # Define the header and output container
     compiled_lines = []
     header = [# Location information
-              'location', 'wms_url', 'lat', 'lng', 'year', 'county', 'comp_loc',
+              'location', 'wms_url', 'lat', 'lng', 'year', 'county',
               # Final answer information
-              'n_frk_res', 'n_oth_res', 'n_unk_res', 'n_tot_res',
-              'p_crd_a', 'p_s_crd_a',
+              'n_frk_res', 'n_oth_res', 'n_unk_res', 'n_tot_res', 'comp_loc', 'crowd_sel', 'p_crd_a', 'p_s_crd_a',
               # Public responses
               'p_n_frk_res', 'p_n_oth_res', 'p_n_unk_res', 'p_n_tot_res', 'p_crowd_sel', 'p_p_crd_a', 'p_p_s_crd_a',
               # First internal responses
