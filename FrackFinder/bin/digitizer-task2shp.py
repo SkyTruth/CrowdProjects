@@ -14,11 +14,26 @@ except ImportError:
     import osr
 
 
+__docname__ = basename(__file__)
+
+
+def print_usage():
+    print("")
+    print('Usage %s: task_run.json outfile.shp' % __docname__)
+    print("")
+    return 1
+
+
 def main(args):
 
     # Output file
-    outfile = '/Users/kwurster/Desktop/TEST.shp'
-    infile = '/Users/kwurster/Desktop/task_run.json'
+    infile = args[0]
+    outfile = args[1]
+
+    # Validate input
+    if not isfile(infile):
+        print("ERROR: Can't find infile: %s" % infile)
+        return 1
 
     # Crack open input JSON file
     with open(infile) as f:
@@ -37,7 +52,7 @@ def main(args):
 
     # Create layers and define fields
     layer_name = basename(outfile).split('.', 1)[1]
-    layer = datasource.CreateLayer(layer_name, srs, ogr.wkbPolygon)
+    layer = datasource.CreateLayer(layer_name, srs, ogr.wkbMultiPolygon)
     field_definitions = (('selection', 254, ogr.OFTString),
                          ('task_id', 10, ogr.OFTInteger))
     for f_def in field_definitions:
@@ -59,16 +74,17 @@ def main(args):
 
         # Only create a geometry if the task run was digitized/kept its fracking classification
         if selection == 'done':
-            coordinates = tr['info']['shape']['coordinates'][0]
-            polygon = ogr.Geometry(ogr.wkbPolygon)
-            ring = ogr.Geometry(ogr.wkbLinearRing)
-            for x_y in coordinates:
-                x = x_y[0]
-                y = x_y[1]
-                ring.AddPoint(x, y)
-            ring.CloseRings()
-            polygon.AddGeometry(ring)
-            feature.SetGeometry(polygon)
+            for shape in tr['info']['shapes']:
+                coordinates = shape['coordinates'][0]
+                polygon = ogr.Geometry(ogr.wkbMultiPolygon)
+                ring = ogr.Geometry(ogr.wkbLinearRing)
+                for x_y in coordinates:
+                    x = x_y[0]
+                    y = x_y[1]
+                    ring.AddPoint(x, y)
+                ring.CloseRings()
+                polygon.AddGeometry(ring)
+                feature.SetGeometry(polygon)
 
         # Create the feature in the layer
         layer.CreateFeature(feature)
@@ -87,4 +103,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    if len(sys.argv) is 1:
+        sys.exit(print_usage())
+    else:
+        sys.exit(main(sys.argv[1:]))
