@@ -15,6 +15,7 @@ except ImportError:
 
 
 __docname__ = basename(__file__)
+ogr.UseExceptions()
 
 
 def print_usage():
@@ -74,17 +75,19 @@ def main(args):
 
         # Only create a geometry if the task run was digitized/kept its fracking classification
         if selection == 'done':
+            multipolygon = ogr.Geometry(ogr.wkbMultiPolygon)
             for shape in tr['info']['shapes']:
                 coordinates = shape['coordinates'][0]
-                polygon = ogr.Geometry(ogr.wkbMultiPolygon)
                 ring = ogr.Geometry(ogr.wkbLinearRing)
                 for x_y in coordinates:
                     x = x_y[0]
                     y = x_y[1]
                     ring.AddPoint(x, y)
                 ring.CloseRings()
+                polygon = ogr.Geometry(ogr.wkbPolygon)
                 polygon.AddGeometry(ring)
-                feature.SetGeometry(polygon)
+                multipolygon.AddGeometry(polygon)
+            feature.SetGeometry(multipolygon)
 
         # Create the feature in the layer
         layer.CreateFeature(feature)
