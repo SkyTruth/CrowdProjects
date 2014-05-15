@@ -31,6 +31,8 @@
 import sys
 import json
 from os.path import *
+from os import linesep
+from datetime import datetime
 
 
 # Build information
@@ -130,6 +132,25 @@ def print_license():
     return 1
 
 
+def row_formatter(row, qualifier='"'):
+
+    """
+    Format a row in a consistent way
+    """
+
+    output_row = []
+    for item in row:
+        if item is None:
+            item = '""'
+        elif str(item)[0] is '2' and 'T' in str(item):
+            item = qualifier + datetime.strptime(item, "%Y-%m-%dT%H:%M:%S.%f").strftime("%m/%d/%Y %H:%M:%S") + qualifier
+        else:
+            item = qualifier + str(item) + qualifier
+        output_row.append(item)
+
+    return output_row
+
+
 def main(args):
 
     """
@@ -140,8 +161,11 @@ def main(args):
     input_task_runs_file = None
     output_csv_file = None
 
+    # Defaults
+    overwrite_output = False
+
     # Parse arguments
-    arg_error = True
+    arg_error = False
     for arg in args:
 
         # Help arguments
@@ -156,10 +180,16 @@ def main(args):
         elif arg in ('--license', '-license'):
             return print_license()
 
+        # Additional options
+        elif arg in ('-overwrite', '--overwrite'):
+            overwrite_output = True
+
         # Other arguments are positional
         else:
             if input_task_runs_file is None:
-                input_task_runs_file.append(arg)
+                input_task_runs_file = arg
+            elif output_csv_file is None:
+                output_csv_file = arg
             else:
                 print("ERROR: Invalid argument: %s" % arg)
                 arg_error = True
@@ -171,20 +201,49 @@ def main(args):
     if arg_error:
         print("ERROR: Did not successfully parse arguments")
         bail = True
-    for infile in input_task_runs_file:
-        if not isfile(infile):
-            print("ERROR: Can't find input task runs: %s" % infile)
-            bail = True
+    if not isfile(input_task_runs_file):
+        print("ERROR: Can't find input task runs: %s" % input_task_runs_file)
+        bail = True
+    if output_csv_file is None:
+        print("ERROR: Need an output file")
+        bail = True
+    if isfile(output_csv_file) and not overwrite_output:
+        print("ERROR: Outfile exists: %s" % output_csv_file)
+        bail = True
     if bail:
         return 1
 
     # -+== Analyze JSON ==+- #
 
+    print("Analyzing: %s" % input_task_runs_file)
+
+    # Define header structure and containers
+    header = ['user_id', 'user_ip', 'task_id', 'created', 'finish_time']
+    output_rows = [header]
+
+    # Open the input file for processing
     with open(input_task_runs_file, 'r') as f:
+
+        # Convert file to a JSON object
         task_runs = json.load(f)
 
+        # Loop through all task runs
+        for tr in task_runs:
 
+            # Stick items into the proper place, according to the header, convert data types, and add text qualifiers
+            row = ['' for i in header]
+            for item in header:
+                row[header.index(item)] = tr[item]
+            output_rows.append(row)
 
+    # Write the output file
+    print("Writing: %s" % output_csv_file)
+    with open(output_csv_file, 'w') as f:
+        for row in output_rows:
+            f.write(','.join(row_formatter(row)) + linesep)
+
+    # Success
+    return 0
 
 
 if __name__ == '__main__':
