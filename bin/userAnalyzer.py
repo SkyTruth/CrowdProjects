@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 # =================================================================================== #
 #
 # New BSD License
@@ -33,6 +36,10 @@
 
 
 import sys
+import json
+from datetime import datetime
+from pprint import pprint
+from os.path import isfile
 from os.path import basename
 
 
@@ -139,6 +146,37 @@ def print_license():
     return 1
 
 
+def get_task_runs(nuid, utype, task_runs):
+
+    """
+    Return a list of all tasks completed by a given user
+    """
+
+    task_run_list = []
+    for tr in task_runs:
+        if utype == 'id':
+            if str(tr['user_id']) == nuid:
+                task_run_list.append(tr)
+        elif utype == 'ip':
+            if str(tr['user_ip']) == nuid:
+                task_run_list.append(tr)
+        else:
+            raise ValueError("Invalid nuid=%s" % str(nuid))
+
+    return task_run_list
+
+
+def date2datetime(input_datetime_stamp):
+
+    """
+    Convert PyBossa's XML formatted datetime to a Python datetime object
+
+    Note that microseconds are dropped completely
+    """
+
+    return datetime.strptime(input_datetime_stamp, "%Y-%m-%dT%H:%M:%S.%f").replace(microsecond=0)
+
+
 def main(args):
 
     #/* ======================================================================= */#
@@ -148,13 +186,12 @@ def main(args):
     # Input/output files
     input_task_runs_file = None
 
-
     #/* ======================================================================= */#
     #/*     Parse Arguments
     #/* ======================================================================= */#
     arg_error = False
     i = 0
-    while i < len(sys.argv):
+    while i < len(args):
 
         try:
             arg = args[i]
@@ -171,6 +208,18 @@ def main(args):
             elif arg in ('--license', '-license'):
                 return print_license()
 
+            # Positional arguments and errors
+            else:
+
+                # Catch input file
+                if input_task_runs_file is None:
+                    i += 1
+                    input_task_runs_file = arg
+                else:
+                    i += 1
+                    print("ERROR: Invalid argument: %s" % str(arg))
+                    arg_error = True
+
         except IndexError:
             i += 1
             print("ERROR: An argument has invalid parameters")
@@ -184,8 +233,85 @@ def main(args):
     if arg_error:
         print("ERROR: Did not successfully parse arguments")
         bail = True
+    if input_task_runs_file is None or not isfile(input_task_runs_file):
+        print("ERROR: Can't find file: %s" % str(input_task_runs_file))
+        bail = True
     if bail:
         return 1
+
+    #/* ======================================================================= */#
+    #/*     Analyze Task Runs
+    #/* ======================================================================= */#
+
+    # Load input file
+    task_runs = None
+    with open(input_task_runs_file) as f:
+        task_runs = json.load(f)
+
+    # Define containers
+    stats = {}
+    i = 0
+    tot_task_runs = len(task_runs)
+    for tr in task_runs:
+
+        # Update user
+        i += 1
+        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(tot_task_runs)))
+        sys.stdout.flush()
+
+        # Get user identification
+        uid = tr['user_id']
+        utype = 'id'
+        uip = tr['user_ip']
+        nuid = str(uid)
+        if uip is not None and uip.replace('.', '').isdigit():
+            utype = 'ip'
+            nuid = uip
+
+        # Collect user ID stats
+        stats[nuid] = {'uid_type': utype,
+                       'user_id': uid,
+                       'user_ip': uip,
+                       'n_uid': nuid}
+
+        # Get all task runs the user completed
+        completed_task_runs = get_task_runs(nuid, utype, task_runs)
+        stats[nuid]['tr'] = completed_task_runs
+        stats[nuid]['num_completed'] = len(completed_task_runs)
+
+        # Compute metrics for completed task runs
+        start_date = None
+        end_date = None
+        avg_completion_time = None
+        for c_tr in completed_task_runs:
+
+            c_sd = date2datetime(c_tr['created'])
+            c_ed = date2datetime(c_tr['finish_time'])
+
+            # Compute average completion time per task run
+            if avg_completion_time is None:
+                avg_completion_time = c_ed - c_sd
+            else:
+                avg_completion_time = (avg_completion_time + c_ed - c_sd) / 2
+
+            # Figure out if the date of the very first task the user completed and the very last task
+            if start_date is None or c_sd < start_date:
+                start_date = c_sd
+            if end_date is None or c_ed > end_date:
+                end_date = c_ed
+
+            # Dump collected information into stats
+            stats[nuid]['first_date'] = start_date.strftime("%m/%d/%Y %H:%M:%S")
+            stats[nuid]['end_date'] = end_date.strftime("%m/%d/%Y %H:%M:%S")
+            stats[nuid]['avg_time'] = str(avg_completion_time)
+
+
+
+            ####### FIX AVG TIME CALCULATOR #######
+            stats[nuid]['tr'] = None
+            pprint(stats[nuid])
+            return 1
+
 
     # Success
     return 0
