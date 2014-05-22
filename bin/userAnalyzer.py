@@ -521,9 +521,12 @@ def main(args):
         if engaged_days is 0 and stats[nuid]['num_tasks_completed'] > 0:
             engaged_days = 1
         stats[nuid]['engaged_days'] = engaged_days
-        stats[nuid]['start_date'] = datetime_formatter(start_date)
-        stats[nuid]['end_date'] = datetime_formatter(end_date)
-        avg_task_time = sum(stats[nuid]['avg_task_time_seconds']) / len(stats[nuid]['avg_task_time_seconds'])
+        stats[nuid]['start_date'] = datetime_formatter(start_date, strfmt='%Y-%m-%d')
+        stats[nuid]['end_date'] = datetime_formatter(end_date, strfmt='%Y-%m-%d')
+        if stats[nuid]['avg_task_time_seconds']:
+            avg_task_time = sum(stats[nuid]['avg_task_time_seconds']) / len(stats[nuid]['avg_task_time_seconds'])
+        else:
+            avg_task_time = None
         stats[nuid]['avg_task_time_seconds'] = avg_task_time
 
     # Done analyzing task runs - update user
