@@ -36,7 +36,7 @@
 
 
 """
-./userAnalyzer.py --sample=100 ../FrackFinder/Global_QAQC/dartfrog/transform/public/tasks/task_run.json
+./userAnalyzer.py ../FrackFinder/Global_QAQC/dartfrog/transform/public/tasks/task_run.json TEST.csv
 """
 
 
@@ -94,7 +94,13 @@ def print_usage():
     """
 
     print("")
-    print("Usage: %s --help-info task_run.json outfile.csv" % basename(__file__))
+    print("Usage: %s --help-info [options] task_run.json outfile.csv" % basename(__file__))
+    print("")
+    print("Options:")
+    print("  --classify-skiplines=int  ->  Skip n lines if classifying from an input file")
+    print("  --classify-ids id=class   ->  Normalized user ID and user defined classification str")
+    print("  --overwrite  ->  Overwrite the outfile.csv")
+    print("  --inverse-classify-ids id=class  ->  Normalized user ID and user defined classification str")
     print("")
 
     return 1
@@ -107,7 +113,17 @@ def print_help():
     """
 
     print("")
-    print("HELP DESCRIPTION")
+    print("%s Detailed Help" % basename(__file__))
+    print("--------------" + "-" * len(basename(__file__)))
+    print("Transforms a task_run.json file into a CSV with one line per user and a set of attributes.")
+    print("Attributes are as follows:")
+    print("  n_uid    = Normalized user ID taken from user_id when populated and user_ip otherwise")
+    print("  user_id  = Taken from user_id if available - null otherwise")
+    print("  user_ip  = Taken from user_ip if available - null otherwise")
+    print("  uid_type = Specifies whether n_uid came from user_id or user_ip")
+    print("  start_date = The date the user completed their first task run")
+    print("  end_date   = The most recent date a user completed a task run")
+    print("Running without any arguments counts everything in the current directory")
     print("")
 
     return 1
@@ -187,17 +203,6 @@ def date2datetime(input_datetime_stamp):
     return datetime.strptime(input_datetime_stamp, "%Y-%m-%dT%H:%M:%S.%f")
 
 
-def unix2datetime(input_unix_datetime_stamp):
-
-    """
-    Convert PyBossa's Unix formatted datetime to a Python datetime object
-
-    This comes from the task_run.json file: task_run['info']['timings['presentTask / reportAnswer']
-    """
-
-    return datetime.fromtimestamp(input_unix_datetime_stamp)
-
-
 def datetime_formatter(input_datetime_object, strfmt='%Y-%m-%d %H:%M:%S.%f'):
 
     """
@@ -226,6 +231,60 @@ def row_formatter(row, qualifier='"'):
     return output_row
 
 
+def id_classification_processor(id_classification, skip_lines):
+
+    """
+    Convert commandline --classify-id ids=class parameter to a dictionary
+    """
+
+    # Transform ID's
+    o_dict = {}
+    for ids, classification in id_classification.items():
+        if isfile(ids):
+            try:
+                with open(ids, 'r') as f:
+                    for line in f.readlines()[skip_lines:]:
+                        o_dict[line.replace(linesep, '').strip()] = classification
+            except OSError:
+                print("ERROR: ID classifier is a file that cannot be opened: %s" % ids)
+                return 1
+        elif ',' in ids:
+            for i in ids.split(','):
+                o_dict[i] = classification
+
+    # Success
+    return o_dict.copy()
+
+
+def inverse_id_classification_processor(inverse_id_classification, skip_lines):
+
+    """
+    Convert commandline --inverse-classify-id ids=class parameter to a dictionary
+    """
+
+    # Transform ID's
+    output = []
+    for ids, classification in inverse_id_classification.items():
+        if isfile(ids):
+            try:
+                with open(ids, 'r') as f:
+                    id_set = []
+                    for line in f.readlines()[skip_lines:]:
+                        id_set.append(line.replace(linesep, '').strip())
+                    output.append((id_set, classification))
+            except OSError:
+                print("ERROR: ID classifier is a file that cannot be opened: %s" % ids)
+                return 1
+        elif ',' in ids:
+            id_set = []
+            for i in ids.split(','):
+                id_set.append(i)
+            output.append((id_set, classification))
+
+    # Success
+    return output
+
+
 def main(args):
 
     """
@@ -243,10 +302,14 @@ def main(args):
     # Parameters/configuration
     sample_size = None
     overwrite_outfile = False
+    id_classification = {}
+    inverse_id_classification = {}
+    classify_skipline = 0
 
     #/* ======================================================================= */#
     #/*     Parse Arguments
     #/* ======================================================================= */#
+
     arg_error = False
     i = 0
     while i < len(args):
@@ -266,17 +329,39 @@ def main(args):
             elif arg in ('--license', '-license'):
                 return print_license()
 
+            # User ID classification
+            elif arg in ('--classify-ids', '--classify-id'):
+                i += 1
+                while i < len(args) and args[i][0] != '-':
+                    ids, classification = args[i].split('=', 1)
+                    id_classification[ids] = classification
+                    i += 1
+            elif '--classify-skiplines=' in arg or '--classify-skipline=' in arg:
+                i += 1
+                try:
+                    classify_skipline = int(arg.split('=', 1)[1])
+                except ValueError:
+                    arg_error = True
+                    print("ERROR: Invalid classify skiplines - must be an int: %s" % arg)
+            elif arg in ('--inverse-classify-ids', '--inverse-classify-id'):
+                i += 1
+                while i < len(args) and args[i][0] != '-':
+                    ids, classification = args[i].split('=', 1)
+                    inverse_id_classification[ids] = classification
+                    i += 1
+
             # Additional parameters
             elif '--overwrite' in arg:
                 i += 1
                 overwrite_outfile = True
+
             elif '--sample=' in arg:
                 i += 1
                 try:
                     sample_size = int(arg.split('=', 1)[1])
                 except ValueError:
-                    print("ERROR: Invalid sample - must be an int: %s" % arg)
                     arg_error = True
+                    print("ERROR: Invalid sample value - must be an int: %s" % arg)
 
             # Positional arguments and errors
             else:
@@ -322,7 +407,17 @@ def main(args):
         return 1
 
     #/* ======================================================================= */#
-    #/*     Analyze Task Runs
+    #/*     Transform ID classification stuff - files and arguments
+    #/* ======================================================================= */#
+
+    # Transform ID's
+    if id_classification != {}:
+        id_classification = id_classification_processor(id_classification, classify_skipline)
+    if inverse_id_classification != {}:
+        inverse_id_classification = inverse_id_classification_processor(inverse_id_classification, classify_skipline)
+
+    #/* ======================================================================= */#
+    #/*     Aggregate Task Runs and Users
     #/* ======================================================================= */#
 
     # Update user
@@ -370,34 +465,50 @@ def main(args):
                            'num_tasks_completed': 0,
                            'start_date': None,
                            'end_date': None,
-                           'avg_task_time_seconds': None}
+                           'avg_task_time_seconds': [],
+                           'engaged_days': None}
+        if id_classification != {} or inverse_id_classification != {}:
+            stats[nuid]['classification'] = None
+
+        # Classify ID
+        if inverse_id_classification is not {}:
+            for t in inverse_id_classification:
+                id_set, classification = t
+                if str(nuid) not in id_set:
+                    stats[nuid]['classification'] = classification
+        if id_classification is not {}:
+            if str(nuid) in id_classification:
+                stats[nuid]['classification'] = id_classification[str(nuid)]
 
         # Add to task runs and update count
         stats[nuid]['tr'].append(tr)
         stats[nuid]['num_tasks_completed'] += 1
 
-        # Compute time metrics for collected task runs
+#/* ======================================================================= */#
+#/*     Analyze Task Runs
+#/* ======================================================================= */#
+
+    # Loop through all collected user's and compute metrics
+    for nuid in stats.keys():
+
+        # Time metrics for collected task runs
         start_date = None
         end_date = None
-        avg_task_time = None
         for c_tr in stats[nuid]['tr']:
 
             # Get the collected task_run's start/end date and start/end time
             # Sometimes stuff isn't populated for whatever reason so we have to try/except each set
-            c_start_date = None
-            c_end_date = None
-            c_start_time = None
-            c_end_time = None
+            try:
+                task_time_seconds = round(c_tr['info']['timings']['presentTask'] / 1000, 2)
+                stats[nuid]['avg_task_time_seconds'].append(task_time_seconds)
+            except KeyError:
+                pass
             try:
                 c_start_date = date2datetime(c_tr['created'])
-                c_end_date = date2datetime(c_tr['finish'])
+                c_end_date = date2datetime(c_tr['finish_time'])
             except KeyError:
-                pass
-            try:
-                c_start_time = unix2datetime(c_tr['info']['timings']['presentTask'])
-                c_end_time = unix2datetime(c_tr['info']['timings']['reportAnswer'])
-            except KeyError:
-                pass
+                c_start_date = None
+                c_end_date = None
 
             # Handle start/end date
             if start_date is None or c_start_date < start_date:
@@ -405,33 +516,31 @@ def main(args):
             if end_date is None or c_end_date > end_date:
                 end_date = c_end_date
 
-            # Compute delta between start and end time for the task run
-            t_delta = None
-            if c_start_time is not None and c_end_time is not None:
-                t_delta = c_end_time - c_start_time
-
-            # Modify average time spent on tasks
-            if t_delta is not None and avg_task_time is None:
-                avg_task_time = t_delta.seconds
-            elif t_delta is not None:
-                avg_task_time = round((avg_task_time + t_delta.seconds) / 2, 2)
-            else:
-                avg_task_time = None
-
         # Dump start date, end date, and average task completion time into stats object
+        engaged_days = (end_date - start_date).days
+        if engaged_days is 0 and stats[nuid]['num_tasks_completed'] > 0:
+            engaged_days = 1
+        stats[nuid]['engaged_days'] = engaged_days
         stats[nuid]['start_date'] = datetime_formatter(start_date)
         stats[nuid]['end_date'] = datetime_formatter(end_date)
-        stats[nuid]['avg_task_time_seconds'] = avg_task_time  # This is already seconds so no need to format
+        avg_task_time = sum(stats[nuid]['avg_task_time_seconds']) / len(stats[nuid]['avg_task_time_seconds'])
+        stats[nuid]['avg_task_time_seconds'] = avg_task_time
 
     # Done analyzing task runs - update user
     print("  - Done")
+
+#/* ======================================================================= */#
+#/*     Write Output CSV
+#/* ======================================================================= */#
 
     # Write output csv
     print("Processing CSV rows ...")
 
     # Define header structure and containers
-    header = ['n_uid', 'user_id', 'user_ip', 'uid_type', 'start_date', 'end_date', 'num_tasks_completed',
-              'avg_task_time_seconds', 'end_date', 'start_date']
+    header = ['n_uid', 'user_id', 'user_ip', 'uid_type', 'start_date', 'end_date', 'engaged_days',
+              'num_tasks_completed', 'avg_task_time_seconds']
+    if id_classification != {} or inverse_id_classification != {}:
+        header.insert(8, 'classification')
     output_rows = [header]
 
     # Convert the stats container to CSV rows
@@ -458,6 +567,10 @@ def main(args):
     # Success
     return 0
 
+
+#/* ======================================================================= */#
+#/*     Executing from Commandline
+#/* ======================================================================= */#
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
