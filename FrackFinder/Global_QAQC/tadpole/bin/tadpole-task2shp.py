@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 
 
+"""
+Convert a FrackFinder JSON export to a shapefile
+containing 1 point per pond and aggregated response
+metrics.
+"""
+
+
 __license__ = """
 Copyright (c) 2014, SkyTruth
 All rights reserved.
@@ -42,13 +49,6 @@ import ogr
 import osr
 
 
-"""
-Convert a FrackFinder JSON export to a shapefile
-containing 1 point per pond and aggregated response
-metrics.
-"""
-
-
 # Global parameters
 DEBUG = False
 
@@ -59,7 +59,6 @@ __copyright__ = 'Copyright (c) 2014, SkyTruth'
 __version__ = '0.1'
 __release__ = '2014/04/07'
 __docname__ = basename(inspect.getfile(inspect.currentframe()))
-
 
 
 def print_usage():
