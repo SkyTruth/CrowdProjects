@@ -224,7 +224,6 @@ def main(args):
             feature = None
 
     # Cleanup
-    feature = None
     driver = None
     datasource = None
     srs = None
