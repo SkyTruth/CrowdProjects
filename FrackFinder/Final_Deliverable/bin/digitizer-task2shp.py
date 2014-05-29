@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
 
-import os
+"""
+Convert task_run.json from the digitizer app to a pond vector layer
+"""
+
+
 import sys
 import json
+import math
 from pprint import pprint
 from os.path import isfile
 from os.path import basename
@@ -33,8 +38,10 @@ def print_usage():
     print("  --overwrite -> Overwrite output.shp")
     print("  --class=str -> Add a classification field with a uniform value - use '%<field>' to pull from JSON")
     print("  --of=driver -> Specify output OGR driver - defaults to 'ESRI Shapefile'")
-    print("  --check-intersect   -> Don't check for intersecting geometries")
+    print("  --check-intersect    -> Don't check for intersecting geometries")
     print("  --intersect-keep=str -> Keeps intersecting features based on their classified value")
+    print("  --no-split-multi     -> Don't split multi-polygon ponds into single parts")
+    print("  --no-compute-area    -> Don't compute each feature's area")
     print("")
     return 1
 
@@ -70,6 +77,42 @@ def get_multipolygon(shapes_key):
     return multipolygon
 
 
+def get_epsg_code(lat, lng):
+
+    """
+    Get the EPSG code from the latitude and longitude
+    """
+
+    zone = int(math.floor((lng + 180) / 6.0) + 1)
+
+    epsg = 32600 + zone
+
+    if lat < 0:
+        epsg += 100
+
+    return epsg
+
+
+def compute_area(geometry, target_epsg):
+
+    """
+    Compute a geometry's area in a different projection
+    """
+
+    # Generate SRS objects and coordinate transformation
+    geom_srs = osr.SpatialReference()
+    geom_srs.ImportFromEPSG(4326)
+    target_srs = osr.SpatialReference()
+    target_srs.ImportFromEPSG(target_epsg)
+    coord_transform = osr.CoordinateTransformation(geom_srs, target_srs)
+
+    # Copy the geometry to prevent modifying the original
+    geometry = geometry.Clone()
+    geometry.Transform(coord_transform)
+
+    return geometry.GetArea()
+
+
 def main(args):
 
     #/* ======================================================================= */#
@@ -88,6 +131,8 @@ def main(args):
     # Additional processing
     check_geom_intersect = False
     check_geom_intersect_keep = None
+    split_multi_ponds = True
+    compute_pond_area = True
 
     #/* ======================================================================= */#
     #/*     Containers
@@ -120,6 +165,10 @@ def main(args):
             overwrite_outfile = True
         elif '--class=' in arg:
             feature_classification = arg.split('=', 1)[1]
+        elif arg == '--no-split-multi':
+            split_multi_ponds = False
+        elif arg == '--no-compute-area':
+            compute_pond_area = False
 
         # Additional processing
         elif arg == '--check-intersect':
@@ -176,7 +225,6 @@ def main(args):
     # Open JSON file
     with open(infile) as f:
         task_runs = json.load(f)
-    print("Found %s task runs" % str(len(task_runs)))
 
     # Delete output file if it exists
     if isfile(outfile):
@@ -192,28 +240,32 @@ def main(args):
     srs.ImportFromEPSG(4326)
 
     # Create layers and define fields
+    # Field definitions: (name, width, type, precision)
     print("Creating layers and fields")
     layer_name = basename(outfile).split('.', 1)[1]
     layer = datasource.CreateLayer(layer_name, srs, ogr.wkbMultiPolygon)
-    field_definitions = [('selection', 254, ogr.OFTString),
-                         ('task_id', 10, ogr.OFTInteger),
-                         ('intersect', 1, ogr.OFTInteger)]
+    field_definitions = [('selection', 254, ogr.OFTString, None),
+                         ('task_id', 10, ogr.OFTInteger, None),
+                         ('intersect', 1, ogr.OFTInteger, None)]
     if process_year:
-        field_definitions.append(('year', 10, ogr.OFTInteger))
+        field_definitions.append(('year', 10, ogr.OFTInteger, None))
     if process_county:
-        field_definitions.append(('county', 254, ogr.OFTString))
+        field_definitions.append(('county', 254, ogr.OFTString, None))
     if feature_classification is not None:
-        field_definitions.append(('class', 254, ogr.OFTString))
+        field_definitions.append(('class', 254, ogr.OFTString, None))
+    if compute_pond_area:
+        field_definitions.append(('area_m', 254, ogr.OFTReal, 2))
 
     # Add fields to layer
-    for f_def in field_definitions:
-        field_name, field_width, field_type = f_def
+    for field_name, field_width, field_type, field_precision in field_definitions:
         field_object = ogr.FieldDefn(field_name, field_type)
         field_object.SetWidth(field_width)
+        if field_precision is not None:
+            field_object.SetPrecision(field_precision)
         layer.CreateField(field_object)
 
     # Loop through task runs and assemble output shapefile
-    print("Processing task runs...")
+    print("Processing %s task runs..." % str(len(task_runs)))
     for tr in task_runs:
         try:
             selection = str(tr['info']['selection'])
@@ -231,34 +283,55 @@ def main(args):
             elif 'shape' in tr['info']:
                 geometry = get_polygon(tr['info']['shape']['coordinates'][0])
 
-            # Set attributes and geometry
-            if geometry is not None:
-                task_id = int(tr['task_id'])
-                feature = ogr.Feature(layer.GetLayerDefn())
-                feature.SetGeometry(geometry)
-                feature.SetField('selection', selection)
-                feature.SetField('task_id', task_id)
-                if process_year:
-                    feature.SetField('year', tr['year'])
-                if process_county:
-                    feature.SetField('county', str(tr['county']))
+            # If we're splitting multi-ponds into single ponds,
+            geometry_iterator = [geometry]
+            if split_multi_ponds and 'shapes' in tr['info'] and len(tr['info']['shapes']) > 1:
+                geometry_iterator = [get_polygon(i['coordinates'][0]) for i in tr['info']['shapes']]
 
-                # Normal feature classification is just a simple write but the % indicates that the classification
-                # is to be pulled from a field within the json
-                if feature_classification is not None and feature_classification[0] != '%':
-                    feature.SetField('class', str(feature_classification))
-                elif feature_classification is not None and feature_classification[0] == '%':
-                    try:
-                        value = str(tr[feature_classification[1:]])
-                    except KeyError:
-                        value = None
-                    feature.SetField('class', value)
+            # Set attributes and geometry - this is kinda messy buuuuuuut too bad I guess ...
+            for geometry in geometry_iterator:
 
-                # Create the feature in the layer
-                layer.CreateFeature(feature)
+                # Compute the area
+                geometry_area = None  # Default to Null in case the computation fails
+                if compute_pond_area:
+                    centroid = geometry.Centroid()
+                    centroid_lat = centroid.GetY()
+                    centroid_lng = centroid.GetX()
+                    epsg = get_epsg_code(centroid_lat, centroid_lng)
+                    geometry_area = compute_area(geometry, epsg)
 
-            # Cleanup
-            feature = None
+                if geometry is not None:
+                    task_id = int(tr['task_id'])
+                    feature = ogr.Feature(layer.GetLayerDefn())
+                    feature.SetGeometry(geometry)
+                    feature.SetField('selection', selection)
+                    feature.SetField('task_id', task_id)
+                    if process_year:
+                        feature.SetField('year', tr['year'])
+                    if process_county:
+                        feature.SetField('county', str(tr['county']))
+                    if compute_pond_area:
+                        feature.SetField('area_m', geometry_area)
+
+                    # Normal feature classification is just a simple write but the % indicates that the classification
+                    # is to be pulled from a field within the json
+                    if feature_classification is not None and feature_classification[0] != '%':
+                        feature.SetField('class', str(feature_classification))
+                    elif feature_classification is not None and feature_classification[0] == '%':
+                        try:
+                            value = str(tr[feature_classification[1:]])
+                        except KeyError:
+                            value = None
+                        feature.SetField('class', value)
+
+                    # Create the feature in the layer
+                    layer.CreateFeature(feature)
+
+                # Cleanup
+                feature = None
+
+    # Update user
+    print("Created %s features" % str(len(layer)))
 
     # Loop through the output file and check for intersecting geometries
     if check_geom_intersect:
@@ -311,6 +384,7 @@ def main(args):
 
         # Update user
         print("Found %s intersecting geometries" % str(intersect_count))
+        print("Datasource now contains %s features" % str(len(layer)))
 
     # Cleanup
     driver = None
