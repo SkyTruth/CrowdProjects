@@ -38,10 +38,10 @@ def print_usage():
     print("  --overwrite -> Overwrite output.shp")
     print("  --class=str -> Add a classification field with a uniform value - use '%<field>' to pull from JSON")
     print("  --of=driver -> Specify output OGR driver - defaults to 'ESRI Shapefile'")
-    print("  --check-intersect    -> Don't check for intersecting geometries")
-    print("  --intersect-keep=str -> Keeps intersecting features based on their classified value")
+    print("  --no-check-intersect    -> Don't check for intersecting geometries")
     print("  --no-split-multi     -> Don't split multi-polygon ponds into single parts")
     print("  --no-compute-area    -> Don't compute each feature's area")
+    print("  --intersect-keep=str -> Keeps intersecting features based on their classified value")
     print("")
     return 1
 
@@ -129,7 +129,7 @@ def main(args):
     feature_classification = None
 
     # Additional processing
-    check_geom_intersect = False
+    check_geom_intersect = True
     check_geom_intersect_keep = None
     split_multi_ponds = True
     compute_pond_area = True
@@ -173,7 +173,7 @@ def main(args):
         # Additional processing
         elif arg == '--check-intersect':
             check_geom_intersect = True
-        elif '--keep-intersect=' in arg:
+        elif '--intersect-keep=' in arg:
             check_geom_intersect_keep = arg.split('=', 1)[1]
 
         # Positional arguments and errors
