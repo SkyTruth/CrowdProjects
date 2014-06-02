@@ -348,9 +348,9 @@ def main(args):
     if output_file is not None and isfile(output_file) and not overwrite_outfile:
         bail = True
         print("ERROR: Output file exists and overwrite=%s: %s" % (str(overwrite_outfile), output_file))
-    elif not os.access(basename(output_file), os.W_OK):
+    elif not os.access(dirname(output_file), os.W_OK):
         bail = True
-        print("ERROR: Need write permission: %s" % basename(output_file))
+        print("ERROR: Need write permission: %s" % dirname(output_file))
 
     # Processing options
     if field_prefix == '':
