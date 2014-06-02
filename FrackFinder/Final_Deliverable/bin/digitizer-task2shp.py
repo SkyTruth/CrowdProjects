@@ -6,6 +6,11 @@ Convert task_run.json from the digitizer app to a pond vector layer
 """
 
 
+# TODO: Add tasks['id']
+# TODO: Add tasks['info']['year']
+# TODO: Add tasks['info']['county']
+
+
 import sys
 import json
 import math
@@ -33,12 +38,11 @@ def print_usage():
     print('Usage: %s [options] task_run.json outfile.shp' % __docname__)
     print("")
     print("Options:")
-    print("  --process-county -> Input task runs have a county attribute")
-    print("  --process-year   -> Input task runs have a year attribute")
+    print("  --process-extra-fields -> Input task runs have attributes from task.json")
     print("  --overwrite -> Overwrite output.shp")
     print("  --class=str -> Add a classification field with a uniform value - use '%<field>' to pull from JSON")
     print("  --of=driver -> Specify output OGR driver - defaults to 'ESRI Shapefile'")
-    print("  --no-check-intersect    -> Don't check for intersecting geometries")
+    print("  --no-check-intersect -> Don't check for intersecting geometries")
     print("  --no-split-multi     -> Don't split multi-polygon ponds into single parts")
     print("  --no-compute-area    -> Don't compute each feature's area")
     print("  --intersect-keep=str -> Keeps intersecting features based on their classified value")
@@ -120,8 +124,7 @@ def main(args):
     #/* ======================================================================= */#
 
     # task_run.json fields
-    process_year = False
-    process_county = False
+    process_extra_fields = False
 
     # Input/output configuration
     overwrite_outfile = False
@@ -133,6 +136,7 @@ def main(args):
     check_geom_intersect_keep = None
     split_multi_ponds = True
     compute_pond_area = True
+    field_prefix = '_t_'
 
     #/* ======================================================================= */#
     #/*     Containers
@@ -157,10 +161,8 @@ def main(args):
             output_driver = arg.split('=', 1)[1]
 
         # Output file options
-        elif arg == '--process-year':
-            process_year = True
-        elif arg == '--process-county':
-            process_county = True
+        elif arg == '--process-extra-fields':
+            process_extra_fields = True
         elif arg == '--overwrite':
             overwrite_outfile = True
         elif '--class=' in arg:
@@ -247,10 +249,12 @@ def main(args):
     field_definitions = [('selection', 254, ogr.OFTString, None),
                          ('task_id', 10, ogr.OFTInteger, None),
                          ('intersect', 1, ogr.OFTInteger, None)]
-    if process_year:
-        field_definitions.append(('year', 10, ogr.OFTInteger, None))
-    if process_county:
+    if process_extra_fields:
+        field_definitions.append(('comp_loc', 254, ogr.OFTString, None))
+        field_definitions.append(('crowd_sel', 254, ogr.OFTString, None))
         field_definitions.append(('county', 254, ogr.OFTString, None))
+        field_definitions.append(('state', 254, ogr.OFTString, None))
+        field_definitions.append(('year', 254, ogr.OFTString, None))
     if feature_classification is not None:
         field_definitions.append(('class', 254, ogr.OFTString, None))
     if compute_pond_area:
@@ -306,10 +310,36 @@ def main(args):
                     feature.SetGeometry(geometry)
                     feature.SetField('selection', selection)
                     feature.SetField('task_id', task_id)
-                    if process_year:
-                        feature.SetField('year', tr['year'])
-                    if process_county:
-                        feature.SetField('county', str(tr['county']))
+
+                    # Get the extra fields
+                    if process_extra_fields:
+                        try:
+                            comp_loc = str(tr[field_prefix + 'info']['comp_loc'])
+                            feature.SetField('comp_loc', comp_loc)
+                        except KeyError:
+                            print("WARNING: No '%scomp_loc' field: %s" % (field_prefix, str(task_id)))
+                        try:
+                            crowd_sel = str(tr[field_prefix + 'info']['crowd_sel'])
+                            feature.SetField('crowd_sel', crowd_sel)
+                        except KeyError:
+                            print("WARNING: No '%scrowd_sel' field for: %s" % (field_prefix, str(task_id)))
+                        try:
+                            county = str(tr[field_prefix + 'info']['county'])
+                            feature.SetField('county', county)
+                        except KeyError:
+                            print("WARNING: No '%scounty' field for: %s" % (field_prefix, str(task_id)))
+                        try:
+                            state = str(tr[field_prefix + 'info']['state'])
+                            feature.SetField('state', state)
+                        except KeyError:
+                            print("WARNING: No '%sstate' field for: %s" % (field_prefix, str(task_id)))
+                        try:
+                            year = str(tr[field_prefix + 'info']['year'])
+                            feature.SetField('year', year)
+                        except KeyError:
+                            print("WARNING: No '%syear' field for: %s" % (field_prefix, str(task_id)))
+
+                    # Compute area
                     if compute_pond_area:
                         feature.SetField('area_m', geometry_area)
 
@@ -331,7 +361,7 @@ def main(args):
                 feature = None
 
     # Update user
-    print("Created %s features" % str(len(layer)))
+    print("Found %s with geometry" % str(len(layer)))
 
     # Loop through the output file and check for intersecting geometries
     if check_geom_intersect:
@@ -351,11 +381,11 @@ def main(args):
             # Make sure we're supposed to process this feature
             p_fid = p_feature.GetFID()
 
-            # If we don't remove from the FID set, then an intersect will always be found
+            # If we don't remove from the FID list, then an intersect will always be found
             del feature_fids[p_fid]
 
             # Loop through all the features we're comparing against and check for intersects
-            for i_feature, i_feature in feature_fids.copy().items():
+            for i_fid, i_feature in feature_fids.items():
 
                 # Prefixes: p=primary i=intersect - primary comes from outer loop
                 p_geom = p_feature.GetGeometryRef()
@@ -378,9 +408,19 @@ def main(args):
                             if p_feature.GetField('class') is i_feature.GetField('class'):
                                 print("WARNING: Could not filter intersect: homogeneous class")
                             elif p_feature.GetField('class') != check_geom_intersect_keep:
-                                layer.DeleteFeature(p_feature.GetFID())
+                                try:
+                                    layer.DeleteFeature(p_feature.GetFID())
+                                except RuntimeError:
+                                    # Multiple intersections can cause a feature to be deleted twice, which is fine,
+                                    # except that a second deletion throws an exception
+                                    pass
                             elif i_feature.GetField('class') != check_geom_intersect_keep:
-                                layer.DeleteFeature(i_feature.GetFID())
+                                try:
+                                    layer.DeleteFeature(i_feature.GetFID())
+                                except RuntimeError:
+                                    # Multiple intersections can cause a feature to be deleted twice, which is fine,
+                                    # except that a second deletion throws an exception
+                                    pass
 
         # Update user
         print("Found %s intersecting geometries" % str(intersect_count))
