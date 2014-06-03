@@ -211,8 +211,8 @@ def main(args):
     feature_classification = None
 
     # Additional processing
-    check_geom_intersect = False
-    check_geom_intersect_keep = False
+    check_geom_intersect = True
+    check_geom_intersect_keep = None
     split_multi_ponds = True
     compute_pond_area = True
     field_prefix = '_t_'
