@@ -33,7 +33,18 @@ __docname__ = basename(__file__)
 ogr.UseExceptions()
 
 
+#/* ======================================================================= */#
+#/*     Define print_usage() function
+#/* ======================================================================= */#
+
 def print_usage():
+
+    """
+    Commandline usage
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
+    """
     print("")
     print('Usage: %s [options] task_run.json outfile.shp' % __docname__)
     print("")
@@ -47,10 +58,26 @@ def print_usage():
     print("  --no-compute-area    -> Don't compute each feature's area")
     print("  --intersect-keep=str -> Keeps intersecting features based on their classified value")
     print("")
+
     return 1
 
 
+#/* ======================================================================= */#
+#/*     Define get_polygon() function
+#/* ======================================================================= */#
+
 def get_polygon(coordinates):
+
+    """
+    Convert a set of coordinates generated in the DartFrog PyBossa application
+    to an OGR Geometry object containing a single polygon
+
+    :param coordinates: coordinates from a PyBossa DartFrog generated task_run
+    :type coordinates: list|tuple
+
+    :return: OGR Geometry object containing a single polygon
+    :rtype: <class 'osgeo.ogr.Geometry'>
+    """
 
     polygon = ogr.Geometry(ogr.wkbPolygon)
     ring = ogr.Geometry(ogr.wkbLinearRing)
@@ -63,7 +90,22 @@ def get_polygon(coordinates):
     return polygon
 
 
+#/* ======================================================================= */#
+#/*     Define get_multipolygon() function
+#/* ======================================================================= */#
+
 def get_multipolygon(shapes_key):
+
+    """
+    Convert a set of coordinates generated in the DartFrog PyBossa application
+    to an OGR Geometry object containing a multipolygon
+
+    :param shapes_key: coordinates from a PyBossa DartFrog generated task_run
+    :type shapes_key: list|tuple
+
+    :return: OGR Geometry object containing a multipolygon
+    :rtype: <class 'osgeo.ogr.Geometry'>
+    """
 
     multipolygon = ogr.Geometry(ogr.wkbMultiPolygon)
     for shape in shapes_key:
@@ -81,10 +123,22 @@ def get_multipolygon(shapes_key):
     return multipolygon
 
 
+#/* ======================================================================= */#
+#/*     Define get_epsg_code() function
+#/* ======================================================================= */#
+
 def get_epsg_code(lat, lng):
 
     """
-    Get the EPSG code from the latitude and longitude
+    Get a UTM EPSG code from the latitude and longitude
+
+    :param lat: point's degree of latitude
+    :type lat: float
+    :param lng: point's degree longitude
+    :type lng: float
+
+    :return: EPSG code
+    :rtype: int
     """
 
     zone = int(math.floor((lng + 180) / 6.0) + 1)
@@ -97,10 +151,22 @@ def get_epsg_code(lat, lng):
     return epsg
 
 
+#/* ======================================================================= */#
+#/*     Define compute_area() function
+#/* ======================================================================= */#
+
 def compute_area(geometry, target_epsg):
 
     """
     Compute a geometry's area in a different projection
+
+    :param geometry: an OGR Geometry object
+    :type geometry: <class 'osgeo.ogr.Geometry'>
+    :param target_epsg:
+    :type target_epsg:
+
+    :return: the input OGR Geometry object with the area field populated
+    :rtype: <class 'osgeo.ogr.Geometry'>
     """
 
     # Generate SRS objects and coordinate transformation
@@ -117,7 +183,20 @@ def compute_area(geometry, target_epsg):
     return geometry.GetArea()
 
 
+#/* ======================================================================= */#
+#/*     Define man() function
+#/* ======================================================================= */#
+
 def main(args):
+
+    """
+    Commandline logic
+
+    :param args: commandline arguments
+    :type args: list|tuple
+    :return: success returns 0 and failure returns 1
+    :rtype: int
+    """
 
     #/* ======================================================================= */#
     #/*     Defaults
@@ -449,6 +528,7 @@ def main(args):
 #/* ======================================================================= */#
 #/*     Command Line Execution
 #/* ======================================================================= */#
+
 if __name__ == '__main__':
 
     # Didn't get enough arguments - print usage
