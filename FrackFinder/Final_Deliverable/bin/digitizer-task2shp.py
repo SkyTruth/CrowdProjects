@@ -132,8 +132,8 @@ def main(args):
     feature_classification = None
 
     # Additional processing
-    check_geom_intersect = True
-    check_geom_intersect_keep = None
+    check_geom_intersect = False
+    check_geom_intersect_keep = False
     split_multi_ponds = True
     compute_pond_area = True
     field_prefix = '_t_'
@@ -176,7 +176,16 @@ def main(args):
         elif arg == '--check-intersect':
             check_geom_intersect = True
         elif '--intersect-keep=' in arg:
+            print("")
+            print("    +--------------------------------------------------------------------------+")
+            print("    |                                                                          |")
+            print("    |    ERROR: Argument '--intersect-keep=str' is currently not functional    |")
+            print("    |                                                                          |")
+            print("    +--------------------------------------------------------------------------+")
+            print("")
             check_geom_intersect_keep = arg.split('=', 1)[1]
+            return 1
+
 
         # Positional arguments and errors
         else:
@@ -418,7 +427,7 @@ def main(args):
                                 try:
                                     layer.DeleteFeature(i_feature.GetFID())
                                 except RuntimeError:
-                                    # Multiple intersections can cause a feature to be deleted twice, which is fine,
+                                    # Multiple intersections can cause a feature to be deleted twice, which is fine
                                     # except that a second deletion throws an exception
                                     pass
 
