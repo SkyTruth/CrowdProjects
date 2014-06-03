@@ -44,6 +44,8 @@ Add/delete fields
 """
 
 
+from __future__ import print_function
+
 import os
 import sys
 import json
@@ -104,11 +106,11 @@ def print_usage():
     print("Usage: %s --help-info [options] input.json output.json" % __docname__)
     print("")
     print("Options:")
-    print("  -e field=val -> Edit a field and set it equal to value")
+    print("  --overwrite  -> Overwrite output file")
+    print("  -a field=val -> Only add a field if it doesn't exist and set it equal to a value")
+    print("  -e field=val -> Edit/add a field and set it equal to a value")
     print("  -r field=new -> Rename a field")
     print("  -d fields    -> Delete field")
-    print("  --overwrite  -> Overwrite output file")
-    print("  --edit-add   -> Do not modify existing fields - only create")
     print("")
 
     return 1
@@ -125,10 +127,89 @@ def print_help():
     """
 
     print("")
-    print("Detailed Help: %s" % __docname__)
+    print("Explanation: %s" % __docname__)
     print("---------------" + "-" * len(__docname__))
-    print("DETAILED HELP")
-    print("")
+    print("""Add, edit, rename, delete, and change the type of fields in a JSON file
+in a user defined order, which allows for on the fly field mapping and copying.
+Processing flags are processed in the order they are discovered, which allows
+the user to do things like rename a field by creating a new field, copying a
+different field's value into it, and then deleting the old field.
+
+NOTE: Currently only top level fields are accessed.  Nested fields are not
+      supported.
+
+
+Edit Field Example
+------------------
+
+If the 'county' field does not already exist in a given JSON object, it
+will be added and set equal to 'Jefferson'.  If it does exist, the value
+will be overwritten as 'Jefferson'.
+
+{0} -e county=Jefferson input.json output.json
+
+Alternatively, this command does the same thing but sets the value equal
+to the string '123'
+
+{0} -e county=123 input.json output.json
+
+Alternatively, this command does the same thing but sets the value equal
+to the integer 123
+
+{0} -e=int county=123 input.json output.json
+
+
+Add Field Example
+-----------------
+
+This command is similar to the edit shown above but ONLY adds the field if
+it does not already exist
+
+{0} -a county=Jefferson input.json output.json
+{0} -a county=123 input.json output.json
+{0} -a=int county=123 input.json output.json
+
+
+Rename Field Example
+--------------------
+
+If the field exists, it is renamed and if it doesn't exist, nothing happens.
+
+{0} -r county=County input.json output.json
+
+
+Delete Field Example
+--------------------
+
+If the field exists, it is deleted and if it doesn't exist, nothing happens.
+
+{0} -d county input.json output.json
+
+
+Copying a Field Value
+---------------------
+
+Field values can be copied into a new field via the edit command and by placing
+a '%' character in front of the value and using a field name for the value
+
+{0} -e NEW_FIELD=%county input.json output.json
+
+
+Copy a Field and Change Type
+
+Same command as above but add a field type to the -e flag
+
+{0} -e=int NEW_FIELD=%county input.json output.json
+
+
+Change a Field's Type
+---------------------
+
+A field's type can be changed with a combination of the above two commands
+
+{0} -e=int field=%field input.json output.json
+
+""".format(__docname__))
 
     return 1
 
@@ -206,8 +287,8 @@ def main(args):
     #/*     Defaults
     #/* ======================================================================= */#
 
+    # Processing options
     overwrite_outfile = False
-    edit_command_adds = False
 
     #/* ======================================================================= */#
     #/*     Containers
@@ -219,6 +300,9 @@ def main(args):
 
     # Retain the processing argument order so processing order can be specified by the user
     processing_chain = []
+
+    # Constrain value_types
+    value_types = ('str', 'int', 'float', None)  # None is default
 
     #/* ======================================================================= */#
     #/*     Parse Arguments
@@ -244,28 +328,45 @@ def main(args):
                 return print_license()
 
             # Processing flags
-            elif arg in ('-e', '-d', '-r'):
+            elif '-e=' in arg or '-a=' in arg or arg in ('-a', '-e', '-d', '-r'):
                 processing_chain.append(arg)
-                i += 1
-                while i < len(args) and args[i][0] != '-':
-                    processing_chain.append(args[i])
-                    i += 1
+                i += 2
+                processing_chain.append(args[i - 1])
 
-            # Additional processing options
-            elif arg in ('--edit-add', '-edit-add'):
+            # Additional options
+            elif arg in ('--overwrite', '-overwrite'):
                 i += 1
-                edit_command_adds = True
+                overwrite_outfile = True
+
+            # Positional arguments and errors
+            else:
+
+                # Catch input file
+                if infile is None:
+                    i += 1
+                    infile = abspath(arg)
+
+                # Catch output file
+                elif outfile is None:
+                    i += 1
+                    outfile = abspath(arg)
+
+                # Catch errors
+                else:
+                    i += 1
+                    arg_error = True
+                    print("ERROR: Invalid argument: %s" % arg)
 
         except IndexError:
+            i += 1
             arg_error = True
             print("ERROR: An argument has invalid parameters")
-
 
     #/* ======================================================================= */#
     #/*     Validate
     #/* ======================================================================= */#
 
-    bail = True
+    bail = False
 
     # Check arguments
     if arg_error:
@@ -286,7 +387,7 @@ def main(args):
     # Check output file
     if outfile is None:
         bail = True
-        print("ERROR: Need an output file: %s" % outfile)
+        print("ERROR: Need an output file")
     elif isfile(outfile) and not overwrite_outfile:
         bail = True
         print("ERROR: Output file exists and overwrite=%s: %s" % (str(overwrite_outfile), outfile))
@@ -298,7 +399,7 @@ def main(args):
         print("ERROR: Need write access for output directory: %s" % dirname(outfile))
 
     # Make sure there's something to process
-    if processing_chain is []:
+    if not processing_chain:
         bail = True
         print("ERROR: No processing flags supplied - nothing to do")
 
@@ -316,6 +417,7 @@ def main(args):
     print("  Found %s records" % len(infile_content))
 
     # Process fields
+    # TODO: Move each processing command into its own function
     print("Processing fields...")
     i = 0
     content_count = len(infile_content)
@@ -325,31 +427,94 @@ def main(args):
             command = processing_chain[i]
 
             # Edit fields
-            if command == '-e':
+            # TODO: Clean up logic for -e/-a
+            if command[:2] in ('-a', '-e'):
+
+                # Configure
+                if command[:2] == '-a':
+                    edit_command_only_adds = True
+                elif command[:2] == '-e':
+                    edit_command_only_adds = False
+
+                # Loop through edits|additions and process
                 i += 1
                 while i < len(processing_chain) and processing_chain[i][0] != '-':
 
                     # Get the parameters
                     field, value = processing_chain[i].split('=', 1)
 
+                    # Check to see if we're forcing an edit type
+                    value_type = None
+                    if '=' in command:
+                        value_type = command.split('=', 1)[1]
+                        if value_type not in value_types:
+                            print("ERROR: Invalid value type: %s" % str(value_type))
+
+                        # Only force the value's type upfront if its not being pulled from a field
+                        if value[0] != '%':
+                            if value_type == 'str':
+                                value = str(value)
+                            elif value_type == 'int':
+                                try:
+                                    value = int(value)
+                                except ValueError:
+                                    print("ERROR: Type '%s' is invalid for value '%s'" % str(value_type), value)
+                                    return 1
+                            elif value_type == 'float':
+                                try:
+                                    value = float(value)
+                                except ValueError:
+                                    print("ERROR: Type '%s' is invalid for value '%s'" % str(value_type), value)
+                                    return 1
+
+                    # Save the original value for when %values are used
+                    original_value = value
+
                     # Update user
-                    print("  Editing: %s -> %s with edit_add=%s" % (field, value, str(edit_command_adds)))
+                    if edit_command_only_adds:
+                        print("  Adding: '%s'='%s'" % (field, str(value)))
+                    else:
+                        print("  Editing: '%s' -> '%s'" % (field, value))
+                    if value_type is not None:
+                        print("           value_type=%s" % str(value_type))
 
                     # Make edits
                     loop_count = 0
                     for item in infile_content:
-                        if edit_command_adds and field not in item:
-                            item[field] = value
+
+                        # Only create the field if
+                        if edit_command_only_adds:
+                            if field not in item:
+                                item[field] = value
                         else:
+                            if value[0] == '%' and value[1:] in item:
+                                value = item[value[1:]]
+                                if value_type is not None:
+                                    try:
+                                        if value_type == 'str':
+                                            value = str(value)
+                                        elif value_type == 'int':
+                                            value = int(value)
+                                        elif value_type == 'float':
+                                            value = float(value)
+                                    except ValueError:
+                                        pass
                             item[field] = value
+
+                        # Reset value to its original value since not all JSON objects are guaranteed to have the field
+                        # This is necessary for %values
+                        value = original_value
 
                         # Print progress
                         loop_count += 1
-                        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(loop_count), str(content_count)))
+                        sys.stdout.write("\r\x1b[K" + "    %s/%s" % (str(loop_count), str(content_count)))
                         sys.stdout.flush()
 
                     # Loop iteration
                     i += 1
+
+                # Formatting
+                print(" - Done")
 
             # Rename fields
             elif command == '-r':
@@ -360,7 +525,7 @@ def main(args):
                     old_name, new_name = processing_chain[i].split('=', 1)
 
                     # Update user
-                    print("  Renaming: %s -> %s" % (old_name, new_name))
+                    print("  Renaming: '%s' -> '%s'" % (old_name, new_name))
 
                     # Do renaming
                     loop_count = 0
@@ -368,15 +533,18 @@ def main(args):
                         if old_name in item:
                             value = item[old_name]
                             item[new_name] = value
-                            del old_name
+                            del item[old_name]
 
                         # Print progress
                         loop_count += 1
-                        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(loop_count), str(content_count)))
+                        sys.stdout.write("\r\x1b[K" + "    %s/%s" % (str(loop_count), str(content_count)))
                         sys.stdout.flush()
 
                     # Loop iteration
                     i += 1
+
+                # Formatting
+                print(" - Done")
 
             # Delete fields
             elif command == '-d':
@@ -386,6 +554,9 @@ def main(args):
                     # Get the parameters
                     delete_field = processing_chain[i]
 
+                    # Update user
+                    print("  Deleting: '%s'" % delete_field)
+
                     # Do deleting
                     loop_count = 0
                     for item in infile_content:
@@ -394,11 +565,14 @@ def main(args):
 
                         # Print progress
                         loop_count += 1
-                        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(loop_count), str(content_count)))
+                        sys.stdout.write("\r\x1b[K" + "    %s/%s" % (str(loop_count), str(content_count)))
                         sys.stdout.flush()
 
                     # Loop iteration
                     i += 1
+
+                # Formatting
+                print(" - Done")
 
             # Catch errors
             else:
