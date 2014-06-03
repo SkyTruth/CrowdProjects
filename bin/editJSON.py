@@ -162,6 +162,10 @@ to the integer 123
 
 {0} -e=int county=123 input.json output.json
 
+This command does the same thing but sets the value equal to the None type
+
+{0} -e=None county=None input.json output.json
+
 
 Add Field Example
 -----------------
@@ -170,8 +174,12 @@ This command is similar to the edit shown above but ONLY adds the field if
 it does not already exist
 
 {0} -a county=Jefferson input.json output.json
+
 {0} -a county=123 input.json output.json
+
 {0} -a=int county=123 input.json output.json
+
+{0} -a=None county=None input.json output.json
 
 
 Rename Field Example
