@@ -243,7 +243,10 @@ def main(args):
         arg_error = True
         print("ERROR: Can't get output file out of arguments")
     else:
-        output_file = input_files[-1]
+        output_file = abspath(input_files.pop(-1))
+
+    # Force input files to use absolute paths
+    input_files = [abspath(i) for i in input_files]
 
     #/* ======================================================================= */#
     #/*     Validate
@@ -313,6 +316,7 @@ def main(args):
 #/* ======================================================================= */#
 #/*     Commandline Execution
 #/* ======================================================================= */#
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         sys.exit(main(sys.argv[1:]))
