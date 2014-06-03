@@ -112,6 +112,10 @@ def print_usage():
     print("  -r field=new -> Rename a field")
     print("  -d fields    -> Delete field")
     print("")
+    print("Additional Options:")
+    print("  Types: str|float|int|None")
+    print("  -a=type field=val -> Add a field, and set it equal to ")
+    print("")
 
     return 1
 
@@ -302,7 +306,7 @@ def main(args):
     processing_chain = []
 
     # Constrain value_types
-    value_types = ('str', 'int', 'float', None)  # None is default
+    value_types = ('str', 'int', 'float', 'None', None)  # 'None' is default
 
     #/* ======================================================================= */#
     #/*     Parse Arguments
@@ -431,6 +435,7 @@ def main(args):
             if command[:2] in ('-a', '-e'):
 
                 # Configure
+                edit_command_only_adds = None
                 if command[:2] == '-a':
                     edit_command_only_adds = True
                 elif command[:2] == '-e':
@@ -444,7 +449,7 @@ def main(args):
                     field, value = processing_chain[i].split('=', 1)
 
                     # Check to see if we're forcing an edit type
-                    value_type = None
+                    value_type = 'None'
                     if '=' in command:
                         value_type = command.split('=', 1)[1]
                         if value_type not in value_types:
@@ -466,6 +471,8 @@ def main(args):
                                 except ValueError:
                                     print("ERROR: Type '%s' is invalid for value '%s'" % str(value_type), value)
                                     return 1
+                            elif value_type == 'None':
+                                value = None
 
                     # Save the original value for when %values are used
                     original_value = value
@@ -475,7 +482,7 @@ def main(args):
                         print("  Adding: '%s'='%s'" % (field, str(value)))
                     else:
                         print("  Editing: '%s' -> '%s'" % (field, value))
-                    if value_type is not None:
+                    if value_type != 'None':
                         print("           value_type=%s" % str(value_type))
 
                     # Make edits
@@ -489,7 +496,7 @@ def main(args):
                         else:
                             if value[0] == '%' and value[1:] in item:
                                 value = item[value[1:]]
-                                if value_type is not None:
+                                if value_type != 'None':
                                     try:
                                         if value_type == 'str':
                                             value = str(value)
@@ -497,6 +504,8 @@ def main(args):
                                             value = int(value)
                                         elif value_type == 'float':
                                             value = float(value)
+                                        elif value_type == 'none':
+                                            value = None
                                     except ValueError:
                                         pass
                             item[field] = value
