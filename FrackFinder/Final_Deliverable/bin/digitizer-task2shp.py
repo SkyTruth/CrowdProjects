@@ -3,6 +3,34 @@
 
 """
 Convert task_run.json from the digitizer app to a pond vector layer
+
+Sample command:
+
+digitizer-task2shp.py \
+
+
+./digitizer-task2shp.py \
+    --process-extra-fields \
+    ../digitizer/2005-2008/Merged_Task_runs.json \
+    ../digitizer/2005-2008/Deliverable_Ponds/Deliverable_Ponds.shp \
+    --overwrite
+
+
+
+
+Mark intersecting task_id's for deletion
+
+CASE WHEN task_id = 104925 THEN 1
+    WHEN task_id = 105634 THEN 1
+    WHEN task_id = 104788 THEN 1
+    WHEN task_id = 104753 THEN 1
+    WHEN task_id = 105642 THEN 1
+    WHEN task_id = 104543 THEN 1
+    WHEN task_id = 105642 THEN 1
+    WHEN task_id = 104486 THEN 1
+    WHEN task_id = 104508 THEN 1
+    WHEN task_id = 104783 THEN 1
+END
 """
 
 
@@ -343,6 +371,7 @@ def main(args):
         field_definitions.append(('county', 254, ogr.OFTString, None))
         field_definitions.append(('state', 254, ogr.OFTString, None))
         field_definitions.append(('year', 254, ogr.OFTString, None))
+        field_definitions.append(('location', 254, ogr.OFTString, None))
     if feature_classification is not None:
         field_definitions.append(('class', 254, ogr.OFTString, None))
     if compute_pond_area:
@@ -426,6 +455,11 @@ def main(args):
                             feature.SetField('year', year)
                         except KeyError:
                             print("WARNING: No '%syear' field for: %s" % (field_prefix, str(task_id)))
+                        try:
+                            location = str(tr[field_prefix + 'info']['location'])
+                            feature.SetField('location', location)
+                        except KeyError:
+                            print("WARNING: No '%slocation' field for: %s" % (field_prefix, str(task_id)))
 
                     # Compute area
                     if compute_pond_area:
