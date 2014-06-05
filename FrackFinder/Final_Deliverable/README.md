@@ -96,9 +96,9 @@ The exported task.json and task_run.json files from each application were stored
 and in the following locations:
 
 
-    First Pass 2005-2010: CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/first-review/task-backup
+    First Pass 2005-2010: CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/task-backup
   
-    Final Pass 2005-2010: CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/task-backup
+    Final Pass 2005-2010: CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/task-backup
 
 
 
@@ -108,15 +108,15 @@ A utility was developed to add all task.json attributes to the accompanying task
 
 First Digitizer
 >        ./CrowdProjects/bin/mergeExport.py \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/first-review/transform/tasks/task.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/first-review/transform/tasks/task_run.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/first-review/transform/tasks-with-added-fields/task_run_added_fields.json
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks/task.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks/task_run.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks-with-added-fields/task_run_added_fields.json
 
 Final Digitizer
 >        ./CrowdProjects/bin/mergeExport.py \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks/task.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks/task_run.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks-with-added-fields/task_run_added_fields.json
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks/task.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks/task_run.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_run_added_fields.json
 
 Additionally, a classification field was added to the task.json and task_run.json to note which digitizer
 it passed through.
@@ -125,25 +125,25 @@ First Digitizer
 >        ./CrowdProjects/bin/editJSON.py \
 >            --overwrite \
 >            -a class=first \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/first-review/transform/tasks-with-added-fields/task_run_added_fields.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/first-review/transform/tasks-with-added-fields/task_run_added_fields.json
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks-with-added-fields/task_run_added_fields.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks-with-added-fields/task_run_added_fields.json
 >
 >        ./CrowdProjects/bin/editJSON.py \
 >            -a class=first \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/first-review/transform/tasks/task.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/first-review/transform/tasks-with-added-fields/task_added_fields.json
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks/task.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks-with-added-fields/task_added_fields.json
 
 Final Digitizer
 >        ./CrowdProjects/bin/editJSON.py \
 >            --overwrite \
 >            -a class=final \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks-with-added-fields/task_run_added_fields.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks-with-added-fields/task_run_added_fields.json
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_run_added_fields.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_run_added_fields.json
 >
 >        ./CrowdProjects/bin/editJSON.py \
 >            -a class=final \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks/task.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks-with-added-fields/task_added_fields.json            
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks/task.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_added_fields.json            
 
 
 
@@ -156,9 +156,9 @@ where digitized ponds will intersect between applications, but the class field t
 the previous step will be used to determine which polygon is kept and which is thrown away.
 
 >        ./CrowdProjects/bin/mergeFiles.py \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks-with-added-fields/task_run_added_fields.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/final-review/transform/tasks-with-added-fields/task_added_fields.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/Merged_Task_runs.json
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_run_added_fields.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_added_fields.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/Merged_Task_runs.json
 
 
 
@@ -171,8 +171,8 @@ copied into the unaltered input geometry.
 
 >        ./CrowdProjects/FrackFinder/Final_Deliverable/bin/digitizer-task2shp.py \
 >            --process-extra-fields \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/Merged_Task_runs.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2008/Deliverable_Ponds/Deliverable_Ponds.shp
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/Merged_Task_runs.json \
+>            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/Deliverable_Ponds/Deliverable_Ponds.shp
 
 
 
