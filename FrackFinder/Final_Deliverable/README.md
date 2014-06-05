@@ -1,10 +1,12 @@
-Deliverable Ponds 2005-2010 Workflow
-====================================
+FrackFinder Deliverable Ponds 2005-2010 Workflow
+================================================
 
 Kevin Wurster - <kevin@skytruth.org>  
 Last updated: June 5, 2014  
 Data Version: 1.0  
 [GitHub Repository](https://github.com/SkyTruth/CrowdProjects)
+
+An explanation of how the ponds delivered to JHU were generated from FrackFinder data
 
 
 
@@ -203,5 +205,25 @@ No issues were encountered.
 
 8. Ship It!
 -----------
+The following fields were removed:
+  
+    selection
+    intersect
+    delete
 
+The following fields were renamed:
+    
+    location -> uid
 
+Leaving the following fields:
+
+    task_id: Integer (10.0) -> The task_id from task_run.json
+    county: String (254.0)  -> County name
+    state: String (254.0)   -> State name
+    year: String (254.0)    -> The year the NAIP the user was looking at to identify ponds was collected 
+    area_m: Real (254.2)    -> Pond area in meters
+    uid: String (254.0)     -> Location key (lat + long + year) - this maps back to previous steps in the processing chain
+
+The shippable ponds are located here:
+
+    CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/Shipped_Ponds/Shipped_Ponds.shp
