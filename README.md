@@ -1,4 +1,4 @@
 CrowdProjects
 =============
 
-Repository for all crowd related utilities, data, and analysis.
+Repository for all crowd sourcing related utilities, data, QAQC, and analyses.
