@@ -1,9 +1,7 @@
 FrackFinder Deliverable Ponds 2005-2010 Workflow
 ================================================
 
-Kevin Wurster - <kevin@skytruth.org>  
-Last updated: June 5, 2014  
-Data Version: 1.0  
+Author: Kevin Wurster - <kevin@skytruth.org>  
 [GitHub Repository](https://github.com/SkyTruth/CrowdProjects)
 
 An explanation of how the ponds delivered to JHU were generated from FrackFinder data
