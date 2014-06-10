@@ -68,7 +68,7 @@ def print_usage():
     print("Options:")
     print("  --help-info  -> Print out a list of help related flags")
     print("  --overwrite  -> Overwrite output files")
-    print("  --prefix=str -> Output filename prefix - defaults to 'MooreFrog-'")
+    print("  --prefix=str -> Output filename prefix - defaults to 'MoorFrog-'")
     print("  --wellpad-file-name=str -> Defaults to 'wellpad.shp")
     print("  --bbox-file-name=str    -> Defaults to 'bbox.shp")
     print("  --clicks-file-name=str  -> Defaults to 'clicks.shp")
@@ -104,7 +104,7 @@ def print_help():
     print("")
     print("%s Detailed Help" % __docname__)
     print("--------------" + "-" * len(__docname__))
-    print("Input is task.json and task_run.json from MooreFrog")
+    print("Input is task.json and task_run.json from MoorFrog")
     print("Output is a set of bounding boxes, well pad points, ")
     print("and pond clicks.")
     print("")
@@ -317,7 +317,7 @@ def main(args):
     task_file_path = None
     task_run_file_path = None
     output_directory = None
-    output_prefix = 'MooreFrog-'
+    output_prefix = 'MoorFrog-'
 
     # Defaults
     overwrite = False

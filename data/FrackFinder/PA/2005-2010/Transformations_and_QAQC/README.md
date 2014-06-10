@@ -37,19 +37,19 @@ None
 
 
 
-MooreFrog - Click on Ponds
+MoorFrog - Click on Ponds
 --------------------------
-Points classified as ponds in Tadpole were given to MooreFrog as input, which asked users to click on all ponds within a 1200 m x 1600 m bounding box, centered on the Tadpole point.  Unfortunately, this bounding box was only provided for reference and was not used to trash clicks outside the bounding box.  The resulting clicks were then clustered into pond points, but the clustering algorithm did have a minimum number of clicks to create a pond point, which means that even single clicks were turned into ponds.
+Points classified as ponds in Tadpole were given to MoorFrog as input, which asked users to click on all ponds within a 1200 m x 1600 m bounding box, centered on the Tadpole point.  Unfortunately, this bounding box was only provided for reference and was not used to trash clicks outside the bounding box.  The resulting clicks were then clustered into pond points, but the clustering algorithm did have a minimum number of clicks to create a pond point, which means that even single clicks were turned into ponds.
 This is important because because it created some rules for sampling.  Any ponds outside the bounding box were completely ignored, and the number of omitted ponds was counted for each scene.
 
 ### Applications ###
 Public
 
 ### Data ###
-Original Tasks: moorefrog/task-backup/
-Shapefiles: moorefrog/transform/stats/
-Additional Layers: moorefrog/layers
-Random Samples: moorefrog/sampling
+Original Tasks: moorfrog/task-backup/
+Shapefiles: moorfrog/transform/stats/
+Additional Layers: moorfrog/layers
+Random Samples: moorfrog/sampling
 NOTE: The additional layers includes the actual user clicks, pads, and bboxes
 
 ### Pre-sampling Filters ###
