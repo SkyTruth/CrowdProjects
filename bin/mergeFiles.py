@@ -227,6 +227,11 @@ def main(args):
             elif arg in ('--license', '-usage'):
                 return print_license()
 
+            # Output options
+            elif arg == '--overwrite':
+                i += 1
+                overwrite_output_file = True
+
             # Positional arguments and errors
             else:
 
@@ -300,7 +305,7 @@ def main(args):
             output_json += content
 
     # Write output file
-    print("Writing output file...")
+    print("Writing output file ...")
     with open(output_file, 'w') as f:
         json.dump(output_json, f)
 
