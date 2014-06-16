@@ -46,7 +46,7 @@ After adding the source field, the data was combined into a single task.json and
 
 These combined files can now be converted into a single shapefile:
 
->       ./bin/tadpole-task2shp.py tasks/combined-task.json tasks/combined-task_run.json transform/stats/moorfrog-stats.shp --class=%ST_source
+>       ./bin/tadpole-task2shp.py tasks/combined-task.json tasks/combined-task_run.json transform/stats/tadpole-stats.shp --class=%ST_source
 
 Field Definitions:
 
@@ -54,6 +54,7 @@ Field Definitions:
 >       site_id  ->  task.json['info']['siteID']
 >       wms_url  ->  URL for appropriate imagery
 >       county  ->  County name
+>       state  ->  State abbreviation
 >       year  ->  Year original permits were created
 >       location  ->  Generated primary key based on lat + long + year
 >       n_unk_res  ->  Number of task runs marked as 'unknown' - task_run.json['info']['selection']  
