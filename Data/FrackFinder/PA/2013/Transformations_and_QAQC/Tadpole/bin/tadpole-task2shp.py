@@ -554,6 +554,7 @@ def main(args):
                           ('site_id', 254, ogr.OFTString),
                           ('wms_url', 254, ogr.OFTString),
                           ('county', 254, ogr.OFTString),
+                          ('state', 254, ogr.OFTString),
                           ('year', 10, ogr.OFTInteger),
                           ('location', 254, ogr.OFTString),
                           ('n_unk_res', 10, ogr.OFTInteger),
@@ -603,24 +604,23 @@ def main(args):
         # First value in the tuple goes into task_attributes, and second references the info block within the task
         # The third value in the tuple is the type object to be used
         task_attributes = {'location': task_location}
-        initial_task_grab = [('id', 'id', str),
+        initial_task_grab = [('id', 'id', int),
                              ('latitude', 'latitude', str),
                              ('longitude', 'longitude', str),
                              ('wms_url', 'url', str),
                              ('county', 'county', str),
+                             ('state', 'state', str),
                              ('site_id', 'siteID', str),
                              ('year', 'year', int)]
+
         for attributes in initial_task_grab:
             attribute_name = attributes[0]
             info_reference = attributes[1]
             type_caster = attributes[2]
-            if attribute_name == 'id':
-                task_attributes['id'] = int(task['id'])
-            else:
-                try:
-                    task_attributes[attribute_name] = type_caster(task['info'][info_reference])
-                except (TypeError, KeyError):
-                    task_attributes[attributes[0]] = None
+            try:
+                task_attributes[attribute_name] = type_caster(task['info'][info_reference])
+            except (TypeError, KeyError):
+                task_attributes[attributes[0]] = None
 
         # Get the crowd selection counts
         crowd_selection_counts = get_crowd_selection_counts(input_task_id, task_runs_json)
@@ -643,6 +643,7 @@ def main(args):
                         ('site_id', task_attributes['site_id']),
                         ('wms_url', task_attributes['wms_url']),
                         ('county', task_attributes['county']),
+                        ('state', task_attributes['state']),
                         ('year', task_attributes['year']),
                         ('location', task_attributes['location']),
                         ('n_unk_res', task_attributes['n_unk_res']),
