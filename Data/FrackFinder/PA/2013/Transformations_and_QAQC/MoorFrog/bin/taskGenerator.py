@@ -48,10 +48,37 @@ Internal Query:
 
 
 Public Query:
-"p_crd_a" >= 70
+"p_crd_a" >= 70 AND "crowd_sel" = 'pad'
 """
 
 
+from __future__ import division
+from __future__ import print_function
+
+import os
+import sys
+import math
+import json
+from pprint import pprint
+from os.path import *
+try:
+    from osgeo import ogr
+except ImportError:
+    import ogr
+
+
+# Make sure OGR and OSR throw exceptions
+ogr.UseExceptions()
+
+
+__docname__ = basename(__file__)
+__all__ = ['print_usage', 'print_help', 'print_license', 'print_help_info', 'print_version', 'main']
+
+
+# Build information
+__author__ = 'Kevin Wurster'
+__release__ = '2014-06-02'
+__version__ = '0.1-dev'
 __license__ = '''
 New BSD License
 
@@ -84,28 +111,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
 
 
-import os
-import sys
-import json
-from os.path import *
-try:
-    from osgeo import ogr
-except ImportError:
-    import ogr
-
-
-__docname__ = basename(__file__)
-__all__ = ['print_usage', 'print_help', 'print_license', 'print_help_info', 'print_version', 'main']
-
-
-# Build information
-__author__ = 'Kevin Wurster'
-__release__ = '2014-06-02'
-__version__ = '0.1-dev'
-
-
 #/* ======================================================================= */#
-#/*     Define print_usage() Function
+#/*     Define print_usage() function
 #/* ======================================================================= */#
 
 def print_usage():
@@ -118,7 +125,7 @@ def print_usage():
     """
 
     print("""
-Usage: %s [options] [input_files.json] output.json
+Usage: %s [options] infile.shp outfile.json
 
 Options:
   --overwrite -> Overwrite output file if it already exists
@@ -128,7 +135,7 @@ Options:
 
 
 #/* ======================================================================= */#
-#/*     Define print_help() Function
+#/*     Define print_help() function
 #/* ======================================================================= */#
 
 def print_help():
@@ -150,7 +157,7 @@ DETAILED HELP
 
 
 #/* ======================================================================= */#
-#/*     Define print_license() Function
+#/*     Define print_license() function
 #/* ======================================================================= */#
 
 def print_license():
@@ -168,7 +175,7 @@ def print_license():
 
 
 #/* ======================================================================= */#
-#/*     Define print_help_info() Function
+#/*     Define print_help_info() function
 #/* ======================================================================= */#
 
 def print_help_info():
@@ -192,7 +199,7 @@ def print_help_info():
 
 
 #/* ======================================================================= */#
-#/*     Define print_version() Function
+#/*     Define print_version() function
 #/* ======================================================================= */#
 
 def print_version():
@@ -209,6 +216,34 @@ def print_version():
     """ % (__docname__, __version__, __release__))
 
     return 1
+
+
+#/* ======================================================================= */#
+#/*     Define get_epsg_code() function
+#/* ======================================================================= */#
+
+def get_utm_epsg(lat, lng):
+
+    """
+    Get a UTM EPSG code from the latitude and longitude
+
+    :param lat: point's degree of latitude
+    :type lat: float
+    :param lng: point's degree longitude
+    :type lng: float
+
+    :return: EPSG code
+    :rtype: int
+    """
+
+    zone = int(math.floor((lng + 180) / 6.0) + 1)
+
+    epsg = 32600 + zone
+
+    if lat < 0:
+        epsg += 100
+
+    return epsg
 
 
 #/* ======================================================================= */#
@@ -231,13 +266,19 @@ def main(args):
     #/*     Defaults
     #/* ======================================================================= */#
 
+    # Bounding box generation - units are METERS
+    bbox_height = 1000
+    bbox_width = 1000
+
     # Additional options
+    add_info_class = None
     overwrite_mode = False
 
     #/* ======================================================================= */#
     #/*     Containers
     #/* ======================================================================= */#
 
+    # Input/output files
     infile = None
     outfile = None
     input_query = None
@@ -273,6 +314,9 @@ def main(args):
                 input_query = args[i - 1]
 
             # Additional options
+            elif '--add-info-class=' in arg:
+                i += 1
+                add_info_class = arg.split('=', 1)[1]
             elif arg in ('--overwrite', '-overwrite'):
                 i += 1
                 overwrite_mode = True
@@ -324,7 +368,7 @@ def main(args):
     if outfile is None:
         bail = True
         print("ERROR: Need an outfile")
-    elif overwrite_mode and isfile(outfile):
+    elif not overwrite_mode and isfile(outfile):
         bail = True
         print("ERROR: Overwrite=%s and outfile exists: %s" % (str(overwrite_mode), outfile))
 
@@ -336,21 +380,88 @@ def main(args):
     #/* ======================================================================= */#
 
     # Load input OGR datasource
+    print("Opening: %s" % infile)
     datasource = ogr.Open(infile)
     layer = datasource.GetLayer()
-    layer.SetAttributeFilter(input_query)
+    if input_query is not None:
+        try:
+            layer.SetAttributeFilter(input_query)
+            print("  Applied attribute filter: %s" % input_query)
+        except RuntimeError:
+            print("ERROR: Invalid query: %s" % input_query)
+            return 1
 
     #/* ======================================================================= */#
     #/*     Process OGR Datasource
     #/* ======================================================================= */#
 
-    task_template = {}
+    print("Processing ...")
+    output_json = []
+    len_layer = len(layer)
+    i = 0
+    for feature in layer:
+
+        # Progress
+        i += 1
+        sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(len_layer)))
+        sys.stdout.flush()
+
+        # Extract the point coordinates
+        geometry = feature.GetGeometryRef()
+        lat = geometry.GetY()
+        lng = geometry.GetX()
+
+        # Compute bounding box
+        N = lat + (bbox_height / 2 / 111111)
+        S = lat - (bbox_height / 2 / 111111)
+        E = lng + (bbox_width / 2 / 111111 / math.cos(math.radians(lat)))
+        W = lng - (bbox_width / 2 / 111111 / math.cos(math.radians(lat)))
+
+        # Construct the bounding box string
+        bbox_string = '%s,%s,%s,%s' % (str(E), str(S), str(W), str(N))  # E, S, W, N
+
+        # Build the task
+        wms_url = feature.GetField('wms_url')
+        wms_layer = wms_url.replace('https://mapsengine.google.com/', '').split('/')[0]
+        wms_version = wms_url.replace('https://mapsengine.google.com/', '').split('/')[-1]
+        task = {'info': {'SiteID': feature.GetField('site_id'),
+                         'bbox': bbox_string,
+                         'county': feature.GetField('county'),
+                         'latitude': lat,
+                         'longitude': lng,
+                         'options': {'layers': wms_layer,
+                                     'version': wms_version},
+                         'state': feature.GetField('state'),
+                         'url': wms_url,
+                         'year': feature.GetField('year')}}
+        if add_info_class is not None:
+            task['info']['class'] = add_info_class
+
+        # Add to output json
+        output_json.append(task)
+
+    # Required formatting due to progress printer
+    print("")
+
+    #/* ======================================================================= */#
+    #/*     Write output JSON file
+    #/* ======================================================================= */#
+
+    print("Writing outfile: %s" % outfile)
+    with open(outfile, 'w') as f:
+        json.dump(output_json, f)
 
     #/* ======================================================================= */#
     #/*     Cleanup
     #/* ======================================================================= */#
 
+    # OGR objects
+    feature = None
+    layer = None
+    datasource = None
+
     # Success
+    print("Done.")
     return 0
 
 
