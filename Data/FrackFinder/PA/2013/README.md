@@ -26,8 +26,10 @@ into MoorFrog input.
 The data was split between two different applications, `public` and `internal`, each containing
 half of the Tadpole input tasks.  Tasks were placed in:
 
->       ./tasks/public/*.json
->       ./tasks/internal/*.json
+>       Transformations_and_QAQC/Tadpole/tasks/public/task.json
+>       Transformations_and_QAQC/Tadpole/tasks/public/task_run.json
+>       Transformations_and_QAQC/Tadpole/tasks/internal/task.json
+>       Transformations_and_QAQC/Tadpole/tasks/internal/task_run.json
 
 
 
@@ -37,19 +39,19 @@ half of the Tadpole input tasks.  Tasks were placed in:
 Since all tasks were only completed in one location, the data can be combined, however we want
 to be able to know where each task came from, so first we have to add a `ST_source` field.
 
->       CrowdProjects/bin/editJSON.py -a ST_source=public tasks/public/task.json tasks/added_fields/public/added-fields-task.json
->       CrowdProjects/bin/editJSON.py -a ST_source=public tasks/public/task_run.json tasks/added_fields/public/added-fields-task_run.json
->       CrowdProjects/bin/editJSON.py -a ST_source=internal tasks/internal/task.json tasks/added_fields/internal/added-fields-task.json
->       CrowdProjects/bin/editJSON.py -a ST_source=internal tasks/internal/task_run.json tasks/added_fields/internal/added-fields-task_run.json
+>       ~/GitHub/CrowdProjects/bin/editJSON.py -a ST_source=public Transformations_and_QAQC/Tadpole/tasks/public/task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task.json
+>       ~/GitHub/CrowdProjects/bin/editJSON.py -a ST_source=public Transformations_and_QAQC/Tadpole/tasks/public/task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task_run.json
+>       ~/CrowdProjects/bin/editJSON.py -a ST_source=internal Transformations_and_QAQC/Tadpole/tasks/internal/task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task.json
+>       ~/CrowdProjects/bin/editJSON.py -a ST_source=internal Transformations_and_QAQC/Tadpole/tasks/internal/task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task_run.json
 
 After adding the source field, the data was combined into a single task.json and task_run.json:
 
->       CrowdProjects/bin/mergeFiles.py tasks/added_fields/public/added-fields-task.json tasks/added_fields/internal/added-fields-task.json tasks/combined-task.json  
->       CrowdProjects/bin/mergeFiles.py tasks/added_fields/public/added-fields-task_run.json tasks/added_fields/internal/added-fields-task_run.json tasks/combined-task_run.json
+>       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task.json Transformations_and_QAQC/Tadpole/tasks/combined-task.json  
+>       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task_run.json Transformations_and_QAQC/Tadpole/tasks/combined-task_run.json
 
 These combined files can now be converted into a single shapefile:
 
->       ./bin/tadpole-task2shp.py tasks/combined-task.json tasks/combined-task_run.json transform/stats/tadpole-stats.shp --class=%ST_source
+>       ./Transformations_and_QAQC/Tadpole/bin/task2shp.py Transformations_and_QAQC/Tadpole/tasks/combined-task.json Transformations_and_QAQC/Tadpole/tasks/combined-task_run.json Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp --class=%ST_source
 
 Field Definitions:
 
@@ -83,24 +85,24 @@ application, yielding `106` samples per application.  Each task in the public ap
 completed 10 times and each task in the internal application was completed 3 times.  PyBossa
 calls this the redundancy.
 
-After exploring the `./transform/stats/moorfrog-stats.shp` file, a sample size of 5% was selected
-based on the fact that `93%` of tasks had an agreement level greater than or equal to 70%, which
-justifies sampling the entire population rather than a subset.
+After exploring the `Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp` file, a
+sample size of 5% was selected based on the fact that `93%` of tasks had an agreement level greater
+than or equal to 70%, which justifies sampling the entire population rather than a subset.
 
 The random sampling tool in `QGIS` was used, however a bug requires a small pre-processing step.
 For some reason the random sampling tool totally ignores any datasource filters, so the data must
 first be queried and saved to a new file before performing the selection.  The queries and output
 files are as follows:
 
->       "class" = 'public'   -> ./sampling/queries/moorfrog-public.shp
->       "class" = 'internal' -> sampling/queries/moorfrog-internal.shp
+>       "class" = 'public'   -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-public.shp
+>       "class" = 'internal' -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-internal.shp
 
 The subsequent files were loaded into `QGIS` and a sample of `5%` for each application was selected
 with the random sampling tool, yielding `106` features for each layer.  The selections were saved
 in the following locations:
 
->       sampling/public/moorfrog-public-5percent-sample.shp
->       sampling/internal/moorfrog-internal-5percent-sample.shp
+>       Transformations_and_QAQC/Tadpole/sampling/public/tadpole-public-5percent-sample.shp
+>       Transformations_and_QAQC/Tadpole/sampling/internal/tadpole-internal-5percent-sample.shp
 
 The samples were then examined one at a time by an operator in order to determine whether they were
 properly classified or not
@@ -119,8 +121,9 @@ were found to be totally ambiguous and the other half were found to be remediate
 The results were examined and show that both the internal and public crowd were overall very
 confident in their selections.  The input tasks for MoorFrog were determined to be as follows:
 
->       "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'"  
->       "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'"
+>       Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp
+>           "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'"
+>           "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'"
 
 
 
@@ -138,14 +141,14 @@ MoorFrog Workflow
 1. Generate Input Tasks
 -----------------------
 
-An explanation of how the input task queries were determined can be found in `2013/Tadpole/README.md`
+An explanation of how the input task queries were determined can be found above in `Tadpole Step 3`
 
 Output from `Tadpole` was processed into a set of input tasks for MoorFrog using the following
 commands:
 
->       ./bin/taskGenerator.py ../Tadpole/transform/stats/tadpole-stats.shp input_tasks/from_internal.json -query "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'" --add-info-class=internal  
->       ./bin/taskGenerator.py ../Tadpole/transform/stats/tadpole-stats.shp input_tasks/from_public.json -query "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'" --add-info-class=public
->       CrowdProjects/bin/mergeFiles.py input_tasks/from_* input_tasks/combined_input_tasks.json
+>       ./Transformations_and_QAQC/MoorFrog/bin/taskGenerator.py Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json -query "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'" --add-info-class=internal  
+>       ./Transformations_and_QAQC/MoorFrog/bin/taskGenerator.py Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json -query "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'" --add-info-class=public
+>       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json
 
 
 
@@ -155,5 +158,5 @@ commands:
 Tasks were loaded with the `createTasks.py` utility, which can be found in the [pybossa_tools](https://github.com/skytruth/pybossa_tools)
 repository.
 
->       createTasks.py 
+>       ~/GitHub/pybossa_tools/createTasks.py 
 
