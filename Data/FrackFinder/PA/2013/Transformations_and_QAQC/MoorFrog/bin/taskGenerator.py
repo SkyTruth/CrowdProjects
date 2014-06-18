@@ -432,7 +432,7 @@ def main(args):
                          'options': {'layers': wms_layer,
                                      'version': wms_version},
                          'state': feature.GetField('state'),
-                         'url': wms_url,
+                         'url': wms_url + '?version=' + wms_version,
                          'year': feature.GetField('year')}}
         if add_info_class is not None:
             task['info']['class'] = add_info_class
