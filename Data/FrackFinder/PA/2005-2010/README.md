@@ -122,7 +122,10 @@ Currently in progress
 
 Additional Notes
 ----------------
-There is a bug in the QGIS random sampling tool that causes it to ignore filters, which creates a problem for our method of sampling every year in every application.  The solution to this problem is to apply the required filters and then save to a new file.  Random samples can then be pulled from this file without issue.
+There is a bug in the QGIS random sampling tool that causes it to ignore filters, which creates
+a problem for our method of sampling every year in every application.  The solution to this
+problem is to apply the required filters and then save to a new file.  Random samples can then
+be pulled from this file without issue.
 
 
 
