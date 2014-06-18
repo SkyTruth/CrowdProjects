@@ -53,6 +53,8 @@ Field Definitions:
 >       id  ->  task.json['id']
 >       site_id  ->  task.json['info']['siteID']
 >       wms_url  ->  URL for appropriate imagery
+>       wms_id  ->  Layer ID/name for NAIP imagery
+>       wms_v  ->  OGC WMS version
 >       county  ->  County name
 >       state  ->  State abbreviation
 >       year  ->  Year original permits were created

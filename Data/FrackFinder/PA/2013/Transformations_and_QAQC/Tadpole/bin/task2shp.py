@@ -553,6 +553,7 @@ def main(args):
     fields_definitions = [('id', 10, ogr.OFTInteger),
                           ('site_id', 254, ogr.OFTString),
                           ('wms_url', 254, ogr.OFTString),
+                          ('wms_id', 254, ogr.OFTString),
                           ('wms_v', 254, ogr.OFTString),
                           ('county', 254, ogr.OFTString),
                           ('state', 254, ogr.OFTString),
@@ -625,6 +626,7 @@ def main(args):
 
         # Get the WMS version
         task_attributes['wms_v'] = str(task['info']['options']['version'])
+        task_attributes['wms_id'] = str(task['info']['options']['layers'])
 
         # Get the crowd selection counts
         crowd_selection_counts = get_crowd_selection_counts(input_task_id, task_runs_json)
@@ -646,6 +648,7 @@ def main(args):
         field_values = [('id', task_attributes['id']),
                         ('site_id', task_attributes['site_id']),
                         ('wms_url', task_attributes['wms_url']),
+                        ('wms_id', task_attributes['wms_id']),
                         ('wms_v', task_attributes['wms_v']),
                         ('county', task_attributes['county']),
                         ('state', task_attributes['state']),
