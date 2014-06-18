@@ -1,23 +1,21 @@
-Workflow
-========
+MoorFrog 2013 Workflow
+======================
 
 Author: Kevin Wurster <kevin@skytruth.org>
 [GitHub Repository](https://github.com/SkyTruth/CrowdProjects)
-Software: QGIS 2.2, GDAL 1.11.0, Python 2.7.7, PyCharm 3.4.1, Mac 10.9.3
-
-An explanation of how input tasks were generated
-
-
 
 ### General Description ###
+
 1. Generate input tasks
 2. Load into application
-3. Classify
+3. Classify ponds
 
 
 
 1. Generate Input Tasks
 -----------------------
+
+An explanation of how the input task queries were determined can be found in `2013/Tadpole/README.md`
 
 Output from `Tadpole` was processed into a set of input tasks for MoorFrog using the following
 commands:
@@ -31,8 +29,8 @@ commands:
 2. Load Tasks
 -------------
 
-Tasks were loaded into a new application with the command listed below.  Note that the [pybossa_tools](https://github.com/skytruth/pybossa_tools)
-suite must be installed.
+Tasks were loaded with the `createTasks.py` utility, which can be found in the [pybossa_tools](https://github.com/skytruth/pybossa_tools)
+repository.
 
 >       createTasks.py 
 
