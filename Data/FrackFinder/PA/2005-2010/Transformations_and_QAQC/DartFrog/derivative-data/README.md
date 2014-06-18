@@ -1,9 +1,4 @@
-Derivative Data Notes
-=====================
-
-Author: Kevin Wurster - <kevin@skytruth.org>
-[GitHub Repository](https://github.com/SkyTruth/CrowdProjects)
-
+Output file descriptions
 
 
 Compiled Output
@@ -17,17 +12,17 @@ generated the EXACT same way the `Compiled_Output.*` data is constructed.
 
 
 
-Compiled Output Data Description
---------------------------------
-
+Compiled Output Description
+---------------------------
 
 ##### General Structure #####
+
 Each row represents one task and each column represents some attribute.  The information in task_run.json
 was analyzed for each task and condensed into a set of attributes that describe the actual input task,
 which in turn describes a pond.
 
-
 ##### Application Prioritization #####
+
 The applications were completed serially and when selecting which attributes to use for a given task, the
 most recent application should always be used. For instance, if a task was only completed in the `public`
 and `sweeper` applications, the final values should be selected from `sweeper application`.  This logic
@@ -39,8 +34,8 @@ was followed in the `dartfrog-taskCompiler.py` utility.  The hierarchy is as fol
 4. First Internal
 5. Public
 
-
 ##### Additional Notes ######
+
 The primary key between any given set of task.json and task_run.json files is the `id` field in the task
 file and the `task_id` in the task run file.  This is fine when working with one application's output but
 creates problems when working across applications.  Since each task represents a pond in space-time, a 
@@ -49,7 +44,6 @@ lat/long precision on the tasks that were moved to the first internal applicatio
 to get a good match, all lat/long values were rounded (via Python's round() function) to the 8th decimal
 place when generating location keys.  This worked, but about 50 ponds have a location that doesn't match
 anything.  Re-processing data with the `dartfrog-taskCompiler.py` utility will produce errors with task ID's.
-
 
 ##### Fields #####
 

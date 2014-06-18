@@ -27,11 +27,12 @@ import os
 import sys
 import json
 import copy
-import inspect
 from os import linesep
-from os.path import isfile
-from os.path import basename
+from os.path import *
 from pprint import pprint
+
+
+__docname__ = basename(__file__)
 
 
 # Global parameters
@@ -41,10 +42,8 @@ VERBOSE = False
 
 # Build information
 __author__ = 'Kevin Wurster'
-__copyright__ = 'Copyright (c) 2014, SkyTruth'
-__version__ = '0.1'
-__release__ = '2014/04/28'
-__docname__ = basename(inspect.getfile(inspect.currentframe()))
+__release__ = '2014-06-17'
+__version__ = '0.1-dev'
 __license__ = """
 Copyright (c) 2014, SkyTruth
 All rights reserved.
@@ -76,82 +75,267 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 
+#/* ======================================================================= */#
+#/*     Define print_usage() function
+#/* ======================================================================= */#
+
 def print_usage():
+
     """
-    Command line usage information
+    Print commandline usage
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
-    print("")
-    print("Usage: %s --help-info [options]" % __docname__)
-    print("")
-    print("Required:")
-    print("    --pt=str    -> Public task.json")
-    print("    --ptr=str   -> Public task_run.json")
-    print("    --fit=str   -> First Internal task.json")
-    print("    --fitr=str  -> First Internal task_run.json")
-    print("    --fint=str  -> Final Internal task.json")
-    print("    --fintr=str -> Final Internal task_run.json")
-    print("    --st=str    -> Sweeper task.json")
-    print("    --str=str   -> Sweeper task_run.json")
-    print("    --co=str    -> Target compiled output.csv")
-    print("    --so=str    -> Target scrubbed output.csv")
-    print("    --cj=str    -> Target compiled output.json")
-    print("")
-    print("Optional:")
-    print("    --sample=int -> Sample number of tasks to process")
-    print("    --validate   -> Perform a time consuming task run validation")
-    print("    --overwrite  -> Overwrite all output files")
-    print("    --verbose    -> Print out additional errors")
-    print("")
+
+    print("""
+Usage: %s --help-info [options]
+
+Required:
+    --pt=str    -> Public task.json
+    --ptr=str   -> Public task_run.json
+    --fit=str   -> First Internal task.json
+    --fitr=str  -> First Internal task_run.json
+    --fint=str  -> Final Internal task.json
+    --fintr=str -> Final Internal task_run.json
+    --st=str    -> Sweeper task.json
+    --str=str   -> Sweeper task_run.json
+    --co=str    -> Target compiled output.csv
+    --so=str    -> Target scrubbed output.csv
+    --cj=str    -> Target compiled output.json
+
+Optional:
+    --sample=int -> Sample number of tasks to process
+    --validate   -> Perform a time consuming task run validation
+    --overwrite  -> Overwrite all output files
+    --verbose    -> Print out additional errors
+""" % __docname__)
+    
     return 1
 
 
-def print_license():
-    """
-    Print out license information
-    """
-    print('\n' + __license__ + '\n')
-    return 1
-
+#/* ======================================================================= */#
+#/*     Define print_help() function
+#/* ======================================================================= */#
 
 def print_help():
+
     """
-    Detailed help information
+    Print more detailed help information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
-    print("")
-    print("%s Detailed Help" % __docname__)
-    print("--------------" + "-" * len(__docname__))
-    print("")
+
+    print("""
+Help: {0}
+------{1}
+Output file descriptions
+
+
+Compiled Output
+---------------
+The `dartfrog-taskCompiler.py` utility analyzes tasks from all applications and constructs a full history
+for each task, in addition to a final set of attributes.  The two `Compiled_Output.*` files contain the full
+history and the `Scrubbed_Output.csv` contains just the final set of attributes, but when using for
+analytical purposes it is probably best to pull this information out of the first several columns in the
+`Compiled_Output.*` files due to how `Scrubbed_Output.csv` is generated.  The data isn't bad, it just isn't
+generated the EXACT same way the `Compiled_Output.*` data is constructed.
+
+
+
+Compiled Output Description
+---------------------------
+
+##### General Structure #####
+
+Each row represents one task and each column represents some attribute.  The information in task_run.json
+was analyzed for each task and condensed into a set of attributes that describe the actual input task,
+which in turn describes a pond.
+
+##### Application Prioritization #####
+
+The applications were completed serially and when selecting which attributes to use for a given task, the
+most recent application should always be used. For instance, if a task was only completed in the `public`
+and `sweeper` applications, the final values should be selected from `sweeper application`.  This logic
+was followed in the `dartfrog-taskCompiler.py` utility.  The hierarchy is as follows:
+
+1. Missing
+2. Sweeper
+3. Final Internal
+4. First Internal
+5. Public
+
+##### Additional Notes ######
+
+The primary key between any given set of task.json and task_run.json files is the `id` field in the task
+file and the `task_id` in the task run file.  This is fine when working with one application's output but
+creates problems when working across applications.  Since each task represents a pond in space-time, a
+unique location key can be generated from lat + long + year.  This works without issue EXCEPT that the
+lat/long precision on the tasks that were moved to the first internal application was altered, so in order
+to get a good match, all lat/long values were rounded (via Python's round() function) to the 8th decimal
+place when generating location keys.  This worked, but about 50 ponds have a location that doesn't match
+anything.  Re-processing data with the `dartfrog-taskCompiler.py` utility will produce errors with task ID's.
+
+##### Fields #####
+
+Note that the fields are the same for each application except for a few characters pre-pended to the field
+name to denote which application they represent
+
+>       -+= Final Attributes =+-
+>
+>       location      ->  Location key as described above - generated on the fly
+>       wms_url       ->  Final selection - WMS URL from task.json
+>       lat           ->  Final selection - degree of latitude from task.json
+>       lng           ->  Final selection - degree of longitude from task.json
+>       year          ->  Final selection - year from task.json
+>       county        ->  Final selection - county name from task.json
+>       comp_loc      ->  Name of application the final attributes were selected from
+>       n_frk_res     ->  Number of times the crowd classified the pond as 'fracking'
+>       n_oth_res     ->  Number of times the crowd classified the pond as 'other'
+>       n_unk_res     ->  Number of times the crowd classified the pond as 'unknown'
+>       n_tot_res     ->  Total number of times a member of the crowd examined the task (AKA the redundancy)
+>       crowd_sel     ->  The classification the crowd chose for the pond
+>
+>
+>       -+= Public Application Attributes =+-
+>
+>       p_crd_a
+>       p_s_crd_a
+>       p_n_frk_res
+>       p_n_oth_res
+>       p_n_unk_res
+>       p_n_tot_res
+>       p_crowd_sel
+>       p_p_crd_a
+>       p_p_s_crd_a
+>
+>
+>       -+= Attributes from the First Internal =+-
+>
+>       fi_n_frk_res
+>       fi_n_oth_res
+>       fi_n_unk_res
+>       fi_n_tot_res
+>       fi_crowd_sel
+>       fi_p_crd_a
+>       fi_p_s_crd_a
+>
+>
+>       -+= Attributes from the Final Internal Application =+->
+>
+>       fn_n_frk_res
+>       fn_n_oth_res
+>       fn_n_unk_res
+>       fn_n_tot_res
+>       fn_crowd_sel
+>       fn_p_crd_a
+>       fn_p_s_crd_a
+>
+>
+>       -+= Attributes from the Sweeper Internal Application =+->
+>
+>       sw_n_frk_res
+>       sw_n_oth_res
+>       sw_n_unk_res
+>       sw_n_tot_res
+>       sw_crowd_sel
+>       sw_p_crd_a
+>       sw_p_s_crd_a
+>
+>
+>       -+= Attributes from the Missing Internal Application =+->
+>
+>       mt_n_frk_res
+>       mt_n_oth_res
+>       mt_n_unk_res
+>       mt_n_tot_res
+>       mt_crowd_sel
+>       mt_p_crd_a
+>       mt_p_s_crd_a
+
+    """.format(__docname__, '-' * len(__docname__)))
+
     return 1
 
 
+#/* ======================================================================= */#
+#/*     Define print_license() function
+#/* ======================================================================= */#
+
+def print_license():
+
+    """
+    Print licensing information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
+    """
+
+    print(__license__)
+
+    return 1
+
+
+#/* ======================================================================= */#
+#/*     Define print_help_info() function
+#/* ======================================================================= */#
+
 def print_help_info():
+
     """
     Print a list of help related flags
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
+
     print("")
     print("Help flags:")
     print("  --help    -> More detailed description of this utility")
     print("  --usage   -> Arguments, parameters, flags, options, etc.")
     print("  --version -> Version and ownership information")
     print("  --license -> License information")
-    print("  ")
+    print("")
+
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define print_version() function
+#/* ======================================================================= */#
 
 def print_version():
+
     """
-    Print script version information
+    Print the module version information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
-    print("")
-    print('%s version %s - released %s' % (__docname__, __version__, __release__))
-    print(__copyright__)
-    print("")
+
+    print("""
+%s version %s - released %s"
+    """ % (__docname__, __version__, __release__))
+
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define get_crowd_selection() function
+#/* ======================================================================= */#
 
 def get_crowd_selection(selection_count, selection_map):
     """
     Figure out what the crowd actually selected
+
+    :param selection_count: number of responses per selection
+    :type selection_count: dict
+    :param selection_map: maps selections to output fields
+    :type selection_map: dict
+
+    :return: the response with the most selections or tied responses separated by |
+    :rtype: str|None
     """
 
     # Cache containers
@@ -175,9 +359,24 @@ def get_crowd_selection(selection_count, selection_map):
     return crowd_selection
 
 
+#/* ======================================================================= */#
+#/*     Define get_crowd_selection_counts() function
+#/* ======================================================================= */#
+
 def get_crowd_selection_counts(input_id, task_runs_json_object, location):
+
     """
     Figure out how many times the crowd selected each option
+
+    :param input_id: task.json['id']
+    :type input_id: int
+    :param task_runs_json_object: task runs from json.load(open('task_run.json'))
+    :type task_runs_json_object: list
+    :param location: unique location key (lat + long + year)
+    :type location: str
+
+    :return: number of times the crowd selected each classification for a given task
+    :rtype: dict
     """
 
     global VERBOSE
@@ -215,13 +414,32 @@ def get_crowd_selection_counts(input_id, task_runs_json_object, location):
         if VERBOSE:
             print("  -  No task runs in get_crowd_selection_counts(): %s" % location)
         ERROR_COUNT += 1
+
     return copy.deepcopy(counts)
 
+
+#/* ======================================================================= */#
+#/*     Define get_percent_crowd_agreement() function
+#/* ======================================================================= */#
 
 def get_percent_crowd_agreement(crowd_selection, selection_counts, total_responses, map_selection_field,
                                 error_val=None):
     """
     Figure out how well the crowd agreed and if two answers tied, figure out the agreement for both
+
+    :param crowd_selection:
+    :type crowd_selection: str
+    :param selection_counts:
+    :type selection_counts:
+    :param total_responses:
+    :type total_responses:
+    :param map_selection_field:
+    :type map_selection_field:
+    :param error_val:
+    :type error_val:
+
+    :return: crowd agreement level rounded by forcing to int()
+    :rtype: int|None
     """
 
     # Compute crowd agreement
@@ -268,10 +486,20 @@ def get_percent_crowd_agreement(crowd_selection, selection_counts, total_respons
     return copy.deepcopy(o_dict)
 
 
+#/* ======================================================================= */#
+#/*     Define get_locations() function
+#/* ======================================================================= */#
+
 def get_locations(tasks):
 
     """
     Get a list of unique locations from a set of tasks
+
+    :param tasks: tasks from json.load(open('task.json'))
+    :type tasks: list
+
+    :return: unique list of locations, which will be used as a primary key to link everything together
+    :rtype: list
     """
 
     output_set = []
@@ -285,10 +513,22 @@ def get_locations(tasks):
     return list(set(output_set))
 
 
+#/* ======================================================================= */#
+#/*     Define get_task_runs() function
+#/* ======================================================================= */#
+
 def get_task_runs(task_id, task_runs_json):
 
     """
     Search through all task runs to get the set matching the input task id
+
+    :param task_id: task.json['id'] for the task we want the associated task runs for
+    :type task_id: int
+    :param task_runs_json: task runs from json.load(open('task_run.json'))
+    :type task_runs_json: list
+
+    :return: all task runs where task_run.json['task_id'] == :param task_id:
+    :rtype: list
     """
 
     output_list = []
@@ -299,21 +539,61 @@ def get_task_runs(task_id, task_runs_json):
     return output_list
 
 
+#/* ======================================================================= */#
+#/*     Define load_json() function
+#/* ======================================================================= */#
+
 def load_json(input_file):
 
     """
     Load a JSON file into a JSON object
+
+    :param input_file:
+    :type input_file:
+
+    :return: loaded JSON object
+    :rtype: list
     """
 
     with open(input_file, 'r') as f:
         output_json = json.load(f)
+
     return output_json
 
+
+#/* ======================================================================= */#
+#/*     Define analyze_tasks() function
+#/* ======================================================================= */#
 
 def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key, sample=None):
 
     """
-    Do DartFrog specific stuff
+    Create a dictionary with a location as a key and task stats as values,
+    which includes the number of times each task was responded to, how many
+    times a given classification was chosen, etc.
+
+    The locations parameter is updated with information from the tasks
+    parameter and task_runs parameter and then returned at the very end of
+    the function.
+
+    The actual use case is calling the function multiple times, once with data
+    from each application, in order to reconstruct each task's history.
+
+    :param locations:
+    :type locations: dict
+    :param tasks:
+    :type tasks: list
+    :param task_runs:
+    :type task_runs: list
+    :param comp_loc: application being processed
+    :type comp_loc: str
+    :param comp_key: used to reference task attributes for specific applications
+    :type comp_key: str
+    :param sample: sub-sample size
+    :type sample: int
+
+    :return:
+    :rtype:
     """
 
     global VERBOSE
@@ -397,10 +677,28 @@ def analyze_tasks(locations, tasks, task_runs, comp_loc, comp_key, sample=None):
     return copy.deepcopy(locations)
 
 
+#/* ======================================================================= */#
+#/*     Define is_location_complete() function
+#/* ======================================================================= */#
+
 def is_location_complete(location, tasks, task_runs):
 
     """
-    Figure out if a given location was completed in a given tas/task_run set
+    Figure out if a given location was fully completed in a given task/task_run set
+
+    Determined by sifting through the tasks to find the location's redundancy
+    and then sifting through the task_runs to see if there are enough task runs
+    to say the task has been completed.
+
+    :param location: the location primary key (lat + long + year)
+    :type location: str
+    :param tasks: tasks from json.load(open('task.json'))
+    :type tasks: list
+    :param task_runs: task runs from json.load(open('task_run.json'))
+    :type task_runs: list
+
+    :return: True if complete and False if not
+    :rtype: bool
     """
 
     # Translate location to a task.json ID
@@ -419,20 +717,36 @@ def is_location_complete(location, tasks, task_runs):
             return True
 
 
+#/* ======================================================================= */#
+#/*     Define main()
+#/* ======================================================================= */#
+
 def main(args):
 
     """
-    Main routine
+    Commandline logic
+
+    :param args: commandline arguments from sys.argv[1:]
+    :type args: list|tuple
+
+    :return: 0 on success and 1 on failure
+    :rtype: int
     """
 
     global VERBOSE
 
-    # Default
+    #/* ======================================================================= */#
+    #/*     Defaults
+    #/* ======================================================================= */#
+
     overwrite_outfiles = False
     sample_size = None
     validate_tasks = False
 
-    # Containers for storing input and output files
+    #/* ======================================================================= */#
+    #/*     Containers
+    #/* ======================================================================= */#
+
     compiled_output_csv_file = None
     compiled_output_json_file = None
     scrubbed_output_csv_file = None
@@ -447,7 +761,10 @@ def main(args):
     missing_tasks_file = None
     missing_task_runs_file = None
 
-    # Parse arguments
+    #/* ======================================================================= */#
+    #/*     Parse Arguments
+    #/* ======================================================================= */#
+
     arg_error = False
     for arg in args:
 
@@ -528,7 +845,9 @@ def main(args):
             print("ERROR: Invalid argument: %s" % arg)
             arg_error = True
 
-    # == Validate Parameters == #
+    #/* ======================================================================= */#
+    #/*     Validate Input/Output Files and Configurations
+    #/* ======================================================================= */#
 
     # Check make sure files do/don't exist and that all parameters are appropriate
     bail = False
@@ -586,10 +905,13 @@ def main(args):
     if missing_task_runs_file is None or not os.access(missing_task_runs_file, os.R_OK):
         print("ERROR: Can't access missing task runs: %s" % missing_task_runs_file)
         bail = True
+
     if bail:
         return 1
 
-    # == Load Data == #
+    #/* ======================================================================= */#
+    #/*     Load Data
+    #/* ======================================================================= */#
 
     # Public task.json
     print("Loading public tasks: %s" % public_tasks_file)
@@ -641,7 +963,9 @@ def main(args):
     missing_task_runs = load_json(missing_task_runs_file)
     print("  %s" % str(len(missing_task_runs)))
 
-    # == Get a set of locations to analyze == #
+    #/* ======================================================================= */#
+    #/*     Get Locations to Analyze
+    #/* ======================================================================= */#
 
     # Get list
     print("Getting list of unique locations...")
@@ -698,7 +1022,10 @@ def main(args):
         print("  Missing Sweeper: %s" % str(sw_missing))
         print("  Missing missing: %s" % str(mt_missing))
 
-    # Validate task runs
+    #/* ======================================================================= */#
+    #/*     Get Task Runs to Analyze
+    #/* ======================================================================= */#
+
     if validate_tasks:
         locations_no_task_runs = []
         p_missing = 0
@@ -751,6 +1078,13 @@ def main(args):
             print("  Missing internal with no task runs: %s" % str(mt_missing))
             print("  Total unique with locations no task runs: %s " % str(len(locations_no_task_runs)))
 
+        #/* ======================================================================= */#
+        #/*     Extra location/task run check
+        #/* ======================================================================= */#
+
+        # This was used to work out some inherent weirdness in the data so another
+        # part of the utility could be developed
+
         # Figure out if a location with no task runs was actually completed somewhere
         still_bad = []
         print("Looking for locations without task runs in public...")
@@ -779,6 +1113,12 @@ def main(args):
                 if not is_location_complete(location, missing_tasks, missing_task_runs):
                     still_bad.append(location)
         print("  Still bad: %s" % len(still_bad))
+
+    #/* ======================================================================= */#
+    #/*     Build Master Location Container
+    #/* ======================================================================= */#
+
+    # The container constructed below will be used to reconstruct a given task's full history
 
     # Convert the location list into a dictionary based on the templates below
     stats_template = {'n_unk_res': None,
@@ -810,7 +1150,9 @@ def main(args):
     for location in location_list:
         locations[location] = copy.deepcopy(location_template)
 
-    # == Analyze Tasks == #
+    #/* ======================================================================= */#
+    #/*     Analyze Tasks
+    #/* ======================================================================= */#
 
     # Public tasks
     locations = analyze_tasks(locations, public_tasks, public_task_runs,
@@ -832,13 +1174,17 @@ def main(args):
     locations = analyze_tasks(locations, missing_tasks, missing_task_runs,
                               'missing_internal', 'mt_intern', sample=sample_size)
 
-    # == Write the Compiled JSON Output == #
+    #/* ======================================================================= */#
+    #/*     Write Compiled Output JSON
+    #/* ======================================================================= */#
 
     print("Writing compiled JSON output...")
     with open(compiled_output_json_file, 'w') as f:
         json.dump(locations, f)
 
-    # == Write the Scrubbed CSV Output == #
+    #/* ======================================================================= */#
+    #/*     Write Scrubbed Output CSV
+    #/* ======================================================================= */#
 
     # Convert compiled output to lines
     header = ['location', 'wms_url', 'lat', 'lng', 'year', 'county', 'comp_loc', 'n_frk_res', 'n_oth_res',
@@ -863,7 +1209,9 @@ def main(args):
         for line in scrubbed_lines:
             f.write(','.join(line) + linesep)
 
-    # == Write the Compiled Output CSV == #
+    #/* ======================================================================= */#
+    #/*     Write Compiled Output CSV
+    #/* ======================================================================= */#
 
     # Define the header and output container
     compiled_lines = []
@@ -945,12 +1293,29 @@ def main(args):
         for line in compiled_lines:
             f.write(','.join(line) + linesep)
 
-    # Success
+    #/* ======================================================================= */#
+    #/*     Cleanup
+    #/* ======================================================================= */#
+
+    # Update user
     if VERBOSE:
         print("Total errors: %s" % str(ERROR_COUNT))
     print("Done.")
+
+    # Success
     return 0
 
 
+#/* ======================================================================= */#
+#/*     Commandline Execution
+#/* ======================================================================= */#
+
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+
+    # Didn't get enough arguments - print usage and exit
+    if len(sys.argv) is 1:
+        sys.exit(print_usage())
+
+    # Got enough arguments - give sys.argv[1:] to main()
+    else:
+        sys.exit(main(sys.argv[1:]))
