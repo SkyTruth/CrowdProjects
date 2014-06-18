@@ -44,11 +44,11 @@ Generate MoorFrog input tasks from Tadpole output
 
 
 Internal Query:
-"p_crd_a" >= 66 AND "crowd_sel" = 'pad'
+"p_crd_a" >= 66 AND "crowd_sel" = 'pad' AND "class" = 'public'
 
 
 Public Query:
-"p_crd_a" >= 70 AND "crowd_sel" = 'pad'
+"p_crd_a" >= 70 AND "crowd_sel" = 'pad' AND "class" = 'public'
 """
 
 
@@ -72,12 +72,12 @@ ogr.UseExceptions()
 
 
 __docname__ = basename(__file__)
-__all__ = ['print_usage', 'print_help', 'print_license', 'print_help_info', 'print_version', 'main']
+__all__ = ['print_usage', 'print_help', 'print_license', 'print_help_info', 'print_version', 'get_utm_epsg', 'main']
 
 
 # Build information
 __author__ = 'Kevin Wurster'
-__release__ = '2014-06-02'
+__release__ = '2014-06-17'
 __version__ = '0.1-dev'
 __license__ = '''
 New BSD License
@@ -412,18 +412,18 @@ def main(args):
         lng = geometry.GetX()
 
         # Compute bounding box
-        N = lat + (bbox_height / 2 / 111111)
-        S = lat - (bbox_height / 2 / 111111)
-        E = lng + (bbox_width / 2 / 111111 / math.cos(math.radians(lat)))
-        W = lng - (bbox_width / 2 / 111111 / math.cos(math.radians(lat)))
+        east = lng + (bbox_width / 2 / 111111 / math.cos(math.radians(lat)))
+        south = lat - (bbox_height / 2 / 111111)
+        north = lat + (bbox_height / 2 / 111111)
+        west = lng - (bbox_width / 2 / 111111 / math.cos(math.radians(lat)))
 
         # Construct the bounding box string
-        bbox_string = '%s,%s,%s,%s' % (str(E), str(S), str(W), str(N))  # E, S, W, N
+        bbox_string = '%s,%s,%s,%s' % (str(west), str(south), str(east), str(north))  # W, S, E, N
 
         # Build the task
         wms_url = feature.GetField('wms_url')
         wms_version = feature.GetField('wms_v')
-        wms_layer = wms_url.replace('https://mapsengine.google.com/', '').split('/')[0]
+        wms_layer = feature.GetField('wms_id')
         task = {'info': {'SiteID': feature.GetField('site_id'),
                          'bbox': bbox_string,
                          'county': feature.GetField('county'),
