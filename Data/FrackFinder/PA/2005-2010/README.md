@@ -1,6 +1,225 @@
 FrackFinder PA 2005-2010
 ========================
 
+Author: Kevin Wurster - <kevin@skytruth.org>
+
+An explanation of how data flowed from application to application
+
+
+
+Source Data Procurement
+=======================
+
+##### General Description #####
+
+1. Locate source data
+2. Scrape and process source data
+3. Load tasks
+4. Classify
+
+
+1. Locate Source Data
+---------------------
+
+**TODO: Explain**
+
+
+2. Scrape and Process Source Data
+---------------------------------
+
+**TODO: Explain**
+
+
+
+Tadpole Workflow
+================
+
+##### General Description #####
+
+1. Generate tasks and load tasks
+2. Classify
+3. Export data
+4. Transform data
+5. Sample/QAQC
+
+
+1. Generate and Load Tasks
+--------------------------
+
+**TODO: Explain**
+
+
+2. Classify
+-----------
+
+**TODO: Explain**
+
+
+3. Export Data
+--------------
+
+All tasks were completed by the public in a single applications.  The tasks and task runs
+were downloaded and stored in the following locations:
+
+>       Transformations_and_QAQC/Tadpole/tasks/task.json
+>       Transformations_and_QAQC/Tadpole/tasks/task_run.json
+
+
+4. Transform Data
+-----------------
+
+The data needs to be converted to a spatial format in order to perform analyses and better
+understand how one feature relates to another.  The `task2shp.py` utility performs all
+necessary conversions and task/task run aggregation.  In general, the output is a an ESRI
+Shapefile with one feature per task and a set of attributes collected from the associated
+task runs.  Transformations were performed with the following command:
+
+>       ./Transformations_and_QAQC/Tadpole/bin/task2shp.py Transformations_and_QAQC/Tadpole/tasks/task.json Transformations_and_QAQC/Tadpole/tasks/task_run.json Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp
+
+The resulting file contains the following fields:
+
+>       id         ->  Task's ID as assigned by PyBossa
+>       site_id    ->  SkyTruth assigned unique site ID
+>       wms_url    ->  Link to image scene
+>       county     ->  County name
+>       year       ->  Imagery year
+>       location   ->  Generated unique ID (lat + long + year)
+>       n_unk_res  ->  Number of task runs where task was classified as 'unknown'
+>       n_nop_res  ->  Number of task runs where task was classified as 'nopad'
+>       n_eqp_res  ->  Number of task runs where task was classified as 'unknown'
+>       n_emp_res  ->  Number of task runs where task was classified as 'empty'
+>       n_tot_res  ->  Number of times this task was completed
+>       crowd_sel  ->  Classification with the highest number of selections or class1|class2|etc. for ties
+>       qaqc       ->  Used in the manual QAQC process
+>       p_crd_a    ->  Percent of the crowd's responses that matched the crowd_sel field
+>       p_s_crd_a  ->  Percentages for crowd_sel ties percent1|percent2|etc. or NULL if there was no tie
+
+
+5. Sample/QAQC
+--------------
+
+A random sample of 100 sites was taken from each year (2005, 2008, 2010) and manually classified
+by an operator using `QGIS 2.2` and the same imagery displayed in the PyBossa application.  There
+is a bug in QGIS's random sampling tool that ignores any filters applied to the input datasource
+so the filters must be applied and then the data must be exported to a new file, from which a
+random sample can be selected.  Queries and exports were performed in QGIS.  All queries were
+performed on Tadpole stats layer:
+
+>       Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp
+>           "year" = 2005 -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2005.shp
+>           "year" = 2008 -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2008.shp 
+>           "year" = 2010 -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2010.shp 
+
+### 2005 Results ###
+
+2 disagreements were found, one of which was caused by the crowd preferring two
+classifications an equal number of times, and the other was caused by ambiguity in the imagery.
+
+### 2008 Results ###
+
+4 disagreements were found, which were all caused by ambiguity in the imagery.
+
+### 2010 Results ###
+
+6 disagreements were found, about half of which were caused by the crowd preferring two
+classifications an equal number of times.  The other half were related to empty vs. equipment vs.
+nopad ambiguity caused by compressed NAIP used in the application.
+
+
+
+MoorFrog Workflow
+=================
+
+##### General Description #####
+
+1. Identify input tasks
+2. Generate and load tasks
+3. Classify
+4. Export data
+5. Transform data
+6. Sample/QAQC
+
+
+1. Identify Input Tasks
+-----------------------
+
+**TODO: Explain**
+
+
+2. Generate and Load Tasks
+--------------------------
+
+**TODO: Explain**
+
+
+3. Classify
+-----------
+
+**TODO: Explain**
+
+
+4. Export Data
+--------------
+
+All tasks were completed by the public in a single applications.  The tasks and task runs
+were downloaded and stored in the following locations:
+
+>       Transformations_and_QAQC/MoorFrog/tasks/task.json
+>       Transformations_and_QAQC/MoorFrog/tasks/task_run.json
+
+
+5. Transform Data
+-----------------
+
+MoorFrog's `task2shp.py` utility produces all necessary derivative datasets and aggregations
+with a single command.  The MoorFrog tasks have a well pad point, bounding box, and task runs
+containing the user's clicks.  The output files include the following layers: bounding boxes,
+pond clicks, and well pad points.  The following command produces all data:
+
+>       ./Transformations_and_QAQC/MoorFrog/bin/task2shp.py Transformations_and_QAQC/MoorFrog/tasks/task.json Transformations_and_QAQC/MoorFrog/tasks/task_run.json Transformations_and_QAQC/MoorFrog/transform/
+
+Output fields: `Transformations_and_QAQC/MoorFrog/transform/MoorFrog-bbox.shp`
+
+>       id        ->  Task's ID as assigned by PyBossa  
+>       site_id   ->  SkyTruth assigned unique site ID
+>       location  ->  Generated primary key (lat + long + year)
+>       wms_url   ->  Link to imagery required for this task
+>       county    ->  County name
+>       year      ->  Imagery year
+>       qaqc      ->  Used in manual QAQC
+
+Output fields: `Transformations_and_QAQC/MoorFrog/transform/MoorFrog-clicks.shp`
+
+>       id       ->  Task's ID as assigned by PyBossa
+>       task_id  ->  PyBossa assigned task_id from task_run.json (matches task.json['id'])
+>       year     ->  Imagery year
+>       qaqc     ->  Used in manual QAQC
+
+Output fields: `Transformations_and_QAQC/MoorFrog/transform/MoorFrog-wellpads.shp`
+
+>       id        ->  Task's ID as assigned by PyBossa  
+>       site_id   ->  SkyTruth assigned unique site ID
+>       location  ->  Generated primary key (lat + long + year)
+>       wms_url   ->  Link to imagery required for this task
+>       county    ->  County name
+>       year      ->  Imagery year
+>       qaqc      ->  Used in manual QAQC
+
+
+6. Sample/QAQC
+--------------
+
+When examining a MoorFrog task, the user was asked to click on all the ponds located within
+the bounding box.  In order to determine how well the crowd performed a random sample of
+100 bounding boxes per year (2005, 2008, 2010) were extracted and manually examined by an
+operator who was looking for missed ponds.  Some user's clicked outside of the bounding box,
+which was not a part of the instructions so these clicks were thrown away. Any pond (fracking
+or otherwise) within the bounding box that was not clicked on at least was once considered
+omitted.  The operator created a new Shapefile containing one point per missed pond.
+
+The QGIS bug explained and addressed in the `Tadpole Sample/QAQC` section was accounted for
+when creating sample tasks:
+
 
 
 
@@ -16,25 +235,6 @@ General Description
 
 
 
-Tadpole - Identify Wellpads
----------------------------
-Manually examined 100 sample sites in each year from each year by loading the data into QGIS and manually examining each site
-
-### Applications ###
-Public
-
-### Data ###
-Original Tasks: tadpole/task-backup
-Shapefiles: tadpole/transform/stats
-Random Samples: tadpole/sampling
-
-### Pre-sampling Filters ###
-None
-
-### Results ###
-2005 - 6 disagreements
-2008 - 4 disagreements
-2010 - 2 disagreements
 
 
 
@@ -177,8 +377,10 @@ contained ponds with the following characteristics: ponds that were skipped and 
 key.  The 181 ponds marked for re-examination were loaded and examined by a panel without issue.
 
 The PyBossa applications are as follows:  
-[First Digitizer](http://crowd.dev.skytruth.org/app/frackfinder_pa_digitizer-pond/)  
-[Final Digitizer](http://crowd.dev.skytruth.org/app/digitizer_pond_2005-2010_final-review/)  
+
+    * [First Digitizer](http://crowd.dev.skytruth.org/app/frackfinder_pa_digitizer-pond/)  
+    * [Final Digitizer](http://crowd.dev.skytruth.org/app/digitizer_pond_2005-2010_final-review/)  
+
 Only the task_run.json file from the first digitizer exhibits inconsistencies.  The output from the final
 application uses the patched structure.
 

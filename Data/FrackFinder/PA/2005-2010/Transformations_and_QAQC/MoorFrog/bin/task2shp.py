@@ -1,6 +1,64 @@
 #!/usr/bin/env python
 
 
+# This document is part of CrowdProjects
+# https://github.com/skytruth/CrowdProjects
+
+
+# =========================================================================== #
+#
+#  Copyright (c) 2014, SkyTruth
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
+#
+#  * Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+#  * Neither the name of the {organization} nor the names of its
+#  contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+#
+# =========================================================================== #
+
+
+"""
+Convert a FrackFinder MoorFrog 2005-2010 JSON export to three layers:
+bounding boxes, pond clicks, and well pad points
+"""
+
+
+import os
+import sys
+import json
+from os import sep
+from os.path import *
+try:
+    from osgeo import ogr
+    from osgeo import osr
+except ImportError:
+    import ogr
+    import osr
+
+
+#/* ======================================================================= */#
+#/*     Build Information
+#/* ======================================================================= */#
+
+__author__ = 'Kevin Wurster'
+__version__ = '0.1-dev'
+__release__ = '2014-06-19'
+__docname__ = basename(__file__)
 __license__ = """
 Copyright (c) 2014, SkyTruth
 All rights reserved.
@@ -32,62 +90,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 
-import os
-import sys
-import json
-import inspect
-from os import sep
-from os.path import isfile
-from os.path import basename
-
-try:
-    from osgeo import ogr
-    from osgeo import osr
-except ImportError:
-    import ogr
-    import osr
-
-
-# Build information
-__author__ = 'Kevin Wurster'
-__copyright__ = 'Copyright (c) 2014, SkyTruth'
-__version__ = '0.1'
-__release__ = '2014/04/23'
-__docname__ = basename(inspect.getfile(inspect.currentframe()))
-
+#/* ======================================================================= */#
+#/*     Define print_usage() function
+#/* ======================================================================= */#
 
 def print_usage():
 
     """
     Command line usage information
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("Usage: %s [options] task.json task_run.json output/directory" % __docname__)
-    print("")
-    print("Options:")
-    print("  --help-info  -> Print out a list of help related flags")
-    print("  --overwrite  -> Overwrite output files")
-    print("  --prefix=str -> Output filename prefix - defaults to 'MoorFrog-'")
-    print("  --wellpad-file-name=str -> Defaults to 'wellpad.shp")
-    print("  --bbox-file-name=str    -> Defaults to 'bbox.shp")
-    print("  --clicks-file-name=str  -> Defaults to 'clicks.shp")
-    print("  --no-bbox    -> Don't generate bounding boxes file")
-    print("  --no-click   -> Don't generate clicks file")
-    print("  --no-wellpad -> Don't generate wellpads file")
-    print("")
-    print("OGR Options:")
-    print("  --of=driver -> Output driver name/file type - default='ESRI Shapefile'")
-    print("  --epsg=int  -> EPSG code for coordinates in task.json - default=4326")
-    print("")
+    print("""
+Usage: %s [options] task.json task_run.json output/directory
+
+Options:
+
+  --help-info  -> Print out a list of help related flags
+  --overwrite  -> Overwrite output files
+  --prefix=str -> Output filename prefix - defaults to 'MoorFrog-'
+
+  --wellpad-file-name=str -> Defaults to 'wellpad.shp
+  --bbox-file-name=str    -> Defaults to 'bbox.shp
+  --clicks-file-name=str  -> Defaults to 'clicks.shp
+
+  --no-bbox    -> Don't generate bounding boxes file
+  --no-click   -> Don't generate clicks file
+  --no-wellpad -> Don't generate wellpads file
+
+  --of=driver -> Output driver name/file type - default='ESRI Shapefile'
+  --epsg=int  -> EPSG code for coordinates in task.json - default='4326'
+""" % __docname__)
 
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define print_license() function
+#/* ======================================================================= */#
 
 def print_license():
 
     """
     Print out license information
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
 
     print(__license__)
@@ -95,56 +145,90 @@ def print_license():
     return 1
 
 
+#/* ======================================================================= */#
+#/*     Define print_help() function
+#/* ======================================================================= */#
+
 def print_help():
 
     """
     Detailed help information
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("%s Detailed Help" % __docname__)
-    print("--------------" + "-" * len(__docname__))
-    print("Input is task.json and task_run.json from MoorFrog")
-    print("Output is a set of bounding boxes, well pad points, ")
-    print("and pond clicks.")
-    print("")
+    print("""
+Help: {0}
+------{1}
+Input is task.json and task_run.json from MoorFrog
+Output is a set of bounding boxes, well pad points,
+and pond clicks.
+""".format(__docname__, '-' * len(__docname__)))
 
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define print_help_info() function
+#/* ======================================================================= */#
 
 def print_help_info():
+
     """
     Print a list of help related flags
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
-    print("")
-    print("Help flags:")
-    print("  --help    -> More detailed description of this utility")
-    print("  --usage   -> Arguments, parameters, flags, options, etc.")
-    print("  --version -> Version and ownership information")
-    print("  --license -> License information")
-    print("  ")
+
+    print("""
+Help flags:
+  --help    -> More detailed description of this utility
+  --usage   -> Arguments, parameters, flags, options, etc.
+  --version -> Version and ownership information
+  --license -> License information
+    """)
 
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define print_version() function
+#/* ======================================================================= */#
 
 def print_version():
 
     """
     Print script version information
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print('%s version %s - released %s' % (__docname__, __version__, __release__))
-    print(__copyright__)
-    print("")
+    print("""
+%s version %s - released %s
+    """ % (__docname__, __version__, __release__))
 
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define create_bboxes() function
+#/* ======================================================================= */#
 
 def create_bboxes(tasks, layer):
 
     """
     Add bounding boxes to input layer
+
+    :param tasks: tasks from json.load(open('task.json'))
+    :type tasks: list
+    :param layer: OGR layer object
+    :type layer: <ogr.Layer class>
+
+    :return: True on success and False on failure
+    :rtype: bool
     """
 
     # Update user
@@ -168,8 +252,15 @@ def create_bboxes(tasks, layer):
         layer.CreateField(field_object)
 
     # Loop through tasks and create features
+    num_tasks = len(tasks)
+    i = 0
     print("  Processing %s tasks..." % str(len(tasks)))
     for task in tasks:
+
+        # Update user
+        i += 1
+        sys.stdout.write("\r\x1b[K" + "    %s/%s" % (str(i), str(num_tasks)))
+        sys.stdout.flush()
 
         # Get field content
         location = str(task['info']['latitude']) + str(task['info']['longitude']) + '---' + str(task['info']['year'])
@@ -205,14 +296,28 @@ def create_bboxes(tasks, layer):
         feature.Destroy()
 
     # Update user
-    print("  Done")
+    print(" - Done")
     return True
 
 
-def create_clicks(task_runs, layer):
+#/* ======================================================================= */#
+#/*     Define create_clicks() function
+#/* ======================================================================= */#
+
+def create_clicks(tasks, task_runs, layer):
 
     """
     Add click points to layer
+
+    :param tasks: tasks from json.load(open('task.json'))
+    :type tasks: list
+    :param task_runs: tasks from json.load(open('task_run.json'))
+    :type task_runs: list
+    :param layer: OGR layer object
+    :type layer: <ogr.Layer class>
+
+    :return: True on success and False on failure
+    :rtype: bool
     """
 
     # Update user
@@ -222,6 +327,7 @@ def create_clicks(task_runs, layer):
     print("  Defining click fields...")
     fields_definitions = (('id', 10, ogr.OFTInteger),
                           ('task_id', 10, ogr.OFTInteger),
+                          ('year', 10, ogr.OFTInteger),
                           ('qaqc', 254, ogr.OFTString))
 
     # Create fields
@@ -233,11 +339,24 @@ def create_clicks(task_runs, layer):
 
     # Loop through tasks and create features
     print("  Processing %s tasks..." % str(len(task_runs)))
+    i = 0
+    num_task_runs = len(task_runs)
     for task_run in task_runs:
+
+        # Update user
+        i += 1
+        sys.stdout.write("\r\x1b[K" + "    %s/%s" % (str(i), str(num_task_runs)))
+        sys.stdout.flush()
 
         # Get field content
         field_values = {'id': int(task_run['id']),
                         'task_id': int(task_run['task_id'])}
+
+        # Get year
+        for t in tasks:
+            if t['id'] == task_run['task_id']:
+                field_values['year'] = int(t['info']['year'])
+                break
 
         # Get list of clicks
         clicks = task_run['info']['positions']
@@ -257,10 +376,22 @@ def create_clicks(task_runs, layer):
     return True
 
 
+#/* ======================================================================= */#
+#/*     Define get_crowd_selection() function
+#/* ======================================================================= */#
+
 def create_wellpads(tasks, layer):
 
     """
     Add click points to layer
+
+    :param tasks: tasks from json.load(open('task.json'))
+    :type tasks: list
+    :param layer: OGR layer object
+    :type layer: <ogr.Layer class>
+
+    :return: True on success and False on failure
+    :rtype: bool
     """
 
     # Update user
@@ -285,7 +416,14 @@ def create_wellpads(tasks, layer):
 
     # Loop through tasks and create features
     print("  Processing %s tasks..." % str(len(tasks)))
+    i = 0
+    num_tasks = len(tasks)
     for task in tasks:
+
+        # Update user
+        i += 1
+        sys.stdout.write("\r\x1b[K" + "    %s/%s" % (str(i), str(num_tasks)))
+        sys.stdout.flush()
 
         # Get field content
         location = str(task['info']['latitude']) + str(task['info']['longitude']) + '---' + str(task['info']['year'])
@@ -311,7 +449,21 @@ def create_wellpads(tasks, layer):
     return True
 
 
+#/* ======================================================================= */#
+#/*     Define main() function
+#/* ======================================================================= */#
+
 def main(args):
+
+    """
+    Main routine
+
+    :param args: arguments from the commandline (sys.argv[1:] in order to drop the script name)
+    :type args: list
+
+    :return: 0 on success and 1 on error
+    :rtype: int
+    """
 
     # Containers
     task_file_path = None
@@ -484,7 +636,7 @@ def main(args):
         if not create_bboxes(task_json, bbox_layer):
             print("ERROR: Problem creating bounding boxes")
     if generate_clicks:
-        if not create_clicks(task_run_json, clicks_layer):
+        if not create_clicks(task_json, task_run_json, clicks_layer):
             print("ERROR: Problem creating clicks")
     if generate_wellpads:
         if not create_wellpads(task_json, wellpad_layer):
@@ -506,8 +658,16 @@ def main(args):
     return 0
 
 
+#/* ======================================================================= */#
+#/*     Commandline Execution
+#/* ======================================================================= */#
+
 if __name__ == '__main__':
+
+    # Not enough arguments - print usage
     if len(sys.argv) is 1:
         sys.exit(print_usage())
+
+    # Got enough arguments - give all but the first to the main() function
     else:
         sys.exit(main(sys.argv[1:]))
