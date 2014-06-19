@@ -1,5 +1,5 @@
-FrackFinder PA 2005-2010
-========================
+SkyTruth FrackFinder PA 2005-2010 Methodology
+=============================================
 
 Author: Kevin Wurster - <kevin@skytruth.org>
 
@@ -106,9 +106,15 @@ random sample can be selected.  Queries and exports were performed in QGIS.  All
 performed on Tadpole stats layer:
 
 >       Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp
->           "year" = 2005 -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2005.shp
->           "year" = 2008 -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2008.shp 
->           "year" = 2010 -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2010.shp 
+>           "year" = 2005  ->  Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2005.shp
+>           "year" = 2008  ->  Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2008.shp 
+>           "year" = 2010  ->  Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-query-2010.shp
+
+The random samples were exported to the sampling directory and examined in place:
+
+>       Transformations_and_QAQC/Tadpole/sampling/2005/tadpole-2005-sample-100.shp
+>       Transformations_and_QAQC/Tadpole/sampling/2008/tadpole-2008-sample-100.shp
+>       Transformations_and_QAQC/Tadpole/sampling/2010/tadpole-2010-sample-100.shp
 
 ### 2005 Results ###
 
@@ -220,112 +226,362 @@ omitted.  The operator created a new Shapefile containing one point per missed p
 The QGIS bug explained and addressed in the `Tadpole Sample/QAQC` section was accounted for
 when creating sample tasks:
 
+>       Transformations_and_QAQC/MoorFrog/transform/MoorFrog-bbox.shp
+>           "year" = 2005  ->  Transformations_and_QAQC/MoorFrog/sampling/queries/bbox-2005-query.shp
+>           "year" = 2008  ->  Transformations_and_QAQC/MoorFrog/sampling/queries/bbox-2008-query.shp
+>           "year" = 2010  ->  Transformations_and_QAQC/MoorFrog/sampling/queries/bbox-2010-query.shp
 
+The random samples and missed ponds are located in the sampling directory and were examined
+in place:
 
+>       Transformations_and_QAQC/MoorFrog/sampling/2005/moorfrog-2005-sample-100.shp
+>       Transformations_and_QAQC/MoorFrog/sampling/2005/moorfrog-2005-missed-ponds.shp
+>       Transformations_and_QAQC/MoorFrog/sampling/2008/moorfrog-2008-sample-100.shp
+>       Transformations_and_QAQC/MoorFrog/sampling/2008/moorfrog-2008-missed-ponds.shp
+>       Transformations_and_QAQC/MoorFrog/sampling/2010/moorfrog-2010-sample-100.shp
+>       Transformations_and_QAQC/MoorFrog/sampling/2010/moorfrog-2010-missed-ponds.shp
 
-General Description
--------------------
-1. Download all task.json and task_run.json for each application
-2. Convert each application's JSON files into a single shapefile with one point per task and aggregated crowd responses
-3. Randomly sample shapefiles from previous step
-4. Determine which tasks must be re-examined based on the sampling results
-5. Extract tasks to be re-examined and load into a new internally accessible application - complete tasks
-6. Stitch together tasks from all applications into a single final dataset with one row per task and full attributes
-7. Extract tasks that were confidently classified as fracking and digitize
+### 2005 Results ###
 
-
-
-
-
-
-MoorFrog - Click on Ponds
---------------------------
-Points classified as ponds in Tadpole were given to MoorFrog as input, which asked users to click on all ponds within a 1200 m x 1600 m bounding box, centered on the Tadpole point.  Unfortunately, this bounding box was only provided for reference and was not used to trash clicks outside the bounding box.  The resulting clicks were then clustered into pond points, but the clustering algorithm did have a minimum number of clicks to create a pond point, which means that even single clicks were turned into ponds.
-This is important because because it created some rules for sampling.  Any ponds outside the bounding box were completely ignored, and the number of omitted ponds was counted for each scene.
-
-### Applications ###
-Public
-
-### Data ###
-Original Tasks: moorfrog/task-backup/
-Shapefiles: moorfrog/transform/stats/
-Additional Layers: moorfrog/layers
-Random Samples: moorfrog/sampling
-NOTE: The additional layers includes the actual user clicks, pads, and bboxes
-
-### Pre-sampling Filters ###
-All points that did not fall within a bounding box were thrown away
-
-### Results ###
 2005 - 18 omitted ponds - None appear to be fracking related
+
+### 2008 Results ###
+
 2008 - 19 omitted ponds - None appear to be fracking related
+
+### 2010 Results ###
+
 2010 - 6 omitted ponds - 2 appear to be fracking related
 
 
 
-DartFrog - Classify Ponds
--------------------------
+DartFrog Workflow
+=================
 
-### Applications ###
-Public
-First Internal
-Final Internal
-Sweeper
-Missing Tasks
+##### General Description #####
 
-#### Explanation ####
-The crowd was slowing down on their DartFrog completion, so a set of
-
-### Data ###
-
-#### Tasks ####
-Public Tasks: dartfrog/task-backup/public
-First Internal Tasks: dartfrog/task-backup/first-internal
-Final Internal Tasks: dartfrog/task-backup/final-internal
-Sweeper Internal Tasks: dartfrog/task-backup/sweeper-internal
-Missing Tasks: dartfrog/task-backup/missing
-
-#### Shapefiles ####
-Public Shapefile: dartfrog/transform/public/stats
-First Internal Shapefile: first-internal/transform/public/stats
-Final Internal Shapefile: dartfrog/final-internal/public/stats
-Sweeper Tasks Shapefile: dartfrog/sweeper/public/stats
-Missing Tasks Shapefile: dartfrog/missing/public/stats
-
-### Pre-sampling Filters ###
-Public sampling: "p_crd_a" >= 80 AND "n_tot_res" >= 10
-Internal sampling: "p_crd_a" >= 66
-
-### Results ###
-2005 First Internal - Sampled 50 - disagreed with 2 pond classifications
-2008 First Internal - Sampled 50 - disagreed with 5 pond classifications
-2010 First Internal - Sampled 50 - disagreed with 4 pond classifications
-2005 Final Internal - Sampled 50 - disagreed with 0 pond classifications
-2008 Final Internal - Sampled 50 - disagreed with 0 pond classifications
-2010 Final Internal - NO SAMPLE - All DartFrog 2010 tasks were completed by the public or the First Internal app
-2005 Public - NO SAMPLE - All DartFrog 2005 tasks were completed in the internal applications
-2008 Public - Sampled 99 - disagreed with 18 pond classifications (unsure why 99 sites were sampled and not 100)
-2010 Public - Sampled 100 - disagreed with 10 pond classifications
-2005 Sweeper Internal - Sampled all 6 sites - disagreed with 0 pond classifications
-2008 Sweeper Internal - Sampled 50 - disagreed with 6 pond classifications
-2010 Sweeper Internal - Sampled 50 - disagreed with 6 pond classifications
+1. Identify input tasks
+2. Generate and load tasks
+3. Classify
+4. Export data
+5. Transform data
+6. Sample/QAQC
 
 
+1. Identify Input Tasks
+-----------------------
 
-Digitizer
----------
-
-### Results ###
-Currently in progress
+**TODO: Explan**
 
 
+2. Generate and Load Tasks
+--------------------------
 
-Additional Notes
-----------------
-There is a bug in the QGIS random sampling tool that causes it to ignore filters, which creates
-a problem for our method of sampling every year in every application.  The solution to this
-problem is to apply the required filters and then save to a new file.  Random samples can then
-be pulled from this file without issue.
+**TODO: Explain**
+
+
+3. Classify
+-----------
+
+### Summary ###
+
+Each task has been completed at least once but may have been completed in multiple applications.  There is
+known overlap between the public and first internal application.  In general it is best to interact with
+the data through the utilities provided.  The `derivative-data/Compiled_Output.csv` file is the most reliable
+dataset and has the complete record of each task's history including a final set of attributes.
+
+### Public Application ###
+
+The files in `public` are directly exported from the application presented to the public.  This
+application was never fully completed by the crowd, so when working with the tasks, understand that
+only tasks from task.json were ONLY fully completed if there are >= 10 task runs in the task_run.json
+file.
+
+### First Internal Application ###
+
+The files in `first-internal` were from the very first DartFrog internal application.  The crowd
+stalled on the public application around the 50% mark so almost 4000 tasks were pulled out of the
+public app and and moved to an internal application with a lower redundancy.  The redundancy for
+these tasks were set to 0 in the database behind the public app so they would never be shown to
+the public, and to force the public progress bar to display the appropriate new number.
+
+### Final Internal Application ###
+
+The files in `final-internal` are a combination of tasks from public and first-internal.  Through
+examining the public and first internal tasks it became apparent that the set of tasks moved to the
+first internal application was incorrect, so any task that was never fully completed in the public
+or first internal application was extracted and placed into a new final internal application.
+
+### Sweeper Internal Application ###
+
+The `task2shp.py` utility was used to convert each task.json and its matching task_run.json
+file into a spatial format with a set of attributes explaining the crowd's selection and confidence
+level.  If the crowd classified a pond as 'fracking' 8 times and 'other' 2 times, 80% of the crowd agreed.
+These attributes and agreement levels were used to identify which ponds needed to be re-examined one
+final time by SkyTruth employees.  A total of 1280 ponds were placed into a sweeper application to 
+resolve any ambiguity based on the following criteria:  
+
+For the public application, any pond with an agreement level < 80% and any pond that was confidently
+classified as 'unknown'
+
+For the internal applications, any pond with an agreement level < 66%.
+
+For all applications, any pond where the crowd's response was evenly split across two or more choices.
+
+### Missing Internal Application ###
+
+After the four applications detailed above were completed, the `dartfrog-taskCompiler.py` utility
+was developed to stitch together a complete history for any given pond and to identify a final
+pond classification.  Through developing this utility it was discovered that 221 tasks had never been
+completed in any application.  These tasks were identified and completed in a final application.
+
+
+4. Export Data
+--------------
+
+Each DartFrog application's tasks are stored separately in the following locations:
+
+>       Transformations_and_QAQC/DartFrog/tasks/public/task.json
+>       Transformations_and_QAQC/DartFrog/tasks/public/task_run.json
+>       Transformations_and_QAQC/DartFrog/tasks/first-internal/task.json
+>       Transformations_and_QAQC/DartFrog/tasks/first-internal/task_run.json
+>       Transformations_and_QAQC/DartFrog/tasks/final-internal/task.json
+>       Transformations_and_QAQC/DartFrog/tasks/final-internal/task_run.json
+>       Transformations_and_QAQC/DartFrog/tasks/sweeper-internal/task.json
+>       Transformations_and_QAQC/DartFrog/tasks/sweeper-internal/task_run.json
+>       Transformations_and_QAQC/DartFrog/tasks/missing/task.json
+>       Transformations_and_QAQC/DartFrog/tasks/missing/task_run.json
+
+
+5. Transform Data
+-----------------
+
+As with the previous applications, a `task2shp.py` utility exists to aggregate information
+into a single spatial file.  The commands used are as follows:
+
+>       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/public/task.json Transformations_and_QAQC/DartFrog/tasks/public/task_run.json Transformations_and_QAQC/DartFrog/transform/public/stats/dartfrog-public-stats.shp
+>       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/first-internal/task.json Transformations_and_QAQC/DartFrog/tasks/first-internal/task_run.json Transformations_and_QAQC/DartFrog/transform/first-internal/stats/dartfrog-first-internal-stats.shp
+>       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/final-internal/task.json Transformations_and_QAQC/DartFrog/tasks/final-internal/task_run.json Transformations_and_QAQC/DartFrog/transform/final-internal/stats/dartfrog-final-internal-stats.shp
+>       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/sweeper-internal/task.json Transformations_and_QAQC/DartFrog/tasks/sweeper-internal/task_run.json Transformations_and_QAQC/DartFrog/transform/sweeper-internal/stats/dartfrog-sweeper-internal-stats.shp
+>       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/missing/task.json Transformations_and_QAQC/DartFrog/tasks/missing/task_run.json Transformations_and_QAQC/DartFrog/transform/missing/stats/dartfrog-missing-stats.shp
+
+The output file fields are as follows:
+
+>       id         ->  Task's ID as assigned by PyBossa
+>       site_id    ->  SkyTruth assigned unique site ID
+>       wms_url    ->  Link to image scene
+>       county     ->  County name
+>       year       ->  Imagery year
+>       location   ->  Generated unique ID (lat + long + year)
+>       n_unk_res  ->  Number of task runs where task was classified as 'unknown'
+>       n_frk_res  ->  Number of task runs where task was classified as 'fracking'
+>       n_oth_res  ->  Number of task runs where task was classified as 'other'
+>       n_tot_res  ->  Number of times this task was completed
+>       crowd_sel  ->  Classification with the highest number of selections or class1|class2|etc. for ties
+>       qaqc       ->  Used in the manual QAQC process
+>       p_crd_a    ->  Percent of the crowd's responses that matched the crowd_sel field
+>       p_s_crd_a  ->  Percentages for crowd_sel ties percent1|percent2|etc. or NULL if there was no tie
+
+Due to the inherent complexity at the task level, an additional `taskCompiler.py` utility
+is included to reconstruct a given task's history.  Each row is a single task and each
+column contains information about that task for every application.  If a task was never
+completed in an application, then the values for that application will be NULL.  This
+utility outputs 3 files:
+
+>       Compiled_Output.csv   ->  Complete task history as CSV
+>       Compiled_Output.json  ->  Complete task history as JSON
+>       Scrubbed_Output.csv   ->  Final set of attributes for each task as CSV
+
+In order to construct these files a priority/hierarchy must be assigned to each
+application, meaning that if a task is completed in multiple applications the
+the final values come from the most preferred application:
+
+1. Missing
+2. Sweeper
+3. Final Internal
+4. First Internal
+5. Public
+
+
+##### Additional Notes ######
+
+The primary key between any given set of task.json and task_run.json files is the `id` field in the task
+file and the `task_id` in the task run file.  This is fine when working with one application's output but
+creates problems when working across applications.  Since each task represents a pond in space-time, a
+unique location key can be generated from lat + long + year.  This works without issue EXCEPT that the
+lat/long precision on the tasks that were moved to the first internal application was altered, so in order
+to get a good match, all lat/long values were rounded (via Python's round() function) to the 8th decimal
+place when generating location keys.  This worked, but about 50 ponds have a location that doesn't match
+anything.  Re-processing data with the `dartfrog-taskCompiler.py` utility will produce errors with task ID's.
+
+##### Fields #####
+
+Note that the fields are the same for each application except for a few characters pre-pended to the field
+name to denote which application they represent:
+
+>       -+= Final Attributes =+-
+>
+>       location      ->  Location key as described above - generated on the fly
+>       wms_url       ->  Final selection - WMS URL from task.json
+>       lat           ->  Final selection - degree of latitude from task.json
+>       lng           ->  Final selection - degree of longitude from task.json
+>       year          ->  Final selection - year from task.json
+>       county        ->  Final selection - county name from task.json
+>       comp_loc      ->  Name of application the final attributes were selected from
+>       n_frk_res     ->  Number of times the crowd classified the pond as 'fracking'
+>       n_oth_res     ->  Number of times the crowd classified the pond as 'other'
+>       n_unk_res     ->  Number of times the crowd classified the pond as 'unknown'
+>       n_tot_res     ->  Total number of times a member of the crowd examined the task (AKA the redundancy)
+>       crowd_sel     ->  The classification the crowd chose for the pond
+>       p_crd_a    ->  Percent of the crowd's responses that matched the crowd_sel field
+>       p_s_crd_a  ->  Percentages for crowd_sel ties percent1|percent2|etc. or NULL if there was no tie
+
+Each application's attributes are denoted with a few leading characters:
+
+>       p_   ->  Public (note that p_crd_a and p_s_crd_a will start with p_p_)
+>       fi_  ->  First Internal
+>       fn_  ->  Final Internal
+>       sw_  ->  Sweeper
+>       mt_  ->  Missing Tasks
+
+
+6. Sample/QAQC
+--------------
+
+The sampling routine was similar to the previous applications, however
+there are 5 applications and 3 years to sample from.  Samples were
+split into applications and years with 100 samples for the public
+application and 50 for each internal.  The QGIS random sample bug
+was also handled similarly to the previous applications.  The sampling
+for this phase served a slightly different purpose as the output from
+DartFrog would be used as the input for the Digitizer, which is where
+we get one polygon representing each pond, but the Digitizer also
+serves as the last location where a human can look at a site and
+determine whether or not it is actually a fracking related pond.
+The goal of this round of sampling was to identify exactly what
+should go into the digitizer (without creating too much work for the
+digitizer operator) so some initial data exploration was performed
+to determine whether or not the crowd agreement levels could be used
+as a threshold for determining which ponds are loaded into the
+digitizer.  The threshold for the internal applications was determined
+to be 66% and 80% for the public application.  The queries and exports
+are as follows:
+
+>       Transformations_and_QAQC/DartFrog/transform/public/stats/dartfrog-public-stats.shp
+>           "p_crd_a" >= 80 AND "n_tot_res" >= 10 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-public-2008.shp
+>           "p_crd_a" >= 80 AND "n_tot_res" >= 10 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-public-2010.shp
+>
+>       Transformations_and_QAQC/DartFrog/transform/first-internal/stats/dartfrog-first-internal-stats.shp
+>           "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2005.shp
+>           "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2008.shp
+>           "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2010.shp
+>
+>       Transformations_and_QAQC/DartFrog/transform/final-internal/stats/dartfrog-final-internal-stats.shp
+>           "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2005.shp
+>           "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2008.shp
+>           "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2010.shp
+>
+>       Transformations_and_QAQC/DartFrog/transform/sweeper-internal/stats/dartfrog-sweeper-internal-stats.shp
+>           "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2005.shp
+>           "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2008.shp
+>           "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2010.shp
+
+Additional Notes:
+* 2005 Public has no random sample because all 2005 tasks were completed in the
+  First Internal and Final Internal applications.
+* 2010 Final Internal has no random sampling because all of the 2010 tasks were
+  completed in the Public or First Internal applications.
+* The Missing Tasks were only examined once and did not need to be randomly
+  sampled since the one response constitutes the final classification.
+
+The manually examined files are located in the following locations:
+
+>       Transformations_and_QAQC/DartFrog/sampling/2008/dartfrog-public-2008-sample-100.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2010/dartfrog-public-2010-sample-100.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2005/dartfrog-first-internal-2005-sample-50.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2008/dartfrog-first-internal-2008-sample-50.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2010/dartfrog-first-internal-2010-sample-50.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2005/dartfrog-final-internal-2005-sample-50.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2008/dartfrog-final-internal-2008-sample-50.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2005/dartfrog-sweeper-internal-2005-sample-50.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2008/dartfrog-sweeper-internal-2008-sample-50.shp
+>       Transformations_and_QAQC/DartFrog/sampling/2010/dartfrog-sweeper-internal-2010-sample-50.shp
+
+
+### Public Results ###
+
+Sample size: 100
+
+2005 - NO SAMPLE (see above section)
+2008 - Disagreed with 18 pond classifications - due to "fat fingering"
+       the sample size was 99 instead of 100.
+2010 - Disagreed with 10 pond classifications
+
+### First Internal Results ###
+
+Sample size: 50
+
+2005 - Disagreed with 2 pond classifications
+2008 - Disagreed with 5 pond classifications
+2010 - Disagreed with 4 pond classifications
+
+### Final Internal Results ###
+
+Sample size: 50
+
+2005 - Disagreed with 0 pond classifications
+2008  - Disagreed with 0 pond classifications
+2010  - NO SAMPLE (see above section)
+
+### Sweeper Results ###
+
+Sample size: 50
+
+2005 - Sampled all 6 sites - disagreed with 0 pond classifications
+2008 - Disagreed with 6 pond classifications
+2010 - Disagreed with 6 pond classifications
+
+### Missing Tasks Results ###
+
+NOT SAMPLED (see above section)
+
+
+
+Digitizer Workflow
+=================
+
+##### General Description #####
+
+1. Identify input tasks
+2. Generate and load tasks
+3. Digitize
+4. Export data
+5. Transform data
+6. Sample/QAQC
+
+
+1. Identify Input Tasks
+-----------------------
+
+
+2. Generate and Load Tasks
+--------------------------
+
+
+3. Digitize
+-----------
+
+
+4. Export Data
+--------------
+
+
+5. Transform Data
+-----------------
+
+
+6. Sample/QAQC
+--------------
 
 
 

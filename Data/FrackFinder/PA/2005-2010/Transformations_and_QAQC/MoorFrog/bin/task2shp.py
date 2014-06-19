@@ -292,8 +292,8 @@ def create_bboxes(tasks, layer):
         for field, value in field_values.iteritems():
             feature.SetField(field, value)
         layer.CreateFeature(feature)
-        rectangle.Destroy()
-        feature.Destroy()
+        rectangle = None
+        feature = None
 
     # Update user
     print(" - Done")
@@ -369,7 +369,7 @@ def create_clicks(tasks, task_runs, layer):
             for field, value in field_values.iteritems():
                 feature.SetField(field, value)
             layer.CreateFeature(feature)
-            feature.Destroy()
+            feature = None
 
     # Update user
     print("  Done")
@@ -442,7 +442,7 @@ def create_wellpads(tasks, layer):
         for field, value in field_values.iteritems():
             feature.SetField(field, value)
         layer.CreateFeature(feature)
-        feature.Destroy()
+        feature = None
 
     # Update user
     print("  Done")
@@ -649,9 +649,9 @@ def main(args):
     clicks_layer = None
     bbox_layer = None
     wellpad_layer = None
-    clicks_datasource.Destroy()
-    bbox_datasource.Destroy()
-    wellpad_datasource.Destroy()
+    clicks_datasource = None
+    bbox_datasource = None
+    wellpad_datasource = None
 
     # Success
     print("Done.")
