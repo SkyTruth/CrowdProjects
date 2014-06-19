@@ -7,6 +7,15 @@ An explanation of how data flowed from application to application
 
 
 
+Requirements
+============
+
+QGIS 2.2
+Python 2.7
+GDAL/OGR 1.11.0 + Bindings 
+
+
+
 Source Data Procurement
 =======================
 
@@ -197,7 +206,7 @@ Output fields: `Transformations_and_QAQC/MoorFrog/transform/MoorFrog-bbox.shp`
 Output fields: `Transformations_and_QAQC/MoorFrog/transform/MoorFrog-clicks.shp`
 
 >       id       ->  Task's ID as assigned by PyBossa
->       task_id  ->  PyBossa assigned task_id from task_run.json (matches task.json['id'])
+>       task_id  ->  PyBossa assigned task_id from task_run.json (matches task.json['task_id'])
 >       year     ->  Imagery year
 >       qaqc     ->  Used in manual QAQC
 
@@ -729,6 +738,21 @@ polygons with attributes.
 >           --process-extra-fields \
 >           Transformations_and_QAQC/Digitizer/derivative-data/Merged_Task_Runs.json \
 >           Transformations_and_QAQC/Digitizer/derivative-data/deliverable-ponds-candidate.shp
+
+While the input for `task2shp.py` is slightly different than the other
+utilities, the output fields are similar:
+
+>       selection  ->  Unused and included by mistake
+>       task_id    ->  PyBossa assigned task_id from task_run.json (matches task.json['task_id'])
+>       intersect  ->  Says if this pond intersects with another - used during the QAQC/resolution step
+>       comp_loc   ->  Which DartFrog application this pond was classified in
+>       crowd_sel  ->  Classification with the highest number of selections or class1|class2|etc. for ties
+>       county     ->  County name
+>       state      ->  State name
+>       year       ->  Imagery year
+>       location   ->  Generated unique ID (lat + long + year)
+>       area_m     ->  Pond area in meters
+>       delete     ->  Used during the QAQC/resolution step
 
 
 6. Resolve Intersecting Ponds
