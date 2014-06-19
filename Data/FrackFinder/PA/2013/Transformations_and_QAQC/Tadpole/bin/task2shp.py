@@ -33,11 +33,34 @@
 
 
 """
-Convert a FrackFinder JSON export to a shapefile containing 1 point per input
-task and aggregated crowd response metrics.
+Convert a FrackFinder Tadpole 2013 JSON export to a shapefile
+containing 1 point per input task and aggregated crowd response
+metrics.
 """
 
+from __future__ import print_function
 
+import os
+import sys
+import json
+from os.path import *
+from pprint import pprint
+try:
+    from osgeo import ogr
+    from osgeo import osr
+except ImportError:
+    import ogr
+    import osr
+
+
+#/* ======================================================================= */#
+#/*     Build Information
+#/* ======================================================================= */#
+
+__author__ = 'Kevin Wurster'
+__version__ = '0.1'
+__release__ = '2014/06/11'
+__docname__ = basename(__file__)
 __license__ = """
 Copyright (c) 2014, SkyTruth
 All rights reserved.
@@ -69,31 +92,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 
-import os
-import sys
-import json
-from os.path import *
-from pprint import pprint
-try:
-    from osgeo import ogr
-    from osgeo import osr
-except ImportError:
-    import ogr
-    import osr
-
-
 #/* ======================================================================= */#
-#/*     Build Information
-#/* ======================================================================= */#
-
-__author__ = 'Kevin Wurster'
-__version__ = '0.1'
-__release__ = '2014/06/11'
-__docname__ = basename(__file__)
-
-
-#/* ======================================================================= */#
-#/*     Define print_license() Function
+#/*     Define print_usage() function
 #/* ======================================================================= */#
 
 def print_usage():
@@ -105,21 +105,21 @@ def print_usage():
     :rtype: int
     """
 
-    print("")
-    print("Usage: %s [options] task.json task_run.json outfile.shp" % __docname__)
-    print("")
-    print("Options:")
-    print("  --class=str -> Add a field containing a value, or use %str to get a field from the JSON")
-    print("  --help-info -> Print out a list of help related flags")
-    print("  --of=driver -> Output driver name/file type - default='ESRI Shapefile'")
-    print("  --epsg=int  -> EPSG code for coordinates in task.json - default=4326")
-    print("  --overwrite -> Overwrite the output file")
-    print("")
+    print("""
+Usage: %s [options] task.json task_run.json outfile.shp
+
+Options:
+  --class=str -> Add a field containing a value, or use %str to get a field from the JSON
+  --help-info -> Print out a list of help related flags
+  --of=driver -> Output driver name/file type - default='ESRI Shapefile'
+  --epsg=int  -> EPSG code for coordinates in task.json - default='4326'
+  --overwrite -> Overwrite the output file
+""" % __docname__)
     return 1
 
 
 #/* ======================================================================= */#
-#/*     Define print_license() Function
+#/*     Define print_license() function
 #/* ======================================================================= */#
 
 def print_license():
@@ -137,7 +137,7 @@ def print_license():
 
 
 #/* ======================================================================= */#
-#/*     Define print_help() Function
+#/*     Define print_help() function
 #/* ======================================================================= */#
 
 def print_help():
@@ -172,7 +172,7 @@ equal number of times.  The output for these cases is pipe delimited.
 
 
 #/* ======================================================================= */#
-#/*     Define print_help_info() Function
+#/*     Define print_help_info() function
 #/* ======================================================================= */#
 
 def print_help_info():
@@ -192,9 +192,11 @@ Help flags:
   --license -> License information
     """)
 
+    return 1
+
 
 #/* ======================================================================= */#
-#/*     Define print_version() Function
+#/*     Define print_version() function
 #/* ======================================================================= */#
 
 def print_version():
@@ -214,7 +216,7 @@ def print_version():
 
 
 #/* ======================================================================= */#
-#/*     Define get_crowd_selection() Function
+#/*     Define get_crowd_selection() function
 #/* ======================================================================= */#
 
 def get_crowd_selection(selection_count, selection_map):
@@ -253,7 +255,7 @@ def get_crowd_selection(selection_count, selection_map):
 
 
 #/* ======================================================================= */#
-#/*     Define get_crowd_selection_counts() Function
+#/*     Define get_crowd_selection_counts() function
 #/* ======================================================================= */#
 
 def get_crowd_selection_counts(input_id, task_runs_json_object):
@@ -292,7 +294,7 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
 
 
 #/* ======================================================================= */#
-#/*     Define get_percent_crowd_agreement() Function
+#/*     Define get_percent_crowd_agreement() function
 #/* ======================================================================= */#
 
 def get_percent_crowd_agreement(crowd_selection, selection_counts, total_responses, map_selection_field,
@@ -355,7 +357,7 @@ def get_percent_crowd_agreement(crowd_selection, selection_counts, total_respons
 
 
 #/* ======================================================================= */#
-#/*     Define main() Function
+#/*     Define main() function
 #/* ======================================================================= */#
 
 def main(args):
