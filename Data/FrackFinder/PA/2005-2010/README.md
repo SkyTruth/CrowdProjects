@@ -40,7 +40,7 @@ Tadpole Workflow
 2. Classify
 3. Export data
 4. Transform data
-5. Sample/QAQC
+5. Sample Data
 
 
 1. Generate and Load Tasks
@@ -95,7 +95,7 @@ The resulting file contains the following fields:
 >       p_s_crd_a  ->  Percentages for crowd_sel ties percent1|percent2|etc. or NULL if there was no tie
 
 
-5. Sample/QAQC
+5. Sample Data
 --------------
 
 A random sample of 100 sites was taken from each year (2005, 2008, 2010) and manually classified
@@ -143,7 +143,7 @@ MoorFrog Workflow
 3. Classify
 4. Export data
 5. Transform data
-6. Sample/QAQC
+6. Sample Data
 
 
 1. Identify Input Tasks
@@ -212,7 +212,7 @@ Output fields: `Transformations_and_QAQC/MoorFrog/transform/MoorFrog-wellpads.sh
 >       qaqc      ->  Used in manual QAQC
 
 
-6. Sample/QAQC
+6. Sample Data
 --------------
 
 When examining a MoorFrog task, the user was asked to click on all the ponds located within
@@ -223,7 +223,7 @@ which was not a part of the instructions so these clicks were thrown away. Any p
 or otherwise) within the bounding box that was not clicked on at least was once considered
 omitted.  The operator created a new Shapefile containing one point per missed pond.
 
-The QGIS bug explained and addressed in the `Tadpole Sample/QAQC` section was accounted for
+The QGIS bug explained and addressed in the `Tadpole Sample Data` section was accounted for
 when creating sample tasks:
 
 >       Transformations_and_QAQC/MoorFrog/transform/MoorFrog-bbox.shp
@@ -265,13 +265,13 @@ DartFrog Workflow
 3. Classify
 4. Export data
 5. Transform data
-6. Sample/QAQC
+6. Sample Data
 
 
 1. Identify Input Tasks
 -----------------------
 
-**TODO: Explan**
+**TODO: Explain**
 
 
 2. Generate and Load Tasks
@@ -445,7 +445,7 @@ Each application's attributes are denoted with a few leading characters:
 >       mt_  ->  Missing Tasks
 
 
-6. Sample/QAQC
+6. Sample Data
 --------------
 
 The sampling routine was similar to the previous applications, however
@@ -557,59 +557,25 @@ Digitizer Workflow
 3. Digitize
 4. Export data
 5. Transform data
-6. Sample/QAQC
+6. Resolve intersecting ponds
+7. Sample Data
 
 
 1. Identify Input Tasks
 -----------------------
 
+**TODO: Explain**
+
 
 2. Generate and Load Tasks
 --------------------------
+
+**TODO: Explain**
 
 
 3. Digitize
 -----------
 
-
-4. Export Data
---------------
-
-
-5. Transform Data
------------------
-
-
-6. Sample/QAQC
---------------
-
-
-
-
-FrackFinder Deliverable Ponds 2005-2010 Workflow
-================================================
-
-Author: Kevin Wurster - <kevin@skytruth.org>  
-[GitHub Repository](https://github.com/SkyTruth/CrowdProjects)
-
-An explanation of how the ponds delivered to JHU were generated from FrackFinder data
-
-
-
-### General Description ###
-1. Digitize ponds via a private internal PyBossa application
-2. Download all task.json and task_run.json for each application (first/final review)
-3. Copy the attributes of each task.json object into the associated task_run.json objects
-4. Join the two task_run.json files together
-5. Convert the combined task_run.json file to a shapefile and mark intersecting ponds
-6. Manually mark intersecting ponds for deletion
-7. Manual QAQC to verify data transformations
-8. Manually remove unnecessary fields and ponds marked for deletion
-
-
-
-1. Digitize Ponds
---------------
 The final set of 896 ponds were loaded into a single application for digitizing with a redundancy of 1 and
 4 actions: draw polygons and submit, skip pond, classify as unknown, and classify as not a fracking pond
 The operator was instructed to digitize and classify tasks with an obvious answer, but skip any that
@@ -640,8 +606,8 @@ The PyBossa applications are as follows:
 Only the task_run.json file from the first digitizer exhibits inconsistencies.  The output from the final
 application uses the patched structure.
 
-
 ##### Digitizer Bug: Original Info Key #####
+
 NOTE: Each list of vertexes is nested within an additional unused list
 >        'info': {'done': {'tasks': 1},  
 >                 'selection': 'done',  
@@ -655,6 +621,7 @@ NOTE: Each list of vertexes is nested within an additional unused list
 
 
 ##### Digitizer Bug: Patched Info Key #####
+
 For sites with a single pond, the shapes key contains a list with a single element.  
 NOTE: Each list of vertices is nested within an additional list unused
 >        'info': {'done': {'tasks': 1},
@@ -678,96 +645,95 @@ NOTE: Each list of vertices is nested within an additional list unused
 >                 'timings': {'presentTask': 73966, 'reportAnswer': 74292}}
 
 
+4. Export Data
+--------------
+
+Due to bugs in the digitizer, the tasks were completed in two applications,
+`first-review` and `final-review`.  The data was exported and stored in the
+following locations:
+
+>       Transformations_and_QAQC/Digitizer/tasks/first-review/task.json
+>       Transformations_and_QAQC/Digitizer/tasks/first-review/task_run.json
+>       Transformations_and_QAQC/Digitizer/tasks/final-review/task.json
+>       Transformations_and_QAQC/Digitizer/tasks/final-review/task_run.json
 
 
-2. Download Data
-----------------
-The exported task.json and task_run.json files from each application were stored in the CrowdProjects repo
-and in the following locations:
+5. Transform Data
+-----------------
 
+Similar to the previous applications, a `task2shp.py` utility is included
+to handle all the necessary transforms and data aggregations.  The output
+data structure is similar to the other utilities that server the same
+purpose but the features are polygons representing ponds.  The input data
+is slightly different in that the other `task2shp.py` utilities require
+both the task.json and task_run.json, this one ONLY takes a modified
+task_run.json file.  The next steps prepare that file for processing.
 
-    First Pass 2005-2010: CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/task-backup
-  
-    Final Pass 2005-2010: CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/task-backup
+Before running the `task2shp.py` utility, a few pre-processing steps must
+be done.  The first takes the task_run.json and adds all the associated
+task.json attributes to each task run:
 
-
-
-3. Copy Attributes
-------------------
-A utility was developed to add all task.json attributes to the accompanying task_run.json file.
-
-First Digitizer
->        ./CrowdProjects/bin/mergeExport.py \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks/task.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks/task_run.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks-with-added-fields/task_run_added_fields.json
-
-Final Digitizer
->        ./CrowdProjects/bin/mergeExport.py \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks/task.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks/task_run.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_run_added_fields.json
-
-Additionally, a classification field was added to the task.json and task_run.json to note which digitizer
-it passed through.
-
-First Digitizer
->        ./CrowdProjects/bin/editJSON.py \
->            --overwrite \
->            -a class=first \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks-with-added-fields/task_run_added_fields.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks-with-added-fields/task_run_added_fields.json
+>       ~/GitHub/CrowdProjects/bin/mergeExport.py \
+>           Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \
+>           Transformations_and_QAQC/Digitizer/tasks/first-review/task_run.json\
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
 >
->        ./CrowdProjects/bin/editJSON.py \
->            -a class=first \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks/task.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/first-review/transform/tasks-with-added-fields/task_added_fields.json
+>       ~/GitHub/CrowdProjects/bin/mergeExport.py \
+>           Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \
+>           Transformations_and_QAQC/Digitizer/tasks/final-review/task_run.json \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
 
-Final Digitizer
->        ./CrowdProjects/bin/editJSON.py \
->            --overwrite \
->            -a class=final \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_run_added_fields.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_run_added_fields.json
+Additionally, a classification field was added to the task.json and
+task_run.json to note which digitizer it passed through.
+
+NOTE: The overwrite flag on two of the commands is to allow the utility
+      to add the field to the file in place.
+
+>       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           -a class=first \
+>           Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_added_fields.json
 >
->        ./CrowdProjects/bin/editJSON.py \
->            -a class=final \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks/task.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_added_fields.json            
+>       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           --overwrite \
+>           -a class=first \
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
+>
+>       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           -a class=first \
+>           Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_added_fields.json
+>
+>       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           --overwrite \
+>           -a class=first \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
+
+Tasks that were completed in both applications will be manually resolved
+later so the task.json and task_run.json can now be combined.  The
+previous step added a classification field that can be used to determine
+which application a given task or task run came from.
+
+>       ~/GitHub/CrowdProjects/bin/mergeFiles.py \
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \
+>           Transformations_and_QAQC/Digitizer/derivative-data/Merged_Task_Runs.json
+
+Now that the task run files have been combined the data can be handed
+off to the `task2shp.py` utility, which converts the JSON to pond
+polygons with attributes.
+
+>       Transformations_and_QAQC/Digitizer/bin/task2shp.py \
+>           --process-extra-fields \
+>           Transformations_and_QAQC/Digitizer/derivative-data/Merged_Task_Runs.json \
+>           Transformations_and_QAQC/Digitizer/derivative-data/deliverable-ponds-candidate.shp
 
 
+6. Resolve Intersecting Ponds
+-----------------------------
 
-4. Join Data
-------------
-The utility that converts the task_run.json file into a spatial format is aware enough to ignore any item
-that does not have a `shape` or `shapes` key in the info block, so the task_run.json files from both
-digitizers can safely be combined into a single file in preparation for processing.  There are scenarios
-where digitized ponds will intersect between applications, but the class field that was added in
-the previous step will be used to determine which polygon is kept and which is thrown away.
-
->        ./CrowdProjects/bin/mergeFiles.py \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_run_added_fields.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/final-review/transform/tasks-with-added-fields/task_added_fields.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/Merged_Task_runs.json
-
-
-
-5. Convert Data
----------------
-The merged task_run.json file can now be converted to a spatial format containing 839 ponds, a set of
-attributes, and a field noting whether or not any given feature intersects any other features within
-the file.  An area calculation was performed on each feature in its corresponding UTM zone and then
-copied into the unaltered input geometry.
-
->        ./CrowdProjects/FrackFinder/Final_Deliverable/bin/digitizer-task2shp.py \
->            --process-extra-fields \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/Merged_Task_runs.json \
->            CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/Deliverable_Ponds/Deliverable_Ponds.shp
-
-
-
-6. Handle Intersecting Ponds
-----------------------------
 Due to the nature of the the data and the bugs discovered in the digitizer application, some ponds
 intersect other ponds in the file.  In some cases this intersection is caused by the pond existing for
 multiple years, but some ponds were actually digitized twice.  All of the ponds marked as intersecting
@@ -781,37 +747,10 @@ was changed to serial which means that larger task_ids were completed later and 
 being digitized after the bugs were discovered.
 
 
+7. Sample Data
+--------------
 
-7. QAQC/Validation
-------------------
 A random subsample of 100 digitized ponds were manually examined to verify both the data transformations
 explained above and the quality of the data.  The main goal was to ensure that the attributes were properly
 copied from the merged task_run.json to the proper pond.  Imagery was also used to verify the geometry.
 No issues were encountered. 
-
-
-
-8. Ship It!
------------
-The following fields were removed:
-  
-    selection
-    intersect
-    delete
-
-The following fields were renamed:
-    
-    location -> uid
-
-Leaving the following fields:
-
-    task_id: Integer (10.0) -> The task_id from task_run.json
-    county: String (254.0)  -> County name
-    state: String (254.0)   -> State name
-    year: String (254.0)    -> The year the NAIP the user was looking at to identify ponds was collected 
-    area_m: Real (254.2)    -> Pond area in meters
-    uid: String (254.0)     -> Location key (lat + long + year) - this maps back to previous steps in the processing chain
-
-The shippable ponds are located here:
-
-    CrowdProjects/FrackFinder/Final_Deliverable/digitizer/2005-2010/Shipped_Ponds/Shipped_Ponds.shp
