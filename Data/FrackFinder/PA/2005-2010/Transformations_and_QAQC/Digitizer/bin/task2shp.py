@@ -1,36 +1,41 @@
 #!/usr/bin/env python
 
 
+# This document is part of CrowdProjects
+# https://github.com/skytruth/CrowdProjects
+
+
+# =========================================================================== #
+#
+#  Copyright (c) 2014, SkyTruth
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
+#
+#  * Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+#  * Neither the name of the {organization} nor the names of its
+#  contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+#
+# =========================================================================== #
+
+
 """
-Convert task_run.json from the digitizer app to a pond vector layer
-
-Sample command:
-
-digitizer-task2shp.py \
-
-
-./digitizer-task2shp.py \
-    --process-extra-fields \
-    ../digitizer/2005-2008/Merged_Task_runs.json \
-    ../digitizer/2005-2008/Deliverable_Ponds/Deliverable_Ponds.shp \
-    --overwrite
-
-
-
-
-Mark intersecting task_id's for deletion
-
-CASE WHEN task_id = 104925 THEN 1
-    WHEN task_id = 105634 THEN 1
-    WHEN task_id = 104788 THEN 1
-    WHEN task_id = 104753 THEN 1
-    WHEN task_id = 105642 THEN 1
-    WHEN task_id = 104543 THEN 1
-    WHEN task_id = 105642 THEN 1
-    WHEN task_id = 104486 THEN 1
-    WHEN task_id = 104508 THEN 1
-    WHEN task_id = 104783 THEN 1
-END
+Convert a FrackFinder Tadpole 2013 JSON export to a shapefile
+containing 1 point per input task and aggregated crowd response
+metrics.
 """
 
 
@@ -51,14 +56,46 @@ try:
 except ImportError:
     import ogr
     import osr
-
-
-# Get the script name
-__docname__ = basename(__file__)
-
-
-# Force OGR to use exceptions
 ogr.UseExceptions()
+
+
+#/* ======================================================================= */#
+#/*     Build Information
+#/* ======================================================================= */#
+
+__author__ = 'Kevin Wurster'
+__version__ = '0.1'
+__release__ = '2014/06/11'
+__docname__ = basename(__file__)
+__license__ = """
+Copyright (c) 2014, SkyTruth
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the {organization} nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
 
 
 #/* ======================================================================= */#
@@ -73,19 +110,106 @@ def print_usage():
     :return: returns 1 for for exit code purposes
     :rtype: int
     """
-    print("")
-    print('Usage: %s [options] task_run.json outfile.shp' % __docname__)
-    print("")
-    print("Options:")
-    print("  --process-extra-fields -> Input task runs have attributes from task.json")
-    print("  --overwrite -> Overwrite output.shp")
-    print("  --class=str -> Add a classification field with a uniform value - use '%<field>' to pull from JSON")
-    print("  --of=driver -> Specify output OGR driver - defaults to 'ESRI Shapefile'")
-    print("  --no-check-intersect -> Don't check for intersecting geometries")
-    print("  --no-split-multi     -> Don't split multi-polygon ponds into single parts")
-    print("  --no-compute-area    -> Don't compute each feature's area")
-    print("  --intersect-keep=str -> Keeps intersecting features based on their classified value")
-    print("")
+
+    print("""
+Usage: %s [options] task_run.json outfile.shp
+
+Options:
+  --process-extra-fields -> Input task runs have attributes from task.json
+  --overwrite -> Overwrite output.shp
+  --class=str -> Add a classification field with a uniform value - use '%%<field>' to pull from JSON
+  --of=driver -> Specify output OGR driver - defaults to 'ESRI Shapefile'
+  --no-check-intersect -> Don't check for intersecting geometries
+  --no-split-multi     -> Don't split multi-polygon ponds into single parts
+  --no-compute-area    -> Don't compute each feature's area
+  --intersect-keep=str -> Keeps intersecting features based on their classified value
+""" % __docname__)
+
+    return 1
+
+
+#/* ======================================================================= */#
+#/*     Define print_license() function
+#/* ======================================================================= */#
+
+def print_license():
+
+    """
+    Print out license information
+
+    :return: 1 for exit code purposes
+    :rtype: int
+    """
+
+    print(__license__)
+
+    return 1
+
+
+#/* ======================================================================= */#
+#/*     Define print_help() function
+#/* ======================================================================= */#
+
+def print_help():
+
+    # TODO: Populate printout
+
+    """
+    Detailed help information
+
+    :return: 1 for exit code purposes
+    :rtype: int
+    """
+
+    print("""
+Help: {0}
+------{1}
+HELP STUFF
+    """.format(__docname__, '-' * len(__docname__)))
+
+    return 1
+
+
+#/* ======================================================================= */#
+#/*     Define print_help_info() function
+#/* ======================================================================= */#
+
+def print_help_info():
+
+    """
+    Print a list of help related flags
+
+    :return: 1 for exit code purposes
+    :rtype: int
+    """
+
+    print("""
+Help flags:
+  --help    -> More detailed description of this utility
+  --usage   -> Arguments, parameters, flags, options, etc.
+  --version -> Version and ownership information
+  --license -> License information
+    """)
+
+    return 1
+
+
+#/* ======================================================================= */#
+#/*     Define print_version() function
+#/* ======================================================================= */#
+
+def print_version():
+
+    """
+    Print script version information
+
+    :return: 1 for exit code purposes
+    :rtype: int
+    """
+
+    print("""
+%s version %s - released %s
+    """ % (__docname__, __version__, __release__))
 
     return 1
 
@@ -337,7 +461,7 @@ def main(args):
         return 1
 
     #/* ======================================================================= */#
-    #/*     Analyze Task Runs
+    #/*     Open Input Data and Create Output OGR Datasource
     #/* ======================================================================= */#
 
     # Open JSON file
@@ -384,6 +508,10 @@ def main(args):
         if field_precision is not None:
             field_object.SetPrecision(field_precision)
         layer.CreateField(field_object)
+
+    #/* ======================================================================= */#
+    #/*     Analyze Task Runs
+    #/* ======================================================================= */#
 
     # Loop through task runs and assemble output shapefile
     print("Processing %s task runs..." % str(len(task_runs)))
@@ -482,6 +610,10 @@ def main(args):
                 # Cleanup
                 feature = None
 
+    #/* ======================================================================= */#
+    #/*     Check for Intersecting Polygons
+    #/* ======================================================================= */#
+
     # Update user
     print("Found %s with geometry" % str(len(layer)))
 
@@ -548,13 +680,16 @@ def main(args):
         print("Found %s intersecting geometries" % str(intersect_count))
         print("Datasource now contains %s features" % str(len(layer)))
 
-    # Cleanup
+    #/* ======================================================================= */#
+    #/*     Cleanup
+    #/* ======================================================================= */#
+
+    # Close OGR objects
     driver = None
     datasource = None
     srs = None
 
     # Success
-
     print("Done.")
     return 0
 

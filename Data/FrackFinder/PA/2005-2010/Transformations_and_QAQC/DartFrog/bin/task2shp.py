@@ -1,36 +1,60 @@
 #!/usr/bin/env python
 
 
-# See global __license__ variable for license information
+# This document is part of CrowdProjects
+# https://github.com/skytruth/CrowdProjects
+
+
+# =========================================================================== #
+#
+#  Copyright (c) 2014, SkyTruth
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright notice, this
+#  list of conditions and the following disclaimer.
+#
+#  * Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+#  * Neither the name of the {organization} nor the names of its
+#  contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+#
+# =========================================================================== #
 
 
 """
-Convert a FrackFinder JSON export to a shapefile
-containing 1 point per pond and aggregated response
-metrics.
+Convert a FrackFinder 2005-2010 JSON export to a shapefile
+containing 1 point per pond and aggregated response metrics.
 """
 
 
 import os
 import sys
 import json
-import inspect
 from os.path import isfile
 from os.path import basename
 import ogr
 import osr
 
 
-# Global parameters
-DEBUG = False
+#/* ======================================================================= */#
+#/*     Build Information
+#/* ======================================================================= */#
 
-
-# Build information
 __author__ = 'Kevin Wurster'
-__copyright__ = 'Copyright (c) 2014, SkyTruth'
-__version__ = '0.1'
-__release__ = '2014/04/07'
-__docname__ = basename(inspect.getfile(inspect.currentframe()))
+__version__ = '0.1-dev'
+__release__ = '2014-04-07'
+__docname__ = basename(__file__)
 __license__ = """
 Copyright (c) 2014, SkyTruth
 All rights reserved.
@@ -62,87 +86,169 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 
+#/* ======================================================================= */#
+#/*     Global Variables and Constants
+#/* ======================================================================= */#
+
+DEBUG = False
+
+
+#/* ======================================================================= */#
+#/*     Define print_usage() function
+#/* ======================================================================= */#
+
 def pdebug(message):
+
     """
     Easily handle printing debug information
+
+    :param message: debug message to be printed
+    :type message: str
+
+    :return: None
+    :rtype: None
     """
+
     global DEBUG
+
     if DEBUG is True:
         print(message)
 
 
+#/* ======================================================================= */#
+#/*     Define print_usage() function
+#/* ======================================================================= */#
+
 def print_usage():
+
     """
     Command line usage information
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
-    print("")
-    print("Usage: %s [options] task.json task_run.json outfile.shp" % __docname__)
-    print("")
-    print("Options:")
-    print("  --help-info -> Print out a list of help related flags")
-    print("  --of=driver -> Output driver name/file type - default='ESRI Shapefile'")
-    print("  --epsg=int  -> EPSG code for coordinates in task.json - default=4326")
-    print("")
+
+    print("""
+Usage: %s [options] task.json task_run.json outfile.shp
+
+Options:
+  --help-info -> Print out a list of help related flags
+  --of=driver -> Output driver name/file type - default='ESRI Shapefile'
+  --epsg=int  -> EPSG code for coordinates in task.json - default='4326'
+""" % __docname__)
+
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define print_license() function
+#/* ======================================================================= */#
 
 def print_license():
+
     """
     Print out license information
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
-    print('\n' + __license__ + '\n')
+
+    print(__license__)
+
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define print_help() function
+#/* ======================================================================= */#
 
 def print_help():
+
     """
     Detailed help information
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
-    print("")
-    print("%s Detailed Help" % __docname__)
-    print("--------------" + "-" * len(__docname__))
-    print("PyBossa exports tasks in two ways: task.json and task_run.json")
-    print("This utility looks at each task in task.json and sifts through")
-    print("its matching task_run.json to calculate a variety of metrics,")
-    print("like how many times the task was shown, how many times the crowd,")
-    print("how many times the crowd picked each possible answer, and how")
-    print("confident the crowd was in its decision.")
-    print("")
-    print("It is possible for the crowd to be split and pick two different")
-    print("choices an equal number of times.  The output for these cases")
-    print("is pipe delimited.")
-    print("")
+
+    print("""
+Help: {0}
+------{1}
+PyBossa exports tasks in two ways: task.json and task_run.json
+This utility looks at each task in task.json and sifts through
+its matching task_run.json to calculate a variety of metrics,
+like how many times the task was shown, how many times the crowd,
+how many times the crowd picked each possible answer, and how
+confident the crowd was in its decision.
+
+It is possible for the crowd to be split and pick two different
+choices an equal number of times.  The output for these cases
+is pipe delimited.
+""".format(__docname__, '-' * len(__docname__)))
+
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define print_help_info() function
+#/* ======================================================================= */#
 
 def print_help_info():
+
     """
     Print a list of help related flags
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
-    print("")
-    print("Help flags:")
-    print("  --help    -> More detailed description of this utility")
-    print("  --usage   -> Arguments, parameters, flags, options, etc.")
-    print("  --version -> Version and ownership information")
-    print("  --license -> License information")
-    print("  ")
+
+    print("""
+Help flags:
+  --help    -> More detailed description of this utility
+  --usage   -> Arguments, parameters, flags, options, etc.
+  --version -> Version and ownership information
+  --license -> License information
+    """)
+
     return 1
 
+
+#/* ======================================================================= */#
+#/*     Define print_version() function
+#/* ======================================================================= */#
 
 def print_version():
+
     """
     Print script version information
+
+    :return: 1 for exit code purposes
+    :rtype: int
     """
-    print("")
-    print('%s version %s - released %s' % (__docname__, __version__, __release__))
-    print(__copyright__)
-    print("")
+
+    print("""
+%s version %s - released %s
+    """ % (__docname__, __version__, __release__))
+
     return 1
 
 
+#/* ======================================================================= */#
+#/*     Define get_crowd_selection() function
+#/* ======================================================================= */#
+
 def get_crowd_selection(selection_count, selection_map):
+
     """
     Figure out what the crowd actually selected
+
+    :param selection_count: the number of responses for each selection
+    :type selection_count: dict
+    :param selection_map: maps output file fields to selections
+    :type selection_map: dict
+
+    :return: the crowd's selection for a given group of selections or None
+    :rtype: str|None
     """
 
     # Cache containers
@@ -166,10 +272,24 @@ def get_crowd_selection(selection_count, selection_map):
     return crowd_selection
 
 
+#/* ======================================================================= */#
+#/*     Define get_crowd_selection_counts() function
+#/* ======================================================================= */#
+
 def get_crowd_selection_counts(input_id, task_runs_json_object):
+
     """
     Figure out how many times the crowd selected each option
+
+    :param input_id: the id for a given task
+    :type input_id: int
+    :param task_runs_json_object: all of the input task_runs from json.load(open('task_run.json'))
+    :type task_runs_json_object: list
+
+    :return: number of responses for each selection
+    :rtype: dict
     """
+
     counts = {'n_frk_res': 0,
               'n_unk_res': 0,
               'n_oth_res': 0,
@@ -188,13 +308,33 @@ def get_crowd_selection_counts(input_id, task_runs_json_object):
                 counts['n_oth_res'] += 1
             else:
                 counts['ERROR'] += 1
+
     return counts
 
 
+#/* ======================================================================= */#
+#/*     Define get_percent_crowd_agreement() function
+#/* ======================================================================= */#
+
 def get_percent_crowd_agreement(crowd_selection, selection_counts, total_responses, map_selection_field,
                                 error_val=None):
+
     """
     Figure out how well the crowd agreed and if two answers tied, figure out the agreement for both
+
+    :param crowd_selection: the winning selection for a given task
+    :type crowd_selection: str|None
+    :param selection_counts: number of responses for each count
+    :type selection_counts: dict
+    :param total_responses: total number of responses
+    :type total_responses: int
+    :param map_selection_field: maps selections to output file field names
+    :type map_selection_field: dict
+    :param error_val: set crowd agreement to this value if any errors are encountered
+    :type error_val: str|None
+
+    :return: percent crowd agreement and percent crowd agreement
+    :rtype: dict
     """
 
     # Compute crowd agreement
@@ -236,18 +376,29 @@ def get_percent_crowd_agreement(crowd_selection, selection_counts, total_respons
     return {'p_crd_a': per_crowd_agreement, 'p_s_crd_a': split_per_crowd_agreement}
 
 
+#/* ======================================================================= */#
+#/*     Define main() function
+#/* ======================================================================= */#
+
 def main(args):
 
     """
     Main routine
+
+    :param args: arguments from the commandline (sys.argv[1:] in order to drop the script name)
+    :type args: list
+
+    :return: 0 on success and 1 on error
+    :rtype: int
     """
 
     global DEBUG
 
-    # Set defaults and cache containers
-    tasks_file = None
-    task_runs_file = None
-    outfile = None
+    #/* ======================================================================= */#
+    #/*     Defaults
+    #/* ======================================================================= */#
+
+    # OGR options
     outfile_driver = 'ESRI Shapefile'
     outfile_epsg_code = 4326
 
@@ -263,7 +414,18 @@ def main(args):
                               'unknown': 'n_unk_res',
                               'ERROR': 'ERROR'}
 
-    # Parse arguments
+    #/* ======================================================================= */#
+    #/*     Containers
+    #/* ======================================================================= */#
+
+    tasks_file = None
+    task_runs_file = None
+    outfile = None
+
+    #/* ======================================================================= */#
+    #/*     Parse Arguments
+    #/* ======================================================================= */#
+
     arg_error = False
     for arg in args:
 
@@ -303,7 +465,9 @@ def main(args):
                 print("ERROR: Invalid argument: %s" % arg)
                 arg_error = True
 
-    # == Validate Parameters == #
+    #/* ======================================================================= */#
+    #/*     Validate
+    #/* ======================================================================= */#
 
     # Check make sure files do/don't exist and that all parameters are appropriate
     bail = False
@@ -329,7 +493,9 @@ def main(args):
     if bail:
         return 1
 
-    # == Load Data == #
+    #/* ======================================================================= */#
+    #/*     Load JSON Data
+    #/* ======================================================================= */#
 
     # Load task.json file into a JSON object
     print("Loading task file...")
@@ -343,7 +509,9 @@ def main(args):
         task_runs_json = json.load(f)
     print("Found %s items" % str(len(task_runs_json)))
 
-    # == Create Output File == #
+    #/* ======================================================================= */#
+    #/*     Create Output OGR Datasource
+    #/* ======================================================================= */#
 
     # Get driver
     print("Creating output file...")
@@ -388,7 +556,9 @@ def main(args):
         field_object.SetWidth(field_width)
         layer.CreateField(field_object)
 
-    # == Examine Task.json File == #
+    #/* ======================================================================= */#
+    #/*     Analyze task.json File
+    #/* ======================================================================= */#
 
     # Loop through all task.json tasks
     len_tasks_json = len(tasks_json)
@@ -481,20 +651,30 @@ def main(args):
         feature.SetGeometry(point)
         layer.CreateFeature(feature)
 
-        # Cleanup
-        feature.Destroy()
+    #/* ======================================================================= */#
+    #/*     Cleanup
+    #/* ======================================================================= */#
 
     # Cleanup shapefile
-    data_source.Destroy()
+    feature = None
+    layer = None
+    data_source = None
 
-    # Update user
+    # Success
     print("Done.")
-
-    # Everything executed properly
     return 0
 
+
+#/* ======================================================================= */#
+#/*     Commandline Execution
+#/* ======================================================================= */#
+
 if __name__ == '__main__':
+
+    # Not enough arguments - print usage
     if len(sys.argv) is 1:
         sys.exit(print_usage())
+
+    # Got enough arguments - give all but the first to the main() function
     else:
         sys.exit(main(sys.argv[1:]))

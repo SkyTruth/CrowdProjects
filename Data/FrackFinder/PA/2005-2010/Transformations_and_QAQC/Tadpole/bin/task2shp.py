@@ -33,8 +33,8 @@
 
 
 """
-Convert a FrackFinder JSON export to a shapefile containing one
-point per pond and aggregated response metrics
+Convert a FrackFinder Tadpole 2005-2010 JSON export to a shapefile
+containing one point per pond and aggregated response metrics
 """
 
 
