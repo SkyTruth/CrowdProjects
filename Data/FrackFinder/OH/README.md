@@ -26,3 +26,8 @@ and management a lot easier while allowing us to take advantage of some of
 the available higher resolution imagery.
 
 >       http://ogrip.oit.ohio.gov/
+
+A NAIP coverage map was located, although it has not proven to be the best
+resource.  The `OGRIP` site looks promising and is easy to use.
+
+>       Source_Data/naip04_13_coverage_maps.pdf
