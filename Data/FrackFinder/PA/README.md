@@ -1,4 +1,4 @@
-SkyTruth FrackFinder PA 2005-2010 Methodology
+SkyTruth FrackFinder PA 2005-2013 Methodology
 =============================================
 
 Author: Kevin Wurster - <kevin@skytruth.org>
@@ -12,12 +12,18 @@ Requirements
 
 QGIS 2.2
 Python 2.7
-GDAL/OGR 1.11.0 + Bindings 
+GDAL/OGR 1.11.0 + Bindings
+git
+
+
+
+-------------------------------------------------------------------------------
 
 
 
 Source Data Procurement
 =======================
+
 
 ##### General Description #####
 
@@ -40,8 +46,17 @@ Source Data Procurement
 
 
 
-Tadpole Workflow
-================
+FrackFinder PA 2005-2010
+========================
+
+
+
+-------------------------------------------------------------------------------
+
+
+
+Tadpole 2005-2010 Workflow
+============================
 
 ##### General Description #####
 
@@ -142,8 +157,8 @@ nopad ambiguity caused by compressed NAIP used in the application.
 
 
 
-MoorFrog Workflow
-=================
+MoorFrog 2005-2010 Workflow
+===========================
 
 ##### General Description #####
 
@@ -264,8 +279,9 @@ in place:
 
 
 
-DartFrog Workflow
-=================
+DartFrog 2005-2010 Workflow
+===========================
+
 
 ##### General Description #####
 
@@ -556,8 +572,8 @@ NOT SAMPLED (see above section)
 
 
 
-Digitizer Workflow
-=================
+Digitizer 2005-2010 Workflow
+============================
 
 ##### General Description #####
 
@@ -778,3 +794,190 @@ A random subsample of 100 digitized ponds were manually examined to verify both 
 explained above and the quality of the data.  The main goal was to ensure that the attributes were properly
 copied from the merged task_run.json to the proper pond.  Imagery was also used to verify the geometry.
 No issues were encountered. 
+
+
+
+-------------------------------------------------------------------------------
+
+
+
+FrackFinder PA 2013
+===================
+
+
+
+Tadpole 2013 Workflow
+=====================
+
+### General Description ###
+
+1. Download tasks
+2. Transform data
+3. Sample/QAQC
+
+
+
+1. Download Data
+----------------
+
+The data was split between two different applications, `public` and `internal`, each containing
+half of the Tadpole input tasks.  Tasks were placed in:
+
+>       Transformations_and_QAQC/Tadpole/tasks/public/task.json
+>       Transformations_and_QAQC/Tadpole/tasks/public/task_run.json
+>       Transformations_and_QAQC/Tadpole/tasks/internal/task.json
+>       Transformations_and_QAQC/Tadpole/tasks/internal/task_run.json
+
+
+
+2. Transform Data
+-----------------
+
+Since all tasks were only completed in one location, the data can be combined, however we want
+to be able to know where each task came from, so first we have to add a `ST_source` field.
+
+>       ~/GitHub/CrowdProjects/bin/editJSON.py -a ST_source=public Transformations_and_QAQC/Tadpole/tasks/public/task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task.json
+>       ~/GitHub/CrowdProjects/bin/editJSON.py -a ST_source=public Transformations_and_QAQC/Tadpole/tasks/public/task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task_run.json
+>       ~/CrowdProjects/bin/editJSON.py -a ST_source=internal Transformations_and_QAQC/Tadpole/tasks/internal/task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task.json
+>       ~/CrowdProjects/bin/editJSON.py -a ST_source=internal Transformations_and_QAQC/Tadpole/tasks/internal/task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task_run.json
+
+After adding the source field, the data was combined into a single task.json and task_run.json:
+
+>       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task.json Transformations_and_QAQC/Tadpole/tasks/combined-task.json  
+>       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task_run.json Transformations_and_QAQC/Tadpole/tasks/combined-task_run.json
+
+These combined files can now be converted into a single shapefile:
+
+>       ./Transformations_and_QAQC/Tadpole/bin/task2shp.py Transformations_and_QAQC/Tadpole/tasks/combined-task.json Transformations_and_QAQC/Tadpole/tasks/combined-task_run.json Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp --class=%ST_source
+
+Field Definitions:
+
+>       id  ->  task.json['id']
+>       site_id  ->  task.json['info']['siteID']
+>       wms_url  ->  URL for appropriate imagery
+>       wms_id  ->  Layer ID/name for NAIP imagery
+>       wms_v  ->  OGC WMS version
+>       county  ->  County name
+>       state  ->  State abbreviation
+>       year  ->  Year original permits were created
+>       location  ->  Generated primary key based on lat + long + year
+>       n_unk_res  ->  Number of task runs marked as 'unknown' - task_run.json['info']['selection']  
+>       n_nop_res  ->  Number of task runs marked as 'nopad' - task_run.json['info']['selection']
+>       n_pad_res  ->  Number of task runs marked as 'pad' - task_run.json['info']['selection']
+>       n_tot_res  ->  Total number of times a task was completed in task_run.json
+>       crowd_sel  ->  The most picked task_run.json['info']['selection'] - some are split with '|'
+>       qaqc  ->  String field for use when performing QAQC
+>       p_crd_a  ->  Percentage of responses that agreed with the crowd_sel field
+>       p_s_crd_a  ->  If two selections were favored equally, the p_crd_a for each separated by '|'
+>       class  ->  User defined classification - in this case it specifies public vs. internal
+
+
+
+3. Sample/QAQC
+--------------
+
+A random sample size of 5% for each application was selected after exploring the data.  A total 
+of `4241` tasks were were completed, half in the public application and half in an internal
+application, yielding `106` samples per application.  Each task in the public application was
+completed 10 times and each task in the internal application was completed 3 times.  PyBossa
+calls this the redundancy.
+
+After exploring the `Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp` file, a
+sample size of 5% was selected based on the fact that `93%` of tasks had an agreement level greater
+than or equal to 70%, which justifies sampling the entire population rather than a subset.
+
+The random sampling tool in `QGIS` was used, however a bug requires a small pre-processing step.
+For some reason the random sampling tool totally ignores any datasource filters, so the data must
+first be queried and saved to a new file before performing the selection.  The queries and output
+files are as follows:
+
+>       "class" = 'public'   -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-public.shp
+>       "class" = 'internal' -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-internal.shp
+
+The subsequent files were loaded into `QGIS` and a sample of `5%` for each application was selected
+with the random sampling tool, yielding `106` features for each layer.  The selections were saved
+in the following locations:
+
+>       Transformations_and_QAQC/Tadpole/sampling/public/tadpole-public-5percent-sample.shp
+>       Transformations_and_QAQC/Tadpole/sampling/internal/tadpole-internal-5percent-sample.shp
+
+The samples were then examined one at a time by an operator in order to determine whether they were
+properly classified or not
+
+### Sampling Results ###
+
+The operator disagreed with 1/106 sample in the public set and 8/106 in the internal set.  The
+higher number of disagreements in the internal set is likely caused by the redundancy.  The public
+examined each task 10 times but the internal tasks were only examined 3 times, which means that the
+the public crowd's overall selection allowed for a higher level of disagreement.  If 8 out of 10
+people in the `public` crowd agreed that a site should be classified as a pad, they agreed at 80%,
+but if 2 out of 3 people in the `internal` crowd agreed, their confidence is only 66%.  The public
+is much less sensitive to an individual's selection.  After examining all 8 disagreements, half
+were found to be totally ambiguous and the other half were found to be remediated pads.
+
+The results were examined and show that both the internal and public crowd were overall very
+confident in their selections.  The input tasks for MoorFrog were determined to be as follows:
+
+>       Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp
+>           "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'"
+>           "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'"
+
+
+
+MoorFrog 2013 Workflow
+======================
+
+### General Description ###
+
+1. Generate input tasks
+2. Load into application
+3. Classify ponds
+
+
+
+1. Generate Input Tasks
+-----------------------
+
+An explanation of how the input task queries were determined can be found above in `Tadpole Step 3`
+
+Output from `Tadpole` was processed into a set of input tasks for MoorFrog using the following
+commands:
+
+>       ./Transformations_and_QAQC/MoorFrog/bin/taskGenerator.py Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json -query "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'" --add-info-class=internal  
+>       ./Transformations_and_QAQC/MoorFrog/bin/taskGenerator.py Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json -query "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'" --add-info-class=public
+>       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json
+
+
+
+2. Load Tasks
+-------------
+
+Tasks were loaded with the `createTasks.py` utility, which can be found in the [pybossa_tools](https://github.com/skytruth/pybossa_tools)
+repository.  The installation procedure is as follows:
+
+>       git clone https://github.com/SkyTruth/pybossa_tools
+>       cd pybossa_tools
+>
+>       easy_install pip
+>       pip install pip --upgrade
+>       pip install virtualenv
+>
+>       virtualenv env --no-site-packages
+>       source env/bin/activate
+>
+>       pip install -r requirements.txt
+>
+>       ./createTasks.py -a finder-pond/ -s http://crowd.dev.skytruth.org -k 49e1ae77-5cf9-423e-81b4-2e8a3950abde -c -t ~/GitHub/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json -v -q 3 -n 3 -r "MoorFrog 2013 Fracking Ponds Only"
+
+
+
+DartFrog 2013 Workflow
+======================
+
+MoorFrog was completed internally
+
+
+
+Digitizer 2013 Workflow
+=======================
+
