@@ -40,7 +40,7 @@
 
 
 """
-Add/delete fields
+Add/delete fields from a JSON file
 """
 
 

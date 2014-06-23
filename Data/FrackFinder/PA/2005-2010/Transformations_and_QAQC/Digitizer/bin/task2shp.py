@@ -39,9 +39,7 @@ metrics.
 """
 
 
-# TODO: Add tasks['id']
-# TODO: Add tasks['info']['year']
-# TODO: Add tasks['info']['county']
+# TODO: Refactor to use both task_run.json and task.json as input instead of pre-processing data?  Worth doing for consistency but will be kind of time consuming.
 
 
 import sys
@@ -57,6 +55,7 @@ except ImportError:
     import ogr
     import osr
 ogr.UseExceptions()
+osr.UseExceptions()
 
 
 #/* ======================================================================= */#
@@ -64,8 +63,8 @@ ogr.UseExceptions()
 #/* ======================================================================= */#
 
 __author__ = 'Kevin Wurster'
-__version__ = '0.1'
-__release__ = '2014/06/11'
+__version__ = '0.1-dev'
+__release__ = '2014-06-23'
 __docname__ = basename(__file__)
 __license__ = """
 Copyright (c) 2014, SkyTruth
@@ -112,18 +111,21 @@ def print_usage():
     """
 
     print("""
-Usage: %s [options] task_run.json outfile.shp
+Usage:
+    {0} --help-info
+    {0} [options] task_run.json outfile.shp
 
 Options:
-  --process-extra-fields -> Input task runs have attributes from task.json
-  --overwrite -> Overwrite output.shp
-  --class=str -> Add a classification field with a uniform value - use '%%<field>' to pull from JSON
-  --of=driver -> Specify output OGR driver - defaults to 'ESRI Shapefile'
-  --no-check-intersect -> Don't check for intersecting geometries
-  --no-split-multi     -> Don't split multi-polygon ponds into single parts
-  --no-compute-area    -> Don't compute each feature's area
-  --intersect-keep=str -> Keeps intersecting features based on their classified value
-""" % __docname__)
+    --process-extra-fields  Input task runs have attributes from task.json
+    --overwrite             Overwrite output.shp
+    --class=str             Add a classification field with a uniform value
+                            Use '%%<field>' to pull from the input JSON object
+    --of=driver             Specify output OGR driver - defaults to 'ESRI Shapefile'
+    --no-check-intersect    Don't check for intersecting geometries
+    --no-split-multi        Don't split multi-polygon ponds into single parts
+    --no-compute-area       Don't compute each feature's area
+    --intersect-keep=str    Keeps intersecting features based on their classified value
+""".format(__docname__))
 
     return 1
 
@@ -152,8 +154,6 @@ def print_license():
 
 def print_help():
 
-    # TODO: Populate printout
-
     """
     Detailed help information
 
@@ -164,7 +164,64 @@ def print_help():
     print("""
 Help: {0}
 ------{1}
-HELP STUFF
+
+This utility takes the task_run.json file from the 2005-2010 digitizer
+and creates a shapefile containing all ponds, attributes, and some
+additional attributes like area, county, etc.  The additional attributes
+must be added to the input JSON in a pre-processing step described in
+the README.md that accompanies this utility.  The explanation has also
+been pasted below:
+
+The first takes the task_run.json and adds all the associated
+task.json attributes to each task run:
+
+>       ~/GitHub/CrowdProjects/bin/mergeExport.py \
+>           Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \
+>           Transformations_and_QAQC/Digitizer/tasks/first-review/task_run.json\
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
+>
+>       ~/GitHub/CrowdProjects/bin/mergeExport.py \
+>           Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \
+>           Transformations_and_QAQC/Digitizer/tasks/final-review/task_run.json \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
+
+Additionally, a classification field was added to the task.json and
+task_run.json to note which digitizer it passed through.
+
+NOTE: The overwrite flag on two of the commands is to allow the utility
+      to add the field to the file in place.
+
+>       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           -a class=first \
+>           Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_added_fields.json
+>
+>       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           --overwrite \
+>           -a class=first \
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
+>
+>       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           -a class=first \
+>           Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_added_fields.json
+>
+>       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           --overwrite \
+>           -a class=first \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
+
+Tasks that were completed in both applications will be manually resolved
+later so the task.json and task_run.json can now be combined.  The
+previous step added a classification field that can be used to determine
+which application a given task or task run came from.
+
+>       ~/GitHub/CrowdProjects/bin/mergeFiles.py \
+>           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \
+>           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \
+>           Transformations_and_QAQC/Digitizer/derivative-data/Merged_Task_Runs.json
     """.format(__docname__, '-' * len(__docname__)))
 
     return 1
@@ -416,7 +473,6 @@ def main(args):
             print("")
             check_geom_intersect_keep = arg.split('=', 1)[1]
             return 1
-
 
         # Positional arguments and errors
         else:
