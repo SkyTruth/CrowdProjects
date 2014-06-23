@@ -967,7 +967,7 @@ repository.  The installation procedure is as follows:
 >
 >       pip install -r requirements.txt
 >
->       ./createTasks.py -a finder-pond/ -s http://crowd.dev.skytruth.org -k 49e1ae77-5cf9-423e-81b4-2e8a3950abde -c -t ~/GitHub/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json -v -q 3 -n 3 -r "MoorFrog 2013 Fracking Ponds Only"
+>       ./createTasks.py -a finder-pond/ -s http://crowd.dev.skytruth.org -k 49e1ae77-5cf9-423e-81b4-2e8a3950abde -c -t ~/GitHub/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json -v -q 3 -n 3 -r "MoorFrog_2013_Fracking_Ponds_Only2"
 
 
 
