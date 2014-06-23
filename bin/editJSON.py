@@ -40,7 +40,7 @@
 
 
 """
-Add/delete fields from a JSON file
+Edit/add/delete fields in a JSON file
 """
 
 
@@ -56,14 +56,18 @@ __docname__ = basename(__file__)
 __all__ = ['print_usage', 'print_help', 'print_license', 'print_help_info', 'print_version', 'main']
 
 
-# Build information
-__author__ = 'Kevin Wurster'
-__release__ = '2014-06-03'
+#/* ======================================================================= */#
+#/*     Build Information
+#/* ======================================================================= */#
+
 __version__ = '0.1-dev'
+__release__ = '2014-06-23'
+__copyright__ = 'Copyright 2014, SkyTruth'
+__author__ = 'Kevin Wurster'
 __license__ = '''
 New BSD License
 
-Copyright (c) 2014, Kevin D. Wurster
+Copyright (c) 2014, SkyTruth
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -93,47 +97,55 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #/* ======================================================================= */#
-#/*     Define print_usage()
+#/*     Define print_usage() function
 #/* ======================================================================= */#
 
 def print_usage():
 
     """
     Print commandline usage
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("Usage: %s --help-info [options] input.json output.json" % __docname__)
-    print("")
-    print("Options:")
-    print("  --overwrite  -> Overwrite output file")
-    print("  -a field=val -> Only add a field if it doesn't exist and set it equal to a value")
-    print("  -e field=val -> Edit/add a field and set it equal to a value")
-    print("  -r field=new -> Rename a field")
-    print("  -d fields    -> Delete field")
-    print("")
-    print("Additional Options:")
-    print("  Types: str|float|int|None")
-    print("  -a=type field=val -> Add a field, and set it equal to ")
-    print("")
+    print("""
+Usage:
+    {0} --help-info
+    {0} [options] input.json output.json
+
+Options:
+    --overwrite     Overwrite output file
+    -a field=val    Only add a field if it doesn't exist and set it equal to a value
+    -e field=val    Edit/add a field and set it equal to a value
+    -r field=new    Rename a field
+    -d fields       Delete field
+
+Additional Options:
+    -a/-e/-r=type field=val     Add a field, and typecast input value accordingly
+    Types: str|float|int|None
+""".format(__docname__))
 
     return 1
 
 
 #/* ======================================================================= */#
-#/*     Define print_help()
+#/*     Define print_help() function
 #/* ======================================================================= */#
 
 def print_help():
 
     """
     Print more detailed help information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("Explanation: %s" % __docname__)
-    print("---------------" + "-" * len(__docname__))
-    print("""Add, edit, rename, delete, and change the type of fields in a JSON file
+    print("""
+Help: {0}
+------{1}
+Add, edit, rename, delete, and change the type of fields in a JSON file
 in a user defined order, which allows for on the fly field mapping and copying.
 Processing flags are processed in the order they are discovered, which allows
 the user to do things like rename a field by creating a new field, copying a
@@ -221,19 +233,22 @@ A field's type can be changed with a combination of the above two commands
 
 {0} -e=int field=%field input.json output.json
 
-""".format(__docname__))
+""".format(__docname__, '-' * len(__docname__)))
 
     return 1
 
 
 #/* ======================================================================= */#
-#/*     Define print_license()
+#/*     Define print_license() function
 #/* ======================================================================= */#
 
 def print_license():
 
     """
     Print licensing information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
     print(__license__)
@@ -242,45 +257,54 @@ def print_license():
 
 
 #/* ======================================================================= */#
-#/*     Define print_help_info()
+#/*     Define print_help_info() function
 #/* ======================================================================= */#
 
 def print_help_info():
 
     """
     Print a list of help related flags
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("Help flags:")
-    print("  --help    -> More detailed description of this utility")
-    print("  --usage   -> Arguments, parameters, flags, options, etc.")
-    print("  --version -> Version and ownership information")
-    print("  --license -> License information")
-    print("")
+    print("""
+Help Flags:
+    --help-info     This printout
+    --help          More detailed description of this utility
+    --usage         Arguments, parameters, flags, options, etc.
+    --version       Version and ownership information
+    --license       License information
+""")
 
     return 1
 
 
 #/* ======================================================================= */#
-#/*     Define print_version()
+#/*     Define print_version() function
 #/* ======================================================================= */#
 
 def print_version():
 
     """
     Print the module version information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("%s version %s - released %s" % (__docname__, __version__, __release__))
-    print("")
+    print("""
+%s version %s - released %s
+
+%s
+    """ % (__docname__, __version__, __release__, __copyright__))
 
     return 1
 
 
 #/* ======================================================================= */#
-#/*     Define main()
+#/*     Define main() function
 #/* ======================================================================= */#
 
 def main(args):
@@ -619,11 +643,15 @@ def main(args):
 
 
 #/* ======================================================================= */#
-#/*     Command line execution
+#/*     Command Line Execution
 #/* ======================================================================= */#
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        sys.exit(main(sys.argv[1:]))
-    else:
+
+    # Didn't get enough arguments - print usage and exit
+    if len(sys.argv) is 1:
         sys.exit(print_usage())
+
+    # Got enough arguments - give sys.argv[1:] to main()
+    else:
+        sys.exit(main(sys.argv[1:]))

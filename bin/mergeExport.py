@@ -50,15 +50,23 @@ import json
 from os.path import *
 
 
+#/* ======================================================================= */#
+#/*     File Specific Information
+#/* ======================================================================= */#
+
 __docname__ = basename(__file__)
 __all__ = ['print_usage', 'print_help', 'print_license', 'print_help_info', 'print_version', 'get_task',
            'adjust_fields', 'main']
 
 
-# Build information
-__author__ = 'Kevin Wurster'
-__release__ = '2014-06-02'
+#/* ======================================================================= */#
+#/*     Build Information
+#/* ======================================================================= */#
+
 __version__ = '0.1-dev'
+__release__ = '2014-06-23'
+__copyright__ = 'Copyright 2014, SkyTruth'
+__author__ = 'Kevin Wurster'
 __license__ = '''
 New BSD License
 
@@ -92,53 +100,68 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #/* ======================================================================= */#
-#/*     Define print_usage()
+#/*     Define print_usage() function
 #/* ======================================================================= */#
+
 def print_usage():
 
     """
     Print commandline usage
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("Usage: %s [options] task.json task_run.json outfile.json" % __docname__)
-    print("")
-    print("Options:")
-    print("  --overwrite  -> Overwrite output file")
-    print("  --prefix=str -> Prefix for all task fields - defaults to '_t_'")
-    print("")
+    print("""
+Usage:
+    {0} --help-info
+    {0} [options] task.json task_run.json outfile.json
+
+Options:
+    --overwrite     Overwrite output file
+    --prefix=str    Prefix for all task fields
+                    [default: _t_]
+    """.format(__docname__))
 
     return 1
 
 
 #/* ======================================================================= */#
-#/*     Define print_help()
+#/*     Define print_help() function
 #/* ======================================================================= */#
+
 def print_help():
 
     """
     Print more detailed help information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("Detailed Help: %s" % __docname__)
-    print("---------------" + "-" * len(__docname__))
-    print("Loops through all task runs and appends the matching task's fields to the task")
-    print("run.  A string is prepended to all task fields in order to prevent overwriting")
-    print("fields that exist in both the task and task run - this prefix can be set by the")
-    print("user via the '--prefix=str' option.")
-    print("")
+    print("""
+Help: {0}
+------{1}
+Loops through all task runs and appends the matching task's fields to the task
+run.  A string is prepended to all task fields in order to prevent overwriting
+fields that exist in both the task and task run - this prefix can be set by the
+user via the '--prefix=str' option.
+    """.format(__docname__, '-' * len(__docname__)))
 
     return 1
 
 
 #/* ======================================================================= */#
-#/*     Define print_license()
+#/*     Define print_license() function
 #/* ======================================================================= */#
+
 def print_license():
 
     """
     Print licensing information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
     print(__license__)
@@ -147,37 +170,48 @@ def print_license():
 
 
 #/* ======================================================================= */#
-#/*     Define print_help_info()
+#/*     Define print_help_info() function
 #/* ======================================================================= */#
+
 def print_help_info():
 
     """
     Print a list of help related flags
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("Help flags:")
-    print("  --help    -> More detailed description of this utility")
-    print("  --usage   -> Arguments, parameters, flags, options, etc.")
-    print("  --version -> Version and ownership information")
-    print("  --license -> License information")
-    print("")
+    print("""
+Help Flags:
+    --help-info     This printout
+    --help          More detailed description of this utility
+    --usage         Arguments, parameters, flags, options, etc.
+    --version       Version and ownership information
+    --license       License information
+    """)
 
     return 1
 
 
 #/* ======================================================================= */#
-#/*     Define print_version()
+#/*     Define print_version() function
 #/* ======================================================================= */#
+
 def print_version():
 
     """
     Print the module version information
+
+    :return: returns 1 for for exit code purposes
+    :rtype: int
     """
 
-    print("")
-    print("%s version %s - released %s" % (__docname__, __version__, __release__))
-    print("")
+    print("""
+%s version %s - released %s
+
+%s
+    """ % (__docname__, __version__, __release__, __copyright__))
 
     return 1
 
@@ -185,10 +219,19 @@ def print_version():
 #/* ======================================================================= */#
 #/*     Define get_task()
 #/* ======================================================================= */#
+
 def get_task(task_id, tasks_object):
 
     """
     Find the matching task.json for a given task_run.json 's task_id
+
+    :param task_id: task_run.json['task_id']
+    :type task_id: int
+    :param tasks_object: tasks from json.load(open('task.json'))
+    :type tasks_object: list
+
+    :return: a JSON task object from task.json
+    :rtype: dict
     """
 
     task = None
@@ -207,6 +250,14 @@ def adjust_fields(prefix, task):
 
     """
     Prepend the prefix to a task's fields
+
+    :param prefix: string prepended to task fields
+    :type prefix: str
+    :param task: a JSOn task object from task.json
+    :type task: dict
+
+    :return: a modified JSON task object from task.json
+    :rtype: dict
     """
 
     output_task = {}
@@ -219,10 +270,17 @@ def adjust_fields(prefix, task):
 #/* ======================================================================= */#
 #/*     Define main()
 #/* ======================================================================= */#
+
 def main(args):
 
     """
     Commandline logic
+
+    :param args: commandline arguments from sys.argv[1:]
+    :type args: list|tuple
+
+    :return: 0 on success and 1 on failure
+    :rtype: int
     """
 
     #/* ======================================================================= */#
@@ -423,10 +481,15 @@ def main(args):
 
 
 #/* ======================================================================= */#
-#/*     Command line execution
+#/*     Commandline Execution
 #/* ======================================================================= */#
+
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        sys.exit(main(sys.argv[1:]))
-    else:
+
+    # Didn't get enough arguments - print usage and exit
+    if len(sys.argv) is 1:
         sys.exit(print_usage())
+
+    # Got enough arguments - give sys.argv[1:] to main()
+    else:
+        sys.exit(main(sys.argv[1:]))
