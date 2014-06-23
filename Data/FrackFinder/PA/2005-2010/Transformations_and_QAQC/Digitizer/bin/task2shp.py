@@ -62,10 +62,11 @@ osr.UseExceptions()
 #/*     Build Information
 #/* ======================================================================= */#
 
-__author__ = 'Kevin Wurster'
 __version__ = '0.1-dev'
 __release__ = '2014-06-23'
+__copyright__ = 'Copyright 2014, SkyTruth'
 __docname__ = basename(__file__)
+__author__ = 'Kevin Wurster'
 __license__ = """
 Copyright (c) 2014, SkyTruth
 All rights reserved.
@@ -175,15 +176,15 @@ been pasted below:
 The first takes the task_run.json and adds all the associated
 task.json attributes to each task run:
 
->       ~/GitHub/CrowdProjects/bin/mergeExport.py \
->           Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \
->           Transformations_and_QAQC/Digitizer/tasks/first-review/task_run.json\
->           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
+~/GitHub/CrowdProjects/bin/mergeExport.py \\
+    Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \\
+    Transformations_and_QAQC/Digitizer/tasks/first-review/task_run.json\
+    Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
 >
->       ~/GitHub/CrowdProjects/bin/mergeExport.py \
->           Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \
->           Transformations_and_QAQC/Digitizer/tasks/final-review/task_run.json \
->           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
+~/GitHub/CrowdProjects/bin/mergeExport.py \\
+    Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \\
+    Transformations_and_QAQC/Digitizer/tasks/final-review/task_run.json \\
+    Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
 
 Additionally, a classification field was added to the task.json and
 task_run.json to note which digitizer it passed through.
@@ -191,37 +192,37 @@ task_run.json to note which digitizer it passed through.
 NOTE: The overwrite flag on two of the commands is to allow the utility
       to add the field to the file in place.
 
->       ~/GitHub/CrowdProjects/bin/editJSON.py \
->           -a class=first \
->           Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \
->           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_added_fields.json
->
->       ~/GitHub/CrowdProjects/bin/editJSON.py \
->           --overwrite \
->           -a class=first \
->           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \
->           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
->
->       ~/GitHub/CrowdProjects/bin/editJSON.py \
->           -a class=first \
->           Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \
->           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_added_fields.json
->
->       ~/GitHub/CrowdProjects/bin/editJSON.py \
->           --overwrite \
->           -a class=first \
->           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \
->           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
+~/GitHub/CrowdProjects/bin/editJSON.py \\
+    -a class=first \\
+    Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \\
+    Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_added_fields.json
+
+~/GitHub/CrowdProjects/bin/editJSON.py \\
+    --overwrite \\
+    -a class=first \\
+    Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \\
+    Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
+
+~/GitHub/CrowdProjects/bin/editJSON.py \\
+    -a class=first \\
+    Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \\
+    Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_added_fields.json
+
+~/GitHub/CrowdProjects/bin/editJSON.py \\
+    --overwrite \\
+    -a class=first \\
+    Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \\
+    Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
 
 Tasks that were completed in both applications will be manually resolved
 later so the task.json and task_run.json can now be combined.  The
 previous step added a classification field that can be used to determine
 which application a given task or task run came from.
 
->       ~/GitHub/CrowdProjects/bin/mergeFiles.py \
->           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \
->           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \
->           Transformations_and_QAQC/Digitizer/derivative-data/Merged_Task_Runs.json
+~/GitHub/CrowdProjects/bin/mergeFiles.py \\
+    Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \\
+    Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \\
+    Transformations_and_QAQC/Digitizer/derivative-data/Merged_Task_Runs.json
     """.format(__docname__, '-' * len(__docname__)))
 
     return 1
@@ -241,11 +242,12 @@ def print_help_info():
     """
 
     print("""
-Help flags:
-  --help    -> More detailed description of this utility
-  --usage   -> Arguments, parameters, flags, options, etc.
-  --version -> Version and ownership information
-  --license -> License information
+Help Flags:
+    --help-info     This printout
+    --help          More detailed description of this utility
+    --usage         Arguments, parameters, flags, options, etc.
+    --version       Version and ownership information
+    --license       License information
     """)
 
     return 1
@@ -266,7 +268,9 @@ def print_version():
 
     print("""
 %s version %s - released %s
-    """ % (__docname__, __version__, __release__))
+
+%s
+    """ % (__docname__, __version__, __release__, __copyright__))
 
     return 1
 
@@ -441,8 +445,16 @@ def main(args):
     for arg in args:
 
         # Help arguments
-        if arg in ('--usage', '--help', '--help-info'):
+        if arg in ('--help-info', '-help-info', '--helpinfo', '-help-info'):
+            return print_help_info()
+        elif arg in ('--help', '-help', '--h', '-h'):
+            return print_help()
+        elif arg in ('--usage', '-usage'):
             return print_usage()
+        elif arg in ('--version', '-version'):
+            return print_version()
+        elif arg in ('--license', '-usage'):
+            return print_license()
 
         # OGR Configuration
         elif '--of=' in arg:
