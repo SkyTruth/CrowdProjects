@@ -272,6 +272,9 @@ def main(args):
             driver.DeleteDataSource(outfile)
         datasource = driver.CreateDataSource(outfile)
         layer = datasource.CreateLayer('borelines', srs, ogr.wkbLineString)
+        field_object = ogr.FieldDefn('status', ogr.OFTString)
+        field_object.SetWidth(254)
+        layer.CreateField(field_object)
 
         # Process CSV file
         for line in reader:
@@ -284,6 +287,7 @@ def main(args):
             geometry.AddPoint(endpoint_lng, endpoint_lat)
             feature = ogr.Feature(layer.GetLayerDefn())
             feature.SetGeometry(geometry)
+            feature.SetField('status', line['Status'])
             layer.CreateFeature(feature)
 
     # Cleanup

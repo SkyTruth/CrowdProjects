@@ -31,3 +31,29 @@ A NAIP coverage map was located, although it has not proven to be the best
 resource.  The `OGRIP` site looks promising and is easy to use.
 
 >       Source_Data/naip04_13_coverage_maps.pdf
+
+
+Columbiana
+Guernsey
+Belmont
+Holmes
+Morgan
+Knox
+Portage
+Ashland
+Muskingum
+Trumbull
+Stark
+Washington
+Wayne
+Monroe
+Medina
+Ashtabula
+Harrison
+Jefferson
+Coshocton
+Tuscarawas
+Geauga
+Carroll
+Noble
+Mahoning
