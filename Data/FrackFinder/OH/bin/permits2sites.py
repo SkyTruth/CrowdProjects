@@ -73,7 +73,6 @@ import csv
 import math
 import os
 from os.path import *
-from pprint import pprint
 import sys
 try:
     from osgeo import ogr
@@ -257,9 +256,7 @@ def main(args):
     #/* ======================================================================= */#
     #/*     Defaults
     #/* ======================================================================= */#
-    
-    
-    ogr_output_driver = 'ESRI Shapefile'
+
     cluster_distance_m = 100
     overwrite_mode = False
 
@@ -292,11 +289,6 @@ def main(args):
                 return print_version()
             elif arg in ('--usage', '-usage'):
                 return print_usage()
-            
-            # OGR options
-            elif arg in ('-f', '-of', '--output-format'):
-                i += 2
-                ogr_output_driver = args[i - 1]
 
             # Additional options
             elif arg in ('--overwrite', '-overwrite'):
@@ -443,7 +435,7 @@ def main(args):
     #/*     Cluster Data
     #/* ======================================================================= */#
 
-    # TODO: This is preeeeeeeeeetty ugly ...
+    # TODO: This is pretty ugly ...
 
     print("Clustering data ...")
     mem_layer.ResetReading()
@@ -574,6 +566,9 @@ def main(args):
         reprojected_c_feature = None
         feature = None
         cluster = None
+        mem_layer = None
+        mem_ds = None
+        iter_layer = None
 
     #/* ======================================================================= */#
     #/*     Cleanup
