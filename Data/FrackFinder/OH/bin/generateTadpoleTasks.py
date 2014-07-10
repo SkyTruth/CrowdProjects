@@ -83,7 +83,7 @@ import sys
 __author__ = 'Kevin Wurster'
 __version__ = '0.1-dev'
 __release__ = '2014-07-10'
-__copyright__ = 'Copyright (c) 2014, SkyTruth '
+__copyright__ = 'Copyright (c) 2014, SkyTruth'
 
 
 #/* ======================================================================= */#
@@ -221,6 +221,11 @@ def main(args):
     #/* ======================================================================= */#
 
     overwrite_mode = False
+    i_lat_field_name = 'lat'
+    i_long_field_name = 'long'
+    i_guid_field_name = 'guid'
+    i_api_field_name = 'api'
+    process_subsample = None
 
     #/* ======================================================================= */#
     #/*     Containers
@@ -252,15 +257,27 @@ def main(args):
             elif arg in ('--usage', '-usage'):
                 return print_usage()
 
-            # OGR options
-            elif arg in ('-ie', '--input-epsg'):
+            # Infile options
+            elif '-i-lat-field' in arg:
                 i += 2
-                input_data_epsg = args[i - 1]
+                i_lat_field_name = args[i - 1]
+            elif '-i-long-field' in arg:
+                i += 2
+                i_long_field_name = args[i - 1]
+            elif '-i-guid-field' in arg:
+                i += 2
+                i_guid_field_name = args[i - 1]
+            elif '-i-api-field' in arg:
+                i += 2
+                i_api_field_name = args[i - 1]
 
             # Additional options
             elif arg in ('--overwrite', '-overwrite'):
                 i += 1
                 overwrite_mode = True
+            elif arg in ('-s', '--subsample'):
+                i += 2
+                process_subsample = args[i - 1]
 
             # Positional arguments and errors
             else:
@@ -317,12 +334,63 @@ def main(args):
         bail = True
         print("ERROR: Overwrite=%s and output file exists: %s" % (str(overwrite_mode), output_file))
 
+    # If processing a subsample, validate
+    if process_subsample is not None:
+        try:
+            process_subsample = int(process_subsample)
+            if process_subsample < 0:
+                bail = True
+                print("ERROR: Invalid subsample - must be > 0: %s" % str(process_subsample))
+        except ValueError:
+            bail = True
+            print("ERROR: Invalid subsample - must be an int: %s" % str(process_subsample))
+
     if bail:
         return 1
 
     #/* ======================================================================= */#
-    #/*     Cleanup
+    #/*     Convert input file to tasks
     #/* ======================================================================= */#
+
+    # Figure out how many rows are in the input CSV
+    num_input_rows = None
+    with open(input_file, 'r') as i_f:
+        reader = csv.DictReader(i_f)
+        num_input_rows = len([i for i in reader])
+
+    # Process input file
+    with open(input_file, 'r') as i_f:
+
+        reader = csv.DictReader(i_f)
+        output_content = []
+
+        i = 0
+        for row in reader:
+
+            # Update user
+            i += 1
+            sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(num_input_rows)))
+            sys.stdout.flush()
+
+
+            # TODO: Detect year and populate with 4 characters
+            # TODO: WMS URL logic
+            task = {'info': {'latitude': row['lat'],
+                             'longitude': row['long'],
+
+                             'county': row['county'],
+                             'perm_date': row['perm_date'],
+                             'status': row['status'],
+                             'operator': row['operator'],
+                             'well_name': row['well_name'],
+                             'end_lat': row['end_lat'],
+                             'end_long': row['end_long']}}
+
+        # Write the output file
+        with open(output_file, 'w') as o_f:
+
+            json.dump(output_content, o_f)
+
 
 
 

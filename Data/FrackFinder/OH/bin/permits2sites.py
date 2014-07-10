@@ -70,6 +70,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 import csv
+import json
 import math
 import os
 from os.path import *
@@ -239,6 +240,19 @@ def get_epsg_code(lat, lng):
 
 
 #/* ======================================================================= */#
+#/*     Define generate_guid() function
+#/* ======================================================================= */#
+
+def generate_guid(*args):
+
+    """
+    Generate a GUID for a given clustered site
+    """
+
+    return sum(args)
+
+
+#/* ======================================================================= */#
 #/*     Define main() function
 #/* ======================================================================= */#
 
@@ -259,6 +273,7 @@ def main(args):
 
     cluster_distance_m = 100
     overwrite_mode = False
+    input_data_epsg = 4326
 
     #/* ======================================================================= */#
     #/*     Containers
@@ -289,6 +304,11 @@ def main(args):
                 return print_version()
             elif arg in ('--usage', '-usage'):
                 return print_usage()
+
+            # OGR options
+            elif arg in ('-ie', '--input-epsg'):
+                i += 2
+                input_data_epsg = args[i - 1]
 
             # Additional options
             elif arg in ('--overwrite', '-overwrite'):
@@ -350,6 +370,13 @@ def main(args):
         bail = True
         print("ERROR: Overwrite=%s and output file exists: %s" % (str(overwrite_mode), output_file))
 
+    # Check input EPSG
+    try:
+        input_data_epsg = int(input_data_epsg)
+    except ValueError:
+        bail = True
+        print("ERROR: Invalid input EPSG: %s" % str(input_data_epsg))
+
     if bail:
         return 1
 
@@ -381,18 +408,29 @@ def main(args):
     print("Found %s records in input file: %s" % (str(num_permits), input_file))
 
     # Create an in memory OGR datasource for use during processing
-    mem_srs = osr.SpatialReference()
-    mem_srs.ImportFromEPSG(4326)
-    mem_driver = ogr.GetDriverByName('Memory')
-    mem_ds = mem_driver.CreateDataSource('temp_ogr_ds')
-    mem_layer_name = 'temp_ogr_layer'
-    mem_layer = mem_ds.CreateLayer(mem_layer_name, mem_srs, ogr.wkbPoint)
-    field_definitions = (('api', 254, ogr.OFTString),
-                         ('epsg', 10, ogr.OFTInteger))
-    for f_name, f_width, f_type in field_definitions:
-        f_obj = ogr.FieldDefn(f_name, f_type)
-        f_obj.SetWidth(f_width)
-        mem_layer.CreateField(f_obj)
+    try:
+        mem_srs = osr.SpatialReference()
+        mem_srs.ImportFromEPSG(input_data_epsg)
+        mem_driver = ogr.GetDriverByName('Memory')
+        mem_ds = mem_driver.CreateDataSource('temp_ogr_ds')
+        mem_layer_name = 'temp_ogr_layer'
+        mem_layer = mem_ds.CreateLayer(mem_layer_name, mem_srs, ogr.wkbPoint)
+        field_definitions = (('api', 254, ogr.OFTString),
+                             ('epsg', 10, ogr.OFTInteger),
+                             ('perm_date', 254, ogr.OFTString),
+                             ('county', 254, ogr.OFTString),
+                             ('status', 254, ogr.OFTString),
+                             ('operator', 254, ogr.OFTString),
+                             ('well_name', 254, ogr.OFTString),
+                             ('end_lat', 254, ogr.OFTString),
+                             ('end_long', 254, ogr.OFTString))
+        for f_name, f_width, f_type in field_definitions:
+            f_obj = ogr.FieldDefn(f_name, f_type)
+            f_obj.SetWidth(f_width)
+            mem_layer.CreateField(f_obj)
+    except RuntimeError, e:
+        print(e)
+        return 1
 
     # Process input CSV
     with open(input_file, 'r') as f:
@@ -401,13 +439,7 @@ def main(args):
         reader = csv.DictReader(f)
 
         # Add API's to temporary OGR datasource
-        i = 0
         for row in reader:
-
-            # Update user
-            i += 1
-            #sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(num_permits)))
-            #sys.stdout.flush()
 
             # Cache attributes
             api_num = str(row['API #'])
@@ -422,14 +454,20 @@ def main(args):
             feature.SetGeometry(geometry)
             feature.SetField('api', api_num)
             feature.SetField('epsg', epsg_code)
+            feature.SetField('perm_date', row['Permit Issued'])
+            feature.SetField('county', row['County'])
+            feature.SetField('status', row['Status'])
+            feature.SetField('operator', row['Operator'])
+            feature.SetField('well_name', row['Well Name & Number'])
+            feature.SetField('end_lat', row['Endpoint Lat'])
+            feature.SetField('end_long', row['Endpoint Long'])
+
+
             mem_layer.CreateFeature(feature)
 
         # Cleanup
         geometry = None
         feature = None
-
-        # Update user - also needed for formatting due to sys.stdout.flush()
-        print(" - Done")
 
     #/* ======================================================================= */#
     #/*     Cluster Data
@@ -442,7 +480,10 @@ def main(args):
     with open(output_file, 'w') as f:
 
         # Create a CSV writer and immediately write the header row
-        writer = csv.DictWriter(f, fieldnames=['lat', 'long', 'api', 'guid'], quoting=csv.QUOTE_ALL)
+        fieldnames = ['lat', 'long', 'api', 'guid', 'perm_date',
+                      'county', 'perm_date', 'status', 'operator',
+                      'well_name', 'end_lat', 'end_long']
+        writer = csv.DictWriter(f, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
         writer.writeheader()
 
         # Create a copy of the in memory layer for distance calculations
@@ -467,7 +508,7 @@ def main(args):
             f_lng = feature_geometry.GetX()
             f_api = feature.GetField('api')
             f_epsg = feature.GetField('epsg')
-            guid = f_lat + f_lng + int(f_api) + f_epsg
+            guid = generate_guid(*[f_lat, f_lng, int(f_api), f_epsg])
 
             # Only process the feature if its API number has not already been clustered
             if f_api not in processed_input_apis:
@@ -500,7 +541,6 @@ def main(args):
                 cluster_apis = [f_api]
 
                 # Keep performing distance calculations until no mo
-                processed_fids = [feature.GetFID()]
                 nearest_feature = ''  # Get past initial loop
                 while nearest_feature is not None:
 
@@ -509,16 +549,11 @@ def main(args):
                     iter_layer.ResetReading()
                     for i_feature in iter_layer:
 
-                        # Cache feature ID
-                        i_feature_fid = i_feature.GetFID()
-
-                        # Make sure we haven't already processed this FID
-                        if i_feature_fid not in processed_fids:
-
-                            distance = feature.GetGeometryRef().Distance(i_feature.GetGeometryRef())
-                            if nearest_distance is None or distance < nearest_distance:
-                                nearest_distance = distance
-                                nearest_feature = i_feature.Clone()
+                        # Figure out if this feature is closer than the previous
+                        distance = feature.GetGeometryRef().Distance(i_feature.GetGeometryRef())
+                        if nearest_distance is None or distance < nearest_distance:
+                            nearest_distance = distance
+                            nearest_feature = i_feature.Clone()
 
                     # Add the nearest feature to the cluster
                     # If no nearest_feature is still None then that means the entire layer has been processed
@@ -538,21 +573,30 @@ def main(args):
                         # Add nearest point to the cluster if its still within the cluster distance
                         else:
                             processed_input_apis.append(nearest_feature.GetField('api'))
-                            processed_fids.append(nearest_feature.GetFID())
                             point = ogr.Geometry(ogr.wkbPoint)
                             point.AddPoint(reprojected_i_geometry.GetX(), reprojected_i_geometry.GetY())
                             cluster.AddGeometry(point)
                             cluster_apis.append(nearest_feature.GetField('api'))
+                            iter_layer.DeleteFeature(nearest_feature.GetFID())
 
                 # Compute a cluster centroid and send it back to the input layer's SRS
                 centroid = cluster.Centroid()
                 centroid_srs = cluster.GetSpatialReference()
                 centroid_transform = osr.CoordinateTransformation(centroid_srs, f_s_srs)
                 centroid.Transform(centroid_transform)
+
+                # Write data
                 writer.writerow({'lat': centroid.GetY(),
                                  'long': centroid.GetX(),
-                                 'api': ','.join(cluster_apis),
-                                 'guid': guid})
+                                 'api': json.dumps(cluster_apis),
+                                 'guid': guid,
+                                 'perm_date': feature.GetField('perm_date'),
+                                 'county': feature.GetField('county'),
+                                 'status': feature.GetField('status'),
+                                 'operator': feature.GetField('operator'),
+                                 'well_name': feature.GetField('well_name'),
+                                 'end_lat': feature.GetField('end_lat'),
+                                 'end_long': feature.GetField('end_long')})
 
         # Done processing input file
         print(" - Done")
