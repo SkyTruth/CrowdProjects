@@ -430,7 +430,7 @@ extracted and manually examined by an operator who was looking for missed ponds.
 S
 
 Some user's disregarded the directions and clicked on ponds outside of the
-bounding box.  These clicks were thrown out before performing any analysis away.
+bounding box.  These clicks were thrown away before performing any analysis.
 Any pond (fracking or otherwise) within the bounding box that was not clicked
 on at least was once was considered omitted.  The operator created a new Shapefile
 containing one point per missed pond.
