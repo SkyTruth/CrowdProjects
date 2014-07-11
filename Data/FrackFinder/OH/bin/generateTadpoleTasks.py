@@ -220,12 +220,32 @@ def main(args):
     #/*     Defaults
     #/* ======================================================================= */#
 
+    # Processing options
     overwrite_mode = False
-    i_lat_field_name = 'lat'
-    i_long_field_name = 'long'
-    i_guid_field_name = 'guid'
-    i_api_field_name = 'api'
     process_subsample = None
+
+    # Input data field names
+    i_lat_field = 'lat'
+    i_long_field = 'long'
+    i_guid_field = 'guid'
+    i_api_field = 'api'
+    i_perm_date_field = 'perm_date'
+    i_county_field = 'county'
+    i_status_field = 'status'
+    i_operator_field = 'operator'
+    i_well_name_field = 'well_name'
+    i_end_lat_field = 'end_lat'
+    i_end_long_field = 'end_long'
+
+    # WMS info
+    wms_data = {'map': 'https://mapsengine.google.com/06136759344167181854-11845109403981099587-4/wms/',
+                'version': '1.3.0',
+                'years': {'2010': '06136759344167181854-04770958895915995837-4',
+                          '2011': '06136759344167181854-08224624193234342065-4',
+                          '2013': '06136759344167181854-11275828430006462017-4'}}
+
+    # Additional task attributes
+    state = 'OH'
 
     #/* ======================================================================= */#
     #/*     Containers
@@ -260,16 +280,37 @@ def main(args):
             # Infile options
             elif '-i-lat-field' in arg:
                 i += 2
-                i_lat_field_name = args[i - 1]
+                i_lat_field = args[i - 1]
             elif '-i-long-field' in arg:
                 i += 2
-                i_long_field_name = args[i - 1]
+                i_long_field = args[i - 1]
             elif '-i-guid-field' in arg:
                 i += 2
-                i_guid_field_name = args[i - 1]
+                i_guid_field = args[i - 1]
             elif '-i-api-field' in arg:
                 i += 2
-                i_api_field_name = args[i - 1]
+                i_api_field = args[i - 1]
+            elif '-i-perm-date-field' in arg:
+                i += 2
+                i_perm_date_field = args[i - 1]
+            elif '-i-county-field' in arg:
+                i += 2
+                i_county_field = args[i - 1]
+            elif '-i-status-field' in arg:
+                i += 2
+                i_status_field = args[i - 1]
+            elif '-i-operator-field' in arg:
+                i += 2
+                i_operator_field = args[i - 1]
+            elif '-i-wellname-field' in arg:
+                i += 2
+                i_well_name_field = args[i - 1]
+            elif '-i-end-lat-field' in arg:
+                i += 2
+                i_end_lat_field = args[i - 1]
+            elif '-i-end-long-field' in arg:
+                i += 2
+                i_end_long_field = args[i - 1]
 
             # Additional options
             elif arg in ('--overwrite', '-overwrite'):
@@ -372,27 +413,33 @@ def main(args):
             sys.stdout.write("\r\x1b[K" + "  %s/%s" % (str(i), str(num_input_rows)))
             sys.stdout.flush()
 
+            # Create one task for every imagery year
+            for year in wms_data['years'].keys():
 
-            # TODO: Detect year and populate with 4 characters
-            # TODO: WMS URL logic
-            task = {'info': {'latitude': row['lat'],
-                             'longitude': row['long'],
-
-                             'county': row['county'],
-                             'perm_date': row['perm_date'],
-                             'status': row['status'],
-                             'operator': row['operator'],
-                             'well_name': row['well_name'],
-                             'end_lat': row['end_lat'],
-                             'end_long': row['end_long']}}
+                # TODO: Detect year and populate with 4 characters
+                output_content.append({'info': {'county': row[i_county_field],
+                                       'latitude': row[i_lat_field],
+                                       'longitude': row[i_long_field],
+                                       'options': {'layers': wms_data['years'][year],
+                                                   'version': wms_data['version']},
+                                       'siteID': row[i_guid_field],
+                                       #'size': 200  # This is in the Tadpole input tasks for PA 2013 but no one knows what it is
+                                       'state': state,
+                                       'url': wms_data['map'],
+                                       'year': year,
+                                       'apis': row[i_api_field],
+                                       'perm_date': row[i_perm_date_field],
+                                       'status': row[i_status_field],
+                                       'operator': row[i_operator_field],
+                                       'well_name': row[i_well_name_field],
+                                       'end_lat': row[i_end_lat_field],
+                                       'end_long': row[i_end_long_field]}})
+        print(" - Done")
 
         # Write the output file
+        print("Writing output file ...")
         with open(output_file, 'w') as o_f:
-
             json.dump(output_content, o_f)
-
-
-
 
     #/* ======================================================================= */#
     #/*     Cleanup

@@ -435,7 +435,7 @@ def main(args):
     # Process input CSV
     with open(input_file, 'r') as f:
 
-        print("Initial processing...")
+        print("Loading input file ...")
         reader = csv.DictReader(f)
 
         # Add API's to temporary OGR datasource
@@ -461,8 +461,6 @@ def main(args):
             feature.SetField('well_name', row['Well Name & Number'])
             feature.SetField('end_lat', row['Endpoint Lat'])
             feature.SetField('end_long', row['Endpoint Long'])
-
-
             mem_layer.CreateFeature(feature)
 
         # Cleanup
