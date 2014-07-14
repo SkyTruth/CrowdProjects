@@ -109,7 +109,7 @@ def print_usage():
 Usage: %s [options] task.json task_run.json outfile.shp
 
 Options:
-  --class=str -> Add a field containing a value, or use %str to get a field from the JSON
+  --class=str -> Add a field containing a value, or use %%str to get a field from the JSON
   --help-info -> Print out a list of help related flags
   --of=driver -> Output driver name/file type - default='ESRI Shapefile'
   --epsg=int  -> EPSG code for coordinates in task.json - default='4326'
