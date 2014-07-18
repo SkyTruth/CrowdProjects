@@ -75,6 +75,7 @@ import math
 import os
 from os.path import *
 import sys
+import uuid
 try:
     from osgeo import ogr
     from osgeo import osr
@@ -237,19 +238,6 @@ def get_epsg_code(lat, lng):
         epsg += 100
 
     return epsg
-
-
-#/* ======================================================================= */#
-#/*     Define generate_guid() function
-#/* ======================================================================= */#
-
-def generate_guid(*args):
-
-    """
-    Generate a GUID for a given clustered site
-    """
-
-    return sum(args)
 
 
 #/* ======================================================================= */#
@@ -459,8 +447,6 @@ def main(args):
             feature.SetField('status', row['Status'])
             feature.SetField('operator', row['Operator'])
             feature.SetField('well_name', row['Well Name & Number'])
-            feature.SetField('end_lat', row['Endpoint Lat'])
-            feature.SetField('end_long', row['Endpoint Long'])
             mem_layer.CreateFeature(feature)
 
         # Cleanup
@@ -480,7 +466,7 @@ def main(args):
         # Create a CSV writer and immediately write the header row
         fieldnames = ['lat', 'long', 'api', 'guid', 'perm_date',
                       'county', 'perm_date', 'status', 'operator',
-                      'well_name', 'end_lat', 'end_long']
+                      'well_name']
         writer = csv.DictWriter(f, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
         writer.writeheader()
 
@@ -506,7 +492,7 @@ def main(args):
             f_lng = feature_geometry.GetX()
             f_api = feature.GetField('api')
             f_epsg = feature.GetField('epsg')
-            guid = generate_guid(*[f_lat, f_lng, int(f_api), f_epsg])
+            guid = uuid.uuid4().hex
 
             # Only process the feature if its API number has not already been clustered
             if f_api not in processed_input_apis:
@@ -587,14 +573,7 @@ def main(args):
                 writer.writerow({'lat': centroid.GetY(),
                                  'long': centroid.GetX(),
                                  'api': json.dumps(cluster_apis),
-                                 'guid': guid,
-                                 'perm_date': feature.GetField('perm_date'),
-                                 'county': feature.GetField('county'),
-                                 'status': feature.GetField('status'),
-                                 'operator': feature.GetField('operator'),
-                                 'well_name': feature.GetField('well_name'),
-                                 'end_lat': feature.GetField('end_lat'),
-                                 'end_long': feature.GetField('end_long')})
+                                 'guid': guid})
 
         # Done processing input file
         print(" - Done")
