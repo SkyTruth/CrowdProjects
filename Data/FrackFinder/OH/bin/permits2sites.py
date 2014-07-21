@@ -447,6 +447,7 @@ def main(args):
             feature.SetField('status', row['Status'])
             feature.SetField('operator', row['Operator'])
             feature.SetField('well_name', row['Well Name & Number'])
+            feature.SetField('county', row['County'].title())
             mem_layer.CreateFeature(feature)
 
         # Cleanup
@@ -573,6 +574,7 @@ def main(args):
                 writer.writerow({'lat': centroid.GetY(),
                                  'long': centroid.GetX(),
                                  'api': json.dumps(cluster_apis),
+                                 'county': feature.GetField('county'),
                                  'guid': guid})
 
         # Done processing input file

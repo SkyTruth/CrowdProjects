@@ -229,6 +229,7 @@ def main(args):
     i_long_field = 'long'
     i_guid_field = 'guid'
     i_api_field = 'api'
+    i_county_field = 'county'
 
     # WMS info
     wms_data = {'map': 'https://mapsengine.google.com/06136759344167181854-11845109403981099587-4/wms/',
@@ -415,6 +416,7 @@ def main(args):
                                                 'longitude': float(row[i_long_field]),
                                                 'options': {'layers': wms_data['years'][year],
                                                             'version': wms_data['version']},
+                                                'county': row[i_county_field],
                                                 'siteID': row[i_guid_field],
                                                 'size': task_size,
                                                 'state': task_state,
