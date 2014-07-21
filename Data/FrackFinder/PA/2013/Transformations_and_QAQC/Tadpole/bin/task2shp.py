@@ -443,15 +443,15 @@ def main(args):
 
             # Catch task.json file
             if tasks_file is None:
-                tasks_file = arg
+                tasks_file = abspath(arg)
 
             # Catch task_run.json file
             elif task_runs_file is None:
-                task_runs_file = arg
+                task_runs_file = abspath(arg)
 
             # Catch output file
             elif outfile is None:
-                outfile = arg
+                outfile = abspath(arg)
 
             # Catch unrecognized arguments
             else:
