@@ -483,7 +483,7 @@ def main(args):
         print("ERROR: Need a task run file")
     elif not isfile(task_runs_file) or not os.access(task_runs_file, os.R_OK):
         bail = True
-        print("ERROR: Can't access task run file:" % task_runs_file)
+        print("ERROR: Can't access task run file: %s" % task_runs_file)
 
     # Check output file
     if outfile is None:
