@@ -1280,8 +1280,47 @@ DartFrog 2013 Workflow
 
 MoorFrog was completed internally
 
+# TODO: Format below - currently relative to 2013/Transformations_and_QAQC/MoorFrog
 
 
-Digitizer 2013 Workflow
-=======================
+== Kevin ==
+
+./bin/task2shp.py output_tasks/task.json output_tasks/task_run.json transform/layers/
+
+Load transform/layers/MoorFrog-clicks.shp into QGIS and buffer
+    - Segments to approximate: 5
+    - Buffer distance: 0.0001
+    - Dissolve buffer results: True
+    - Output: transform/buffer-dissolve-clicks.shp
+
+Above yields a single feature - explode with this:
+    ogr2ogr -progress transform/exploded-clicks.shp transform/buffer-dissolve-clicks.shp -explodecollections
+
+Load transform/exploded-clicks.shp into QGIS and create centroids
+    - Output: transform/pond-centroids.shp
+
+Load transform/pond-centroids.shp into QGIS and add fiels through calculator
+    * Field Name: X
+        - Type: Real
+        - Width: 10
+        - Precision: 10
+        - Expression: $X
+    * Field Name: Y
+        - Type: Real
+        - Width: 10
+        - Precision: 10
+        - Expression: $Y
+    * Field Name: longitude
+        - Type: Real
+        - Width: 10
+        - Precision: 10
+        - Expression: $X
+    * Field Name: latitude
+        - Type: Real
+        - Width: 10
+        - Precision: 10
+        - Expression: $Y
+
+
+== Tita ==
 
