@@ -223,7 +223,7 @@ def main(args):
     overwrite = False
 
     imagery_year = 2013
-    imagery_state = 'OH'
+    imagery_state = 'PA'
 
     wms_version = '1.3.0'
     gme_base_url = 'https://mapsengine.google.com/06136759344167181854-11153668168998282611-4/wms/?version=1.3.0'
