@@ -222,6 +222,9 @@ def main(args):
 
     overwrite = False
 
+    imagery_year = 2013
+    imagery_state = 'OH'
+
     wms_version = '1.3.0'
     gme_base_url = 'https://mapsengine.google.com/06136759344167181854-11153668168998282611-4/wms/?version=1.3.0'
     county_urls = {'Allegheny': {'layers': '06136759344167181854-17097547970711210810-4',
@@ -373,9 +376,9 @@ def main(args):
     elif not overwrite and isfile(output_task_file):
         bail = True
         print("ERROR: Overwrite=%s and output exists: %s" % (str(overwrite), output_task_file))
-    elif not os.access(output_task_file, os.W_OK):
+    elif overwrite and not os.access(output_task_file, os.W_OK):
         bail = True
-        print("ERROR: Need write access for output: %s" % output_task_file)
+        print("ERROR: Need write access: %s" % output_task_file)
     elif not os.access(dirname(output_task_file), os.W_OK):
         bail = True
         print("ERROR: Need write access for directory: %s" % dirname(output_task_file))
@@ -398,19 +401,24 @@ def main(args):
         print("Processing %s tasks ..." % str(len(input_tasks)))
         for task in input_tasks:
 
+            task_body = {'info': task.copy()}
+
             # Get the GME layer ID for the WMS URL
+            county = task['county']
             try:
-                layer_id = county_urls[task['county']]
+                layer_id = county_urls[county]
             except KeyError:
-                print("ERROR: County '%s' not in WMS URL dictionary")
+                print("ERROR: County '%s' not in WMS URL dictionary" % county)
                 return 1
 
             # Populate task
-            task['info']['url'] = gme_base_url
-            task['info']['options'] = {'layers': layer_id,
-                                       'version': wms_version}
+            task_body['info']['state'] = imagery_state
+            task_body['info']['year'] = imagery_year
+            task_body['info']['url'] = gme_base_url
+            task_body['info']['options'] = {'layers': layer_id,
+                                            'version': wms_version}
 
-            output_json.append(task)
+            output_json.append(task_body)
 
         # Write output file
         print("Writing output file ...")
