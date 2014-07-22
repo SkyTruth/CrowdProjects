@@ -1324,3 +1324,26 @@ Load transform/pond-centroids.shp into QGIS and add fiels through calculator
 
 == Tita ==
 
+Generated Input Tasks for Digitizer-Pond app for PA 2013
+
+Loaded pond centroids into QGIS and joined attributes with Pa County vector layer
+
+	C:\Users\Yolandita\GitHub\CrowdProjects\Data\FrackFinder\PA\2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids.shp
+	C:\Users\Yolandita\Desktop\PA_County_Boundaries\PACounties\PaCounty2013_02.shp
+	
+Which outputed a shapefile
+
+	C:\Users\Yolandita\GitHub\CrowdProjects\Data\FrackFinder\PA\2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids-attribute-join.shp
+	
+Deleted unnecessary attributes; attributes now include county name. Saved as CSV
+
+	C:\Users\Yolandita\GitHub\CrowdProjects\Data\FrackFinder\PA\2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids.csv
+
+Converted csv to json format and appended state, year, and WMS data using the following commands
+
+>		$ skyconvert transform/pond-centroids.csv ../Digitizer/input_tasks/input_no_wms.json
+>		$ ./bin/finalizeInputTasks.py input_tasks/input_no_wms.json input_tasks/input_with_wms.json 
+	
+Upload tasks to application 
+
+>		$ ./createTasks.py -s http://crowd.dev.skytruth.org -k "[----admin api key----]" -a digitizer-pad -r PA-Polywog-2013 -c -t ~/SecretBox/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/Digitizer/input_tasks/input_with_wms.json 

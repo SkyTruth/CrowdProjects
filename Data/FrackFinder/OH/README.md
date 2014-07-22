@@ -7,53 +7,28 @@ format from the Oil and Gas division of the Ohio DNR:
 
 >       http://oilandgas.ohiodnr.gov/shale
 
-Data was downloaded on `2014-06-20` and is currently located in the folowing
+Data was downloaded on `2014-07-22` and is currently located in the following
 locations:
 
->       Source_Data/HorizontalWells_MonthlyMarcellusPagesize_05032014.pdf
->       Source_Data/HorizontalWells_MonthlyUticaPagesize_05032014.pdf
->       Source_Data/Marcellus-061414.xls
->       Source_Data/Utica-061414.xls
+    2010-2013/Tadpole/source_data/Utica_071914.pdf
+    2010-2013/Tadpole/source_data/Utica_071914.xls
+    2010-2013/Tadpole/source_data/Utica_Weekly_071914.pdf
 
-The tables can likely be filtered down to wells marked as `Permitted` for
-use in Tadpole.  Further research must be conducted in order to determine
-whether or not these data are all horizontal wells.
+The table contains a few header and footer rows that are not needed for
+processing, so they were removed and the file saved as:
 
-Ohio's NAIP coverage is fairly good, but they also maintain a website where
-imagery of varying resolutions (low and high) can be downloaded for any
-given county.  This site is a good candidate for making imagery collection
-and management a lot easier while allowing us to take advantage of some of
-the available higher resolution imagery.
+>       2010-2013/Tadpole/source_data/Utica_071914_No_Headers.csv
 
->       http://ogrip.oit.ohio.gov/
+The data was further transformed with the commands listed below.  Information
+about each utility can be found with `$UTILITY --help`:
 
-A NAIP coverage map was located, although it has not proven to be the best
-resource.  The `OGRIP` site looks promising and is easy to use.
+>       ./2010-2013/Tadpole/bin/permits2sites.py \
+>           2010-2013/Tadpole/source_data/Utica_071914_No_Headers.csv \
+>           2010-2013/Tadpole/transform/clustered_sites_071914.csv
+>
+>       ./2010-2013/Tadpole/bin/generateTadpoleTasks.py \
+>           2010-2013/Tadpole/transform/clustered_sites_071914.csv \
+>           2010-2013/Tadpole/input_tasks/input_tasks.json
 
->       Source_Data/naip04_13_coverage_maps.pdf
-
-
-Columbiana
-Guernsey
-Belmont
-Holmes
-Morgan
-Knox
-Portage
-Ashland
-Muskingum
-Trumbull
-Stark
-Washington
-Wayne
-Monroe
-Medina
-Ashtabula
-Harrison
-Jefferson
-Coshocton
-Tuscarawas
-Geauga
-Carroll
-Noble
-Mahoning
+NAIP imagery was downloaded from the NRCS Data Gateway for 2010, 2011, and 2013.
+Unfortunately the uncompressed GeoTiff's were not available so SID's were used.
