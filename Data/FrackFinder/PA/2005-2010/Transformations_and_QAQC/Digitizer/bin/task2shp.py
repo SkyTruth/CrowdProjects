@@ -584,6 +584,7 @@ def main(args):
     # Loop through task runs and assemble output shapefile
     print("Processing %s task runs..." % str(len(task_runs)))
     for tr in task_runs:
+
         try:
             selection = str(tr['info']['selection'])
         except KeyError:
@@ -600,83 +601,92 @@ def main(args):
             elif 'shape' in tr['info']:
                 geometry = get_polygon(tr['info']['shape']['coordinates'][0])
 
-            # If we're splitting multi-ponds into single ponds,
-            geometry_iterator = [geometry]
-            if split_multi_ponds and 'shapes' in tr['info'] and len(tr['info']['shapes']) > 1:
-                geometry_iterator = [get_polygon(i['coordinates'][0]) for i in tr['info']['shapes']]
+            # Task run does not have shape or shapes key for some reason
+            if geometry is None:
+                print("")
+                print("WARNING: Task run with id %s missing 'shape' or 'shapes' key" % str(tr['id']))
+                pprint(tr)
+                print("")
 
-            # Set attributes and geometry - this is kinda messy buuuuuuut too bad I guess ...
-            for geometry in geometry_iterator:
+            else:
 
-                # Compute the area
-                geometry_area = None  # Default to Null in case the computation fails
-                if compute_pond_area:
-                    centroid = geometry.Centroid()
-                    centroid_lat = centroid.GetY()
-                    centroid_lng = centroid.GetX()
-                    epsg = get_epsg_code(centroid_lat, centroid_lng)
-                    geometry_area = compute_area(geometry, epsg)
+                # If we're splitting multi-ponds into single ponds,
+                geometry_iterator = [geometry]
+                if split_multi_ponds and 'shapes' in tr['info'] and len(tr['info']['shapes']) > 1:
+                    geometry_iterator = [get_polygon(i['coordinates'][0]) for i in tr['info']['shapes']]
 
-                if geometry is not None:
-                    task_id = int(tr['task_id'])
-                    feature = ogr.Feature(layer.GetLayerDefn())
-                    feature.SetGeometry(geometry)
-                    feature.SetField('selection', selection)
-                    feature.SetField('task_id', task_id)
+                # Set attributes and geometry - pretty messy ...
+                for geometry in geometry_iterator:
 
-                    # Get the extra fields
-                    if process_extra_fields:
-                        try:
-                            comp_loc = str(tr[field_prefix + 'info']['comp_loc'])
-                            feature.SetField('comp_loc', comp_loc)
-                        except KeyError:
-                            print("WARNING: No '%scomp_loc' field: %s" % (field_prefix, str(task_id)))
-                        try:
-                            crowd_sel = str(tr[field_prefix + 'info']['crowd_sel'])
-                            feature.SetField('crowd_sel', crowd_sel)
-                        except KeyError:
-                            print("WARNING: No '%scrowd_sel' field for: %s" % (field_prefix, str(task_id)))
-                        try:
-                            county = str(tr[field_prefix + 'info']['county'])
-                            feature.SetField('county', county)
-                        except KeyError:
-                            print("WARNING: No '%scounty' field for: %s" % (field_prefix, str(task_id)))
-                        try:
-                            state = str(tr[field_prefix + 'info']['state'])
-                            feature.SetField('state', state)
-                        except KeyError:
-                            print("WARNING: No '%sstate' field for: %s" % (field_prefix, str(task_id)))
-                        try:
-                            year = str(tr[field_prefix + 'info']['year'])
-                            feature.SetField('year', year)
-                        except KeyError:
-                            print("WARNING: No '%syear' field for: %s" % (field_prefix, str(task_id)))
-                        try:
-                            location = str(tr[field_prefix + 'info']['location'])
-                            feature.SetField('location', location)
-                        except KeyError:
-                            print("WARNING: No '%slocation' field for: %s" % (field_prefix, str(task_id)))
-
-                    # Compute area
+                    # Compute the area
+                    geometry_area = None  # Default to Null in case the computation fails
                     if compute_pond_area:
-                        feature.SetField('area_m', geometry_area)
+                        centroid = geometry.Centroid()
+                        centroid_lat = centroid.GetY()
+                        centroid_lng = centroid.GetX()
+                        epsg = get_epsg_code(centroid_lat, centroid_lng)
+                        geometry_area = compute_area(geometry, epsg)
 
-                    # Normal feature classification is just a simple write but the % indicates that the classification
-                    # is to be pulled from a field within the json
-                    if feature_classification is not None and feature_classification[0] != '%':
-                        feature.SetField('class', str(feature_classification))
-                    elif feature_classification is not None and feature_classification[0] == '%':
-                        try:
-                            value = str(tr[feature_classification[1:]])
-                        except KeyError:
-                            value = None
-                        feature.SetField('class', value)
+                    if geometry is not None:
+                        task_id = int(tr['task_id'])
+                        feature = ogr.Feature(layer.GetLayerDefn())
+                        feature.SetGeometry(geometry)
+                        feature.SetField('selection', selection)
+                        feature.SetField('task_id', task_id)
 
-                    # Create the feature in the layer
-                    layer.CreateFeature(feature)
+                        # Get the extra fields
+                        if process_extra_fields:
+                            try:
+                                comp_loc = str(tr[field_prefix + 'info']['comp_loc'])
+                                feature.SetField('comp_loc', comp_loc)
+                            except KeyError:
+                                print("WARNING: No '%scomp_loc' field: %s" % (field_prefix, str(task_id)))
+                            try:
+                                crowd_sel = str(tr[field_prefix + 'info']['crowd_sel'])
+                                feature.SetField('crowd_sel', crowd_sel)
+                            except KeyError:
+                                print("WARNING: No '%scrowd_sel' field for: %s" % (field_prefix, str(task_id)))
+                            try:
+                                county = str(tr[field_prefix + 'info']['county'])
+                                feature.SetField('county', county)
+                            except KeyError:
+                                print("WARNING: No '%scounty' field for: %s" % (field_prefix, str(task_id)))
+                            try:
+                                state = str(tr[field_prefix + 'info']['state'])
+                                feature.SetField('state', state)
+                            except KeyError:
+                                print("WARNING: No '%sstate' field for: %s" % (field_prefix, str(task_id)))
+                            try:
+                                year = str(tr[field_prefix + 'info']['year'])
+                                feature.SetField('year', year)
+                            except KeyError:
+                                print("WARNING: No '%syear' field for: %s" % (field_prefix, str(task_id)))
+                            try:
+                                location = str(tr[field_prefix + 'info']['location'])
+                                feature.SetField('location', location)
+                            except KeyError:
+                                print("WARNING: No '%slocation' field for: %s" % (field_prefix, str(task_id)))
 
-                # Cleanup
-                feature = None
+                        # Compute area
+                        if compute_pond_area:
+                            feature.SetField('area_m', geometry_area)
+
+                        # Normal feature classification is just a simple write but the % indicates that the
+                        # classification is to be pulled from a field within the json
+                        if feature_classification is not None and feature_classification[0] != '%':
+                            feature.SetField('class', str(feature_classification))
+                        elif feature_classification is not None and feature_classification[0] == '%':
+                            try:
+                                value = str(tr[feature_classification[1:]])
+                            except KeyError:
+                                value = None
+                            feature.SetField('class', value)
+
+                        # Create the feature in the layer
+                        layer.CreateFeature(feature)
+
+                    # Cleanup
+                    feature = None
 
     #/* ======================================================================= */#
     #/*     Check for Intersecting Polygons
