@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE metadata SYSTEM "http://www.fgdc.gov/metadata/fgdc-std-001-1998.dtd">
+<metadata>
+	<idinfo>
+		<citation>
+			<citeinfo>
+				<origin>Pennsylvania Department of Transportation, Bureau of Planning and Research, Cartographic Information Division</origin>
+				<pubdate>201302</pubdate>
+				<title>PennDOT - Pennsylvania County Boundaries </title>
+				<geoform>vector digital data</geoform>
+				<pubinfo>
+					<pubplace>Harrisburg, PA</pubplace>
+					<publish>Pennsylvania Department of Transportation</publish>
+				</pubinfo>
+				<onlink>http://www.pasda.psu.edu</onlink>
+			</citeinfo>
+		</citation>
+		<descript>
+			<abstract>County boundaries within Pennsylvania as delineated for the PennDOT Type 10 general highway map.</abstract>
+			<purpose>Public information and support for transportation planning, design and development.</purpose>
+			<supplinf>This data is intended for use at 1:24,000 or smaller scale.</supplinf>
+		</descript>
+		<timeperd>
+			<timeinfo>
+				<sngdate>
+					<caldate>201302</caldate>
+				</sngdate>
+			</timeinfo>
+			<current>publication date</current>
+		</timeperd>
+		<status>
+			<progress>Complete</progress>
+			<update>Bi-annual</update>
+		</status>
+		<spdom>
+			<bounding>
+				<westbc>
+-80.519350</westbc>
+				<eastbc>
+-74.689580</eastbc>
+				<northbc>
+42.269480</northbc>
+				<southbc>
+39.719860</southbc>
+			</bounding>
+		</spdom>
+		<keywords>
+			<theme>
+				<themekt>ISO 19115 Topic Categories</themekt>
+				<themekey>boundaries</themekey>
+				<themekey>county</themekey>
+			</theme>
+			<place>
+				<placekt>None</placekt>
+				<placekey>Pennsylvania</placekey>
+			</place>
+		</keywords>
+		<accconst>None.</accconst>
+		<useconst>The user shall indemnify, save harmless, and, if requested, defend the COMMONWEALTH, their officers, agents, and employees from and against any suits, claims, or actions for injury, death, or property damage arising out of the use of or any defect in the FILES or any accompanying documentation.
+
+The COMMONWEALTH excludes any and all implied warranties, including warranties or merchantability and fitness for a particular purpose.
+
+The COMMONWEALTH makes no warranty or representation, either express or implied, with respect to the FILES or accompanying documentation, including its quality, performance, merchantability, or fitness for a particular purpose. The FILES and documentation are provided "as is" and the USER assumes the entire risk as to its quality and performance.
+
+The COMMONWEALTH will not be liable for any direct, indirect, special, incidental, or consequential damages arising out of the use or inability to use the FILES or any accompanying documentation.
+
+The USER is granted permission to translate and add value to the FILES for the use of the FILES on its computer hardware; provided, however, that the USER annually notify the UNIVERSITY / COMMONWEALTH of any customizing or value-adding work done.
+
+Any customized or value added versions of the files will contain the following disclaimer:
+
+THIS IS NOT A PENNSYLVANIA DEPARTMENT OF TRANSPORTATION APPROVED FILE. THE DEPARTMENT OF TRANSPORTATION RETAINS THE MASTER FILES.
+
+THE USER AGREES AND UNDERSTANDS THAT IT MAY NOT FURTHER DISTRIBUTE THE FILES TO A THIRD PARTY.
+
+If you have any questions or problems, contact the ORGANIZATION where you acquired the data.</useconst>
+		<ptcontac>
+			<cntinfo>
+				<cntorgp>
+					<cntorg>Pennsylvania Department of Transportation, Bureau of Planning and Research, Geographic Information Division</cntorg>
+					<cntper>Bob Grugan</cntper>
+				</cntorgp>
+				<cntaddr>
+					<addrtype>mailing address</addrtype>
+					<address>P.O. Box 3654</address>
+					<city>Harrisburg</city>
+					<state>PA</state>
+					<postal>17101-3654</postal>
+					<country>USA</country>
+				</cntaddr>
+				<cntvoice>(717) 772-3305</cntvoice>
+			</cntinfo>
+		</ptcontac>
+		<native>Microsoft Windows 2000 Version 5.0 (Build 2195) Service Pack 4; ESRI ArcCatalog 8.3.0.800</native>
+	</idinfo>
+	<dataqual>
+		<attracc>
+			<attraccr>Verified visually by comparison against source materials.</attraccr>
+		</attracc>
+		<logic>Topology exists</logic>
+		<complete>Contains all counties in the Commonwealth.</complete>
+		<posacc>
+			<horizpa>
+				<horizpar>Digitized from sources conforming to National Mapping Accuracy Standards for 1:24,000 scale maps.</horizpar>
+				<qhorizpa>
+					<horizpav>100</horizpav>
+					<horizpae>Estimated accuracy is +/- 100 Feet.</horizpae>
+				</qhorizpa>
+			</horizpa>
+		</posacc>
+		<lineage>
+			<srcinfo>
+				<srccite>
+					<citeinfo>
+						<origin>Geological Survey (U.S.)</origin>
+						<pubdate>Unknown</pubdate>
+						<title>USGS 7.5 minute topographic maps</title>
+						<geoform>map</geoform>
+						<pubinfo>
+							<pubplace>Reston, VA</pubplace>
+							<publish>United States Geological Survey</publish>
+						</pubinfo>
+					</citeinfo>
+				</srccite>
+				<srcscale>24000</srcscale>
+				<typesrc>paper</typesrc>
+				<srctime>
+					<timeinfo>
+						<sngdate>
+							<caldate>unknown</caldate>
+						</sngdate>
+					</timeinfo>
+					<srccurr>publication date</srccurr>
+				</srctime>
+				<srccitea>topo quads</srccitea>
+				<srccontr>features for digitization</srccontr>
+			</srcinfo>
+			<procstep>
+				<procdesc>Digitized from 7.5 minute USGS topographic quadrangles on stable mylar base. Converted to ESRI Shapefile format for distribution.</procdesc>
+				<procdate>2006</procdate>
+			</procstep>
+			<procstep><procdesc Sync="TRUE">Dataset moved.</procdesc><srcused Sync="TRUE">D:\PennDOT\PaCounty2009_01</srcused><procdate Sync="TRUE">20100120</procdate><proctime Sync="TRUE">10031400</proctime></procstep></lineage>
+	</dataqual>
+	<spdoinfo>
+		<direct>Vector</direct>
+		<ptvctinf>
+			<sdtsterm>
+				<sdtstype>G-polygon</sdtstype>
+				<ptvctcnt>67</ptvctcnt>
+			</sdtsterm>
+		</ptvctinf>
+	</spdoinfo>
+	<spref>
+		<horizsys>
+			<geograph>
+				<latres>0.000010</latres>
+				<longres>0.000010</longres>
+				<geogunit>Decimal degrees</geogunit>
+			</geograph>
+			<geodetic>
+				<horizdn>North American Datum of 1983</horizdn>
+				<ellips>Geodetic Reference System 80</ellips>
+				<semiaxis>6378137.000000</semiaxis>
+				<denflat>298.257222</denflat>
+			</geodetic>
+		</horizsys>
+		<vertdef>
+			<altsys>
+				<altres>1.000000</altres>
+				<altenc>Explicit elevation coordinate included with horizontal coordinates</altenc>
+			</altsys>
+		</vertdef>
+	</spref>
+	<eainfo>
+		<detailed>
+			<enttyp>
+				<enttypl>PA_COUNTY201302</enttypl>
+				<enttypd>Pennsylvania County</enttypd>
+			</enttyp>
+			<attr>
+				<attrlabl>FID</attrlabl>
+				<attrdef>Internal feature number.</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Sequential unique whole numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>AREA_SQ_MI</attrlabl>
+				<attrdef>Calculated area in square miles</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Coordinates defining the features.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>MAPID</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>Shape</attrlabl>
+				<attrdef>Feature geometry.</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Coordinates defining the features.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>COUNTY_NAM</attrlabl>
+				<attrdef>County Name</attrdef>
+				<attrdefs>self-evident</attrdefs>
+			</attr>
+			<attr>
+				<attrlabl>COUNTY_NUM</attrlabl>
+				<attrdef>Two-digit county code number</attrdef>
+				<attrdefs>See table below</attrdefs>
+			</attr>
+			<attr>
+				<attrlabl>COUNTY_ARE</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>COUNTY_PER</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>FIPS_COUNT</attrlabl>
+				<attrdef>County Federal Information Processing Standard (FIPS) from National Institute of Standards and Technology (NIST)</attrdef>
+			</attr>
+			<attr>
+				<attrlabl>COUNTY_NU1</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>NUMERIC_LA</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>SOUND</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>SPREAD_SHE</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>IMAGE_NAME</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>NOTE_FILE</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>VIDEO</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>DISTRICT_N</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>PA_CTY_COD</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>SHAPE</attrlabl>
+				<attrdef>Feature geometry.</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Coordinates defining the features.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>SHAPE..Area()</attrlabl>
+			</attr>
+			<attr>
+				<attrlabl>SHAPE..Length()</attrlabl>
+			</attr>
+		</detailed>
+		<overview>
+			<eadetcit>PennDOT</eadetcit>
+		</overview>
+	</eainfo>
+	<distinfo>
+		<distrib>
+			<cntinfo>
+				<cntorgp>
+					<cntorg>Pennsylvania Spatial Data Access (PASDA)</cntorg>
+				</cntorgp>
+				<cntaddr>
+					<addrtype>mailing address</addrtype>
+					<address>Land and Water Building</address>
+					<city>University Park</city>
+					<state>PA</state>
+					<postal>16802</postal>
+					<country>USA</country>
+				</cntaddr>
+				<cntemail>pasda@psu.edu</cntemail>
+			</cntinfo>
+		</distrib>
+		<resdesc>downloadabledata</resdesc>
+		<distliab>The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers, agents, and employees from and against any suits, claims, or actions for injury, death, or property damage arising out of the use of or any defect in the FILES or any accompanying documentation. Those parties involved with the development and distribution excluded any and all implied warranties, including warranties or merchantability and fitness for a particular purpose and makes no warranty or representation, either express or implied, with respect to the FILES or accompanying documentation, including its quality, performance, merchantability, or fitness for a particular purpose. The FILES and documentation are provided "as is" and the USER assumes the entire risk as to its quality and performance. Those parties involved with the development and distribution of this data will not be liable for any direct, indirect, special, incidental, or consequential damages arising out of the use or inability to use the FILES or any accompanying documentation.</distliab>
+		<stdorder>
+			<digform>
+				<digtinfo>
+					<formname>ArcView Shapefile</formname>
+					<formvern>3.x</formvern>
+					<filedec>Zip compression</filedec>
+					<transize>1.385</transize>
+				</digtinfo>
+				<digtopt>
+					<onlinopt>
+						<computer>
+							<networka>
+							</networka>
+						</computer>
+						<accinstr>http://www.pasda.psu.edu</accinstr>
+					</onlinopt>
+				</digtopt>
+			</digform>
+			<fees>none</fees>
+		</stdorder>
+		<availabl>
+			<timeinfo>
+				<sngdate>
+					<caldate>2006</caldate>
+				</sngdate>
+			</timeinfo>
+		</availabl>
+	</distinfo>
+	<metainfo>
+		<metd>201302</metd>
+		<metc>
+			<cntinfo>
+				<cntorgp>
+					<cntorg>Pennsylvania Spatial Data Access (PASDA)</cntorg>
+					<cntper>Metadata Coordinator</cntper>
+				</cntorgp>
+				<cntpos>Metadata Coordinator</cntpos>
+				<cntaddr>
+					<addrtype>mailing address</addrtype>
+					<address>115 Land and Water Building</address>
+					<city>University Park</city>
+					<state>PA</state>
+					<postal>16802</postal>
+					<country>USA</country>
+				</cntaddr>
+				<cntvoice>814-865-8792</cntvoice>
+				<cntfax>814-865-3378</cntfax>
+				<cntemail>cxp7@psu.edu</cntemail>
+			</cntinfo>
+		</metc>
+		<metstdn>FGDC Content Standards for Digital Geospatial Metadata</metstdn>
+		<metstdv>FGDC-STD-001-1998</metstdv>
+		<mettc>local time</mettc>
+		<metextns>
+			<onlink>http://www.esri.com/metadata/esriprof80.html</onlink>
+			<metprof>ESRI Metadata Profile</metprof>
+		</metextns>
+	</metainfo>
+	<Esri><ModDate>201201</ModDate><ModTime>14542400</ModTime></Esri><mdDateSt Sync="TRUE">201201</mdDateSt><distInfo><distributor><distorTran><onLineSrc><linkage Sync="TRUE">file://\\PC-36\D\PennDOT\update01_2010\Boundary\PaCounty2009_01</linkage><protocol Sync="TRUE">Local Area Network</protocol></onLineSrc></distorTran></distributor></distInfo></metadata>

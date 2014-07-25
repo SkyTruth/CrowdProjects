@@ -1324,26 +1324,64 @@ Load transform/pond-centroids.shp into QGIS and add fiels through calculator
 
 == Tita ==
 
-Generated Input Tasks for Digitizer-Pond app for PA 2013
+Digitizer 2013 WorkFlow
+=======================
 
-Loaded pond centroids into QGIS and joined attributes with Pa County vector layer
+### General Description ###
 
-	C:\Users\Yolandita\GitHub\CrowdProjects\Data\FrackFinder\PA\2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids.shp
-	C:\Users\Yolandita\Desktop\PA_County_Boundaries\PACounties\PaCounty2013_02.shp
+1. Generate input tasks
+2. Load into application
+3. Classify ponds
+4. Export data
+5. Transform data
+6. Resolve intersecting ponds
+
+
+1. Generate Input Tasks
+------------------
+*******************Kevin, I believe you did some clustering right?*******************
+
+Pond centroids from MoorFrog were loaded into QGIS along a Pa County vector layer. 
+
+	2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids.shp
+	2013\Transformations_and_QAQC\MoorFrog\transform\PACounties\PACounty2013.shp
 	
-Which outputed a shapefile
+Pond centroid attributes were joined with Pa County attributes, which outputed a shapefile.
 
-	C:\Users\Yolandita\GitHub\CrowdProjects\Data\FrackFinder\PA\2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids-attribute-join.shp
+	2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids-attribute-join.shp
 	
-Deleted unnecessary attributes; attributes now include county name. Saved as CSV
+In QGIS, all unwanted attribute fields were removed; attributes now include county name. The layer was saved as a CSV.
 
-	C:\Users\Yolandita\GitHub\CrowdProjects\Data\FrackFinder\PA\2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids.csv
+	2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids.csv
 
-Converted csv to json format and appended state, year, and WMS data using the following commands
+The CSV was converted to json format using the skyconvert tool and state, year, and WMS data was appended using finalizeInputTasks.py
 
 >		$ skyconvert transform/pond-centroids.csv ../Digitizer/input_tasks/input_no_wms.json
 >		$ ./bin/finalizeInputTasks.py input_tasks/input_no_wms.json input_tasks/input_with_wms.json 
 	
-Upload tasks to application 
+2. Load Tasks
+-------------
+Tasks were loaded with the `createTasks.py` utility, which can be found in the
+[pybossa_tools](https://github.com/skytruth/pybossa_tools) repository.  The
+installation procedure is as follows:
 
->		$ ./createTasks.py -s http://crowd.dev.skytruth.org -k "[----admin api key----]" -a digitizer-pad -r PA-Polywog-2013 -c -t ~/SecretBox/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/Digitizer/input_tasks/input_with_wms.json 
+>		$ ./createTasks.py -s http://crowd.skytruth.org -k "{YOUR_API_KEY}" -a digitizer-pond -r Digitizer-pond_PA2013_internal-1 -c -t ~/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/Digitizer/input_tasks/input_with_wms.json -n 1
+
+3. Classify
+------------
+***I don't know where to put this note or if it's even necessary:::::::Because MoorFrog was completed internally, and operators were instructed to select only ponds that were fracking related, the tasks for this digitizer-pond application were expected to include only fracking related ponds.***
+The final set of 698 tasks was loaded into a single application for digitizing with a redundancy of 1 and 4 actions: draw polygons and submit, skip pond, classify as unknown, and classify as not a fracking pond. The operator was instructed to digitize all fracking related ponds, excluding run-off ponds located at fracking sites. As this was the first and final review, no ponds would be skipped. *(Insert something here about me getting a second opinion on tasks I wasn’t sure about) --> When I came across anything ambiguous, I immediately got a second opinion. Anything completely ambiguous was marked as ‘unknown’.*
+
+
+4.	Export Data
+----------------
+
+The data was exported and stored in the following location.
+
+	2013\Transformations_and_QAQC\Digitizer\output_tasks
+
+5.	Transform Data
+---------------------
+
+6.	Resolve Intersecting Ponds
+-------------------------------
