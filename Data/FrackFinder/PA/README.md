@@ -118,10 +118,10 @@ here:
 In order to connect a SiteID to individual well API's, the following
 query must be used:
 
->       SELECT *
->       from public.appomatic_siteinfo_well w
->       JOIN public.appomatic_siteinfo_basemodel b
->       ON w.site_id = b.id
+    SELECT *
+    from public.appomatic_siteinfo_well w
+    JOIN public.appomatic_siteinfo_basemodel b
+    ON w.site_id = b.id
 
 This data has been exported and can be found in the `Source_Data` directory:
 
@@ -235,7 +235,10 @@ general, the output is a an ESRI Shapefile with one feature per task and a set
 of attributes collected from the associated task runs.  Transformations were
 performed with the following command:
 
->       ./Transformations_and_QAQC/Tadpole/bin/task2shp.py Transformations_and_QAQC/Tadpole/tasks/task.json Transformations_and_QAQC/Tadpole/tasks/task_run.json Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp
+>       $ ./Transformations_and_QAQC/Tadpole/bin/task2shp.py \
+>           Transformations_and_QAQC/Tadpole/tasks/task.json \
+>           Transformations_and_QAQC/Tadpole/tasks/task_run.json \
+>           Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp
 
 The resulting file contains the following fields:
 
@@ -345,9 +348,9 @@ logistical reasons each county was exported to its own CSV, converted to JSON
 via `skyconvert.py` and loaded into a PyBossa application via `createTasks.py`
 with commands similar to these:
 
->       skyconvert.py {COUNTY}.csv {COUNTY}.json
+>       $ skyconvert.py {COUNTY}.csv {COUNTY}.json
 >
->       createTasks.py -a {APP_NAME} \
+>       $ createTasks.py -a {APP_NAME} \
 >           -c -v -n 10 \
 >           -s http://crowd.skytruth.org \
 >           -k {YOUR_API_KEY} \
@@ -387,7 +390,10 @@ bounding box, and task runs containing the user's clicks.  The output files
 include the following layers: bounding boxes, pond clicks, and well pad points.
 The following command produces all data:
 
->       ./Transformations_and_QAQC/MoorFrog/bin/task2shp.py Transformations_and_QAQC/MoorFrog/tasks/task.json Transformations_and_QAQC/MoorFrog/tasks/task_run.json Transformations_and_QAQC/MoorFrog/transform/
+>       $ ./Transformations_and_QAQC/MoorFrog/bin/task2shp.py \
+>           Transformations_and_QAQC/MoorFrog/tasks/task.json \
+>           Transformations_and_QAQC/MoorFrog/tasks/task_run.json \
+>           Transformations_and_QAQC/MoorFrog/transform/
 
 Output fields: `Transformations_and_QAQC/MoorFrog/transform/MoorFrog-bbox.shp`
 
@@ -537,9 +543,9 @@ to GeoJSON, which yields the following:
 Each year's file was then converted to JSON with `skyconvert.py` and 
 loaded into a PyBossa app with `createTasks`:
 
->       skyconvert.py {YEAR}.geojson {YEAR}.json
+>       $ skyconvert.py {YEAR}.geojson {YEAR}.json
 >
->       createTasks.py -a {APP_NAME} \
+>       $ createTasks.py -a {APP_NAME} \
 >           -c -v -n 10 \
 >           -s http://crowd.skytruth.org \
 >           -k {YOUR_API_KEY} \
@@ -663,11 +669,30 @@ locations:
 As with the previous applications, a `task2shp.py` utility exists to aggregate
 information into a single spatial file.  The commands used are as follows:
 
->       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/public/task.json Transformations_and_QAQC/DartFrog/tasks/public/task_run.json Transformations_and_QAQC/DartFrog/transform/public/stats/dartfrog-public-stats.shp
->       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/first-internal/task.json Transformations_and_QAQC/DartFrog/tasks/first-internal/task_run.json Transformations_and_QAQC/DartFrog/transform/first-internal/stats/dartfrog-first-internal-stats.shp
->       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/final-internal/task.json Transformations_and_QAQC/DartFrog/tasks/final-internal/task_run.json Transformations_and_QAQC/DartFrog/transform/final-internal/stats/dartfrog-final-internal-stats.shp
->       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/sweeper-internal/task.json Transformations_and_QAQC/DartFrog/tasks/sweeper-internal/task_run.json Transformations_and_QAQC/DartFrog/transform/sweeper-internal/stats/dartfrog-sweeper-internal-stats.shp
->       ./Transformations_and_QAQC/DartFrog/bin/task2shp.py Transformations_and_QAQC/DartFrog/tasks/missing/task.json Transformations_and_QAQC/DartFrog/tasks/missing/task_run.json Transformations_and_QAQC/DartFrog/transform/missing/stats/dartfrog-missing-stats.shp
+>       $ ./Transformations_and_QAQC/DartFrog/bin/task2shp.py \
+>           Transformations_and_QAQC/DartFrog/tasks/public/task.json \
+>           Transformations_and_QAQC/DartFrog/tasks/public/task_run.json \
+>           Transformations_and_QAQC/DartFrog/transform/public/stats/dartfrog-public-stats.shp
+>       
+>       $ ./Transformations_and_QAQC/DartFrog/bin/task2shp.py \
+>           Transformations_and_QAQC/DartFrog/tasks/first-internal/task.json \
+>           Transformations_and_QAQC/DartFrog/tasks/first-internal/task_run.json \
+>           Transformations_and_QAQC/DartFrog/transform/first-internal/stats/dartfrog-first-internal-stats.shp
+>       
+>       $ ./Transformations_and_QAQC/DartFrog/bin/task2shp.py \
+>           Transformations_and_QAQC/DartFrog/tasks/final-internal/task.json \
+>           Transformations_and_QAQC/DartFrog/tasks/final-internal/task_run.json \
+>           Transformations_and_QAQC/DartFrog/transform/final-internal/stats/dartfrog-final-internal-stats.shp
+>       
+>       $ ./Transformations_and_QAQC/DartFrog/bin/task2shp.py \
+>           Transformations_and_QAQC/DartFrog/tasks/sweeper-internal/task.json \
+>           Transformations_and_QAQC/DartFrog/tasks/sweeper-internal/task_run.json \
+>           Transformations_and_QAQC/DartFrog/transform/sweeper-internal/stats/dartfrog-sweeper-internal-stats.shp
+>
+>       $ ./Transformations_and_QAQC/DartFrog/bin/task2shp.py \
+>           Transformations_and_QAQC/DartFrog/tasks/missing/task.json \
+>           Transformations_and_QAQC/DartFrog/tasks/missing/task_run.json \
+>           Transformations_and_QAQC/DartFrog/transform/missing/stats/dartfrog-missing-stats.shp
 
 The output file fields are as follows:
 
@@ -773,24 +798,24 @@ as a threshold for determining which ponds are loaded into the digitizer.  The
 threshold for the internal applications was determined to be 66% and 80% for the
 public application.  The queries and exports are as follows:
 
->       Transformations_and_QAQC/DartFrog/transform/public/stats/dartfrog-public-stats.shp
->           "p_crd_a" >= 80 AND "n_tot_res" >= 10 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-public-2008.shp
->           "p_crd_a" >= 80 AND "n_tot_res" >= 10 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-public-2010.shp
->
->       Transformations_and_QAQC/DartFrog/transform/first-internal/stats/dartfrog-first-internal-stats.shp
->           "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2005.shp
->           "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2008.shp
->           "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2010.shp
->
->       Transformations_and_QAQC/DartFrog/transform/final-internal/stats/dartfrog-final-internal-stats.shp
->           "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2005.shp
->           "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2008.shp
->           "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2010.shp
->
->       Transformations_and_QAQC/DartFrog/transform/sweeper-internal/stats/dartfrog-sweeper-internal-stats.shp
->           "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2005.shp
->           "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2008.shp
->           "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2010.shp
+    Transformations_and_QAQC/DartFrog/transform/public/stats/dartfrog-public-stats.shp
+        "p_crd_a" >= 80 AND "n_tot_res" >= 10 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-public-2008.shp
+        "p_crd_a" >= 80 AND "n_tot_res" >= 10 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-public-2010.shp
+    
+    Transformations_and_QAQC/DartFrog/transform/first-internal/stats/dartfrog-first-internal-stats.shp
+        "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2005.shp
+        "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2008.shp
+        "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-first-internal-2010.shp
+    
+    Transformations_and_QAQC/DartFrog/transform/final-internal/stats/dartfrog-final-internal-stats.shp
+        "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2005.shp
+        "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2008.shp
+        "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-final-internal-2010.shp
+    
+    Transformations_and_QAQC/DartFrog/transform/sweeper-internal/stats/dartfrog-sweeper-internal-stats.shp
+        "p_crd_a" >= 66 AND "year" = 2005  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2005.shp
+        "p_crd_a" >= 66 AND "year" = 2008  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2008.shp
+        "p_crd_a" >= 66 AND "year" = 2010  ->  Transformations_and_QAQC/DartFrog/sampling/query/dartfrog-sweeper-internal-2010.shp
 
 Additional Notes:
 * 2005 Public has no random sample because all 2005 tasks were completed in the
@@ -881,13 +906,13 @@ that should be Digitizer input tasks.  The tasks corresponding to these ID's
 were then extracted from the `Compiled_Output.json` file, loaded into their own
 JSON file, and uploaded to a new PyBossa application.
 
->       2005-2010/Transformations_and_QAQC/DartFrog/transform/Compiled_Output.csv
->
->       Filter for tasks completed in the public application:
->           "comp_loc" = 'public' AND "crowd_sel" = 'fracking' AND "p_crd_a" >= 80 AND "n_tot_res" >= 10
->
->       Filter for tasks completed in any of the internal applications
->           "comp_loc" != 'public' AND "crowd_sel" = 'fracking' AND "p_crd_a" >= 66
+    2005-2010/Transformations_and_QAQC/DartFrog/transform/Compiled_Output.csv
+    
+    Filter for tasks completed in the public application:
+        "comp_loc" = 'public' AND "crowd_sel" = 'fracking' AND "p_crd_a" >= 80 AND "n_tot_res" >= 10
+    
+    Filter for tasks completed in any of the internal applications
+        "comp_loc" != 'public' AND "crowd_sel" = 'fracking' AND "p_crd_a" >= 66
 
 
 2. Digitize
@@ -994,12 +1019,12 @@ Before running the `task2shp.py` utility, a few pre-processing steps must be
 done.  The first takes the task_run.json and adds all the associated task.json
 attributes to each task run:
 
->       ~/GitHub/CrowdProjects/bin/mergeExport.py \
+>       $ ~/GitHub/CrowdProjects/bin/mergeExport.py \
 >           Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \
 >           Transformations_and_QAQC/Digitizer/tasks/first-review/task_run.json\
 >           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
 >
->       ~/GitHub/CrowdProjects/bin/mergeExport.py \
+>       $ ~/GitHub/CrowdProjects/bin/mergeExport.py \
 >           Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \
 >           Transformations_and_QAQC/Digitizer/tasks/final-review/task_run.json \
 >           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json
@@ -1010,23 +1035,23 @@ to note which digitizer it passed through.
 NOTE: The overwrite flag on two of the commands is to allow the utility
       to add the field to the file in place.
 
->       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>       $ ~/GitHub/CrowdProjects/bin/editJSON.py \
 >           -a class=first \
 >           Transformations_and_QAQC/Digitizer/tasks/first-review/task.json \
 >           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_added_fields.json
 >
->       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>       $ ~/GitHub/CrowdProjects/bin/editJSON.py \
 >           --overwrite \
 >           -a class=first \
 >           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \
 >           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json
 >
->       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>       $ ~/GitHub/CrowdProjects/bin/editJSON.py \
 >           -a class=final \
 >           Transformations_and_QAQC/Digitizer/tasks/final-review/task.json \
 >           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_added_fields.json
 >
->       ~/GitHub/CrowdProjects/bin/editJSON.py \
+>       $ ~/GitHub/CrowdProjects/bin/editJSON.py \
 >           --overwrite \
 >           -a class=final \
 >           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \
@@ -1037,7 +1062,7 @@ so the task.json and task_run.json can now be combined.  The previous step added
 a classification field that can be used to determine which application a given
 task or task run came from.
 
->       ~/GitHub/CrowdProjects/bin/mergeFiles.py \
+>       $ ~/GitHub/CrowdProjects/bin/mergeFiles.py \
 >           Transformations_and_QAQC/Digitizer/transform/first-review/tasks-with-added-fields/task_run_added_fields.json \
 >           Transformations_and_QAQC/Digitizer/transform/final-review/tasks-with-added-fields/task_run_added_fields.json \
 >           Transformations_and_QAQC/Digitizer/derivative-data/Merged_Task_Runs.json
@@ -1045,7 +1070,7 @@ task or task run came from.
 Now that the task run files have been combined the data can be handed off to the
 `task2shp.py` utility, which converts the JSON to pond polygons with attributes.
 
->       Transformations_and_QAQC/Digitizer/bin/task2shp.py \
+>       $ Transformations_and_QAQC/Digitizer/bin/task2shp.py \
 >           --process-extra-fields \
 >           Transformations_and_QAQC/Digitizer/derivative-data/Merged_Task_Runs.json \
 >           Transformations_and_QAQC/Digitizer/derivative-data/deliverable-ponds-candidate.shp
@@ -1145,20 +1170,45 @@ Since all tasks were only completed in one location, the data can be combined,
 however we want to be able to know where each task came from, so first we have
 to add a `ST_source` field.
 
->       ~/GitHub/CrowdProjects/bin/editJSON.py -a ST_source=public Transformations_and_QAQC/Tadpole/tasks/public/task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task.json
->       ~/GitHub/CrowdProjects/bin/editJSON.py -a ST_source=public Transformations_and_QAQC/Tadpole/tasks/public/task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task_run.json
->       ~/CrowdProjects/bin/editJSON.py -a ST_source=internal Transformations_and_QAQC/Tadpole/tasks/internal/task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task.json
->       ~/CrowdProjects/bin/editJSON.py -a ST_source=internal Transformations_and_QAQC/Tadpole/tasks/internal/task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task_run.json
+>       $ ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           -a ST_source=public Transformations_and_QAQC/Tadpole/tasks/public/task.json \
+>           Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task.json
+>       
+>       $ ~/GitHub/CrowdProjects/bin/editJSON.py \
+>           -a ST_source=public \
+>           Transformations_and_QAQC/Tadpole/tasks/public/task_run.json \
+>           Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task_run.json
+>       
+>       $ ~/CrowdProjects/bin/editJSON.py \
+>           -a ST_source=internal \
+>           Transformations_and_QAQC/Tadpole/tasks/internal/task.json \
+>           Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task.json
+>       
+>       $ ~/CrowdProjects/bin/editJSON.py \
+>           -a ST_source=internal \
+>           Transformations_and_QAQC/Tadpole/tasks/internal/task_run.json \
+>           Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task_run.json
 
 After adding the source field, the data was combined into a single task.json and
 task_run.json:
 
->       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task.json Transformations_and_QAQC/Tadpole/tasks/combined-task.json  
->       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task_run.json Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task_run.json Transformations_and_QAQC/Tadpole/tasks/combined-task_run.json
+>       $ ~/GitHub/CrowdProjects/bin/mergeFiles.py \
+>           Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task.json \
+>           Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task.json \
+>           Transformations_and_QAQC/Tadpole/tasks/combined-task.json
+>
+>       $ ~/GitHub/CrowdProjects/bin/mergeFiles.py \
+>           Transformations_and_QAQC/Tadpole/tasks/added_fields/public/added-fields-task_run.json \
+>           Transformations_and_QAQC/Tadpole/tasks/added_fields/internal/added-fields-task_run.json \
+>           Transformations_and_QAQC/Tadpole/tasks/combined-task_run.json
 
 These combined files can now be converted into a single shapefile:
 
->       ./Transformations_and_QAQC/Tadpole/bin/task2shp.py Transformations_and_QAQC/Tadpole/tasks/combined-task.json Transformations_and_QAQC/Tadpole/tasks/combined-task_run.json Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp --class=%ST_source
+>       $ ./Transformations_and_QAQC/Tadpole/bin/task2shp.py \
+>           Transformations_and_QAQC/Tadpole/tasks/combined-task.json \
+>           Transformations_and_QAQC/Tadpole/tasks/combined-task_run.json \
+>           Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp \
+>           --class=%ST_source
 
 Field Definitions:
 
@@ -1180,7 +1230,6 @@ Field Definitions:
     p_crd_a  ->  Percentage of responses that agreed with the crowd_sel field
     p_s_crd_a  ->  If two selections were favored equally, the p_crd_a for each separated by '|'
     class  ->  User defined classification - in this case it specifies public vs. internal
-
 
 
 3. Sample/QAQC
@@ -1246,6 +1295,7 @@ MoorFrog 2013 Workflow
 1. Generate input tasks
 2. Load into application
 3. Classify ponds
+4. QA/QC
 
 
 
@@ -1258,9 +1308,21 @@ above in Tadpole 2013's Sample/QAQC section.
 Output from `Tadpole` was processed into a set of input tasks for MoorFrog using
 the following commands:
 
->       ./Transformations_and_QAQC/MoorFrog/bin/taskGenerator.py Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json -query "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'" --add-info-class=internal  
->       ./Transformations_and_QAQC/MoorFrog/bin/taskGenerator.py Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json -query "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'" --add-info-class=public
->       ~/GitHub/CrowdProjects/bin/mergeFiles.py Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json
+>       $ ./Transformations_and_QAQC/MoorFrog/bin/taskGenerator.py \
+>           Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp \
+>           Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json \
+>           -query "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'"
+>           --add-info-class=internal  
+>       
+>       $ ./Transformations_and_QAQC/MoorFrog/bin/taskGenerator.py \
+>           Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp \
+>           Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json \
+>           -query "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'" \
+>           --add-info-class=public
+>       $ ~/GitHub/CrowdProjects/bin/mergeFiles.py \
+>           Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json \
+>           Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json \
+>           Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json
 
 
 
@@ -1271,35 +1333,89 @@ Tasks were loaded with the `createTasks.py` utility, which can be found in the
 [pybossa_tools](https://github.com/skytruth/pybossa_tools) repository.  The
 installation procedure is as follows:
 
->       createTasks.py -a finder-pond/ -s http://crowd.dev.skytruth.org -k {YOUR_API_KEY} -c -t ~/GitHub/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json -v -q 3 -n 3 -r "MoorFrog_2013_Fracking_Ponds_Only2"
+>       $ createTasks.py \
+>           -v -q 3 -n 3 -c \       
+>           -a finder-pond \
+>           -s http://crowd.dev.skytruth.org \
+>           -k {YOUR_API_KEY} \
+>           -t ~/GitHub/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/MoorFrog/input_tasks/combined_input_tasks.json \
+>           -r "MoorFrog_2013_Fracking_Ponds_Only2"
+
+
+3. Classify Ponds
+-----------------
+
+This phase was completely done by SkyTruth employees so instead of clicking on
+ANY pond, users were asked to ONLY click on fracking related ponds.
+
+
+4. QA/QC
+--------
+
+The tasks and task runs were transformed using the usual application specific
+`task2shp.py` utility:
+
+>       $ ./2013/Transformations_and_QAQC/MoorFrog/bin/task2shp.py \
+>           2013/Transformations_and_QAQC/MoorFrog/output_tasks/task.json \
+>           2013/Transformations_and_QAQC/MoorFrog/output_tasks/task_run.json \
+>           2013/Transformations_and_QAQC/MoorFrog/transform/layers/
+
+The resulting dataset was examined in QGIS and it was determined that the best
+course of action was to cluster all clicks and pass the resulting centroids
+into the next application.
 
 
 
 DartFrog 2013 Workflow
 ======================
 
-MoorFrog was completed internally
+DartFrog was skipped for PA 2013.  Instead MoorFrog users were asked to ONLY
+click on ponds that appeared to be fracking related.
 
-# TODO: Format below - currently relative to 2013/Transformations_and_QAQC/MoorFrog
 
 
-== Kevin ==
+Digitizer 2013 WorkFlow
+=======================
 
-./bin/task2shp.py output_tasks/task.json output_tasks/task_run.json transform/layers/
+##### General Description #####
 
-Load transform/layers/MoorFrog-clicks.shp into QGIS and buffer
-    - Segments to approximate: 5
-    - Buffer distance: 0.0001
-    - Dissolve buffer results: True
-    - Output: transform/buffer-dissolve-clicks.shp
+1. Generate input tasks
+2. Load into application
+3. Digitize
+4. Export data
+5. Transform data
+6. Resolve intersecting ponds
 
-Above yields a single feature - explode with this:
-    ogr2ogr -progress transform/exploded-clicks.shp transform/buffer-dissolve-clicks.shp -explodecollections
 
-Load transform/exploded-clicks.shp into QGIS and create centroids
-    - Output: transform/pond-centroids.shp
+1. Generate Input Tasks
+-----------------------
 
-Load transform/pond-centroids.shp into QGIS and add fiels through calculator
+The output from MoorFrog contains an inefficient number of points for digitizing
+purposes so they were clustered using a simple nearest neighbor algorithm and
+QGIS.  The buffer distance was determined by trial and error, the goal being to
+reduce the total number of tasks the digitizer operator was given without
+clustering too many ponds together into single tasks.
+
+1.  Load into QGIS: `2013/Transformations_and_QAQC/MoorFrog/transform/layers/MoorFrog-clicks.shp`
+    and use the built in vector buffer tool:
+    * Segments to approximate: 5
+    * Buffer distance: 0.0001
+    * Dissolve buffer results: True
+    * Output: 2013/Transformations_and_QAQC/MoorFrog/transform/buffer-dissolve-clicks.shp
+
+2.  The previous step yields a single feature collection containing all pond
+    geometries.  Explode the collection into multiple features:
+>       $ ogr2ogr \
+>           -explodecollections
+>           2013/Transformations_and_QAQC/MoorFrog/transform/exploded-clicks.shp \
+>           2013/Transformations_and_QAQC/MoorFrog/transform/buffer-dissolve-clicks.shp  
+
+3.  Load into QGIS: `2013/Transformations_and_QAQC/MoorFrog/transform/exploded-clicks.shp`
+    and use the the centroid tool:
+    * Output: 2013/Transformations_and_QAQC/MoorFrog/transform/pond-centroids.shp
+
+4.  Load into QGIS: `2013/Transformations_and_QAQC/MoorFrog/transform/pond-centroids.shp`
+    and use the field calculator to add some attributes:
     * Field Name: X
         - Type: Real
         - Width: 10
@@ -1321,56 +1437,60 @@ Load transform/pond-centroids.shp into QGIS and add fiels through calculator
         - Precision: 10
         - Expression: $Y
 
+The resulting shapefile is generalized and doesn't contain any attribute
+information.  The digitizer requires the county name, which can be joined
+from a county boundary shapefile.  Pond centroids from MoorFrog were loaded
+into QGIS along a Pa County vector layer. 
 
-== Tita ==
-
-Digitizer 2013 WorkFlow
-=======================
-
-### General Description ###
-
-1. Generate input tasks
-2. Load into application
-3. Classify ponds
-4. Export data
-5. Transform data
-6. Resolve intersecting ponds
-
-
-1. Generate Input Tasks
-------------------
-*******************Kevin, I believe you did some clustering right?*******************
-
-Pond centroids from MoorFrog were loaded into QGIS along a Pa County vector layer. 
-
-	2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids.shp
-	2013\Transformations_and_QAQC\MoorFrog\transform\PACounties\PACounty2013.shp
+	2013/Transformations_and_QAQC/MoorFrog/transform/pond-centroids.shp
+	2013/Transformations_and_QAQC/MoorFrog/transform/PACounties/PACounty2013.shp
 	
-Pond centroid attributes were joined with Pa County attributes, which outputed a shapefile.
+Pond centroid attributes were joined with Pa County attributes and exported:
 
-	2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids-attribute-join.shp
+	2013/Transformations_and_QAQC/MoorFrog/transform/pond-centroids-attribute-join.shp
 	
-In QGIS, all unwanted attribute fields were removed; attributes now include county name. The layer was saved as a CSV.
+In QGIS, all unwanted attribute fields were removed and the layer was exported
+as a CSV:
 
-	2013\Transformations_and_QAQC\MoorFrog\transform\pond-centroids.csv
+	2013/Transformations_and_QAQC/MoorFrog/transform/pond-centroids.csv
 
-The CSV was converted to json format using the skyconvert tool and state, year, and WMS data was appended using finalizeInputTasks.py
+The CSV was converted to json format using the skyconvert tool and additional
+attributes were added using `finalizeInputTasks.py`
 
->		$ skyconvert transform/pond-centroids.csv ../Digitizer/input_tasks/input_no_wms.json
->		$ ./bin/finalizeInputTasks.py input_tasks/input_no_wms.json input_tasks/input_with_wms.json 
-	
+>		$ skyconvert \
+>           transform/pond-centroids.csv 
+>           ../Digitizer/input_tasks/input_no_wms.json
+>
+>		$ 2013/Transformations_and_QAQC/Digitizer/bin/finalizeInputTasks.py \
+>           input_tasks/input_no_wms.json \
+>           input_tasks/input_with_wms.json 
+
+
 2. Load Tasks
 -------------
+
 Tasks were loaded with the `createTasks.py` utility, which can be found in the
 [pybossa_tools](https://github.com/skytruth/pybossa_tools) repository.  The
 installation procedure is as follows:
 
->		$ ./createTasks.py -s http://crowd.skytruth.org -k "{YOUR_API_KEY}" -a digitizer-pond -r Digitizer-pond_PA2013_internal-1 -c -t ~/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/Digitizer/input_tasks/input_with_wms.json -n 1
+>		$ ./createTasks.py \
+>           -n 1 -c
+>           -s http://crowd.skytruth.org \
+>           -k "{YOUR_API_KEY}" \
+>           -a digitizer-pond \
+>           -r Digitizer-pond_PA2013_internal-1 \
+>           -t ~/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/Digitizer/input_tasks/input_with_wms.json \
 
-3. Classify
-------------
-***I don't know where to put this note or if it's even necessary:::::::Because MoorFrog was completed internally, and operators were instructed to select only ponds that were fracking related, the tasks for this digitizer-pond application were expected to include only fracking related ponds.***
-The final set of 698 tasks was loaded into a single application for digitizing with a redundancy of 1 and 4 actions: draw polygons and submit, skip pond, classify as unknown, and classify as not a fracking pond. The operator was instructed to digitize all fracking related ponds, excluding run-off ponds located at fracking sites. As this was the first and final review, no ponds would be skipped. *(Insert something here about me getting a second opinion on tasks I wasn’t sure about) --> When I came across anything ambiguous, I immediately got a second opinion. Anything completely ambiguous was marked as ‘unknown’.*
+
+3. Digitize
+-----------
+
+Digitizing was completed by a SkyTruth employee who as shown a scene centered
+around a pond that is suspected to be fracking related.  If the operator
+determines that the pond is indeed fracking related, they draw a polygon around
+the pond and move to the next task.  If they find the pond is clearly not fracking
+related they select "Not fracking related" and move on.  If they can't tell, they
+click "Not sure".
 
 
 4.	Export Data
@@ -1378,10 +1498,36 @@ The final set of 698 tasks was loaded into a single application for digitizing w
 
 The data was exported and stored in the following location.
 
-	2013\Transformations_and_QAQC\Digitizer\output_tasks
+	2013/Transformations_and_QAQC/Digitizer/output_tasks
+
 
 5.	Transform Data
----------------------
+------------------
+
+The `task_run.json` file was converted to a spatial format:
+
+>       $ 2013/Transformations_and_QAQC/Digitizer/bin/task2shp.py \
+>           2013/Transformations_and_QAQC/Digitizer/output_tasks/task_run.json \
+>           2013/Transformations_and_QAQC/Digitizer/transform/digitized_ponds.shp
+
 
 6.	Resolve Intersecting Ponds
--------------------------------
+------------------------------
+
+Due to the nature of the data a certain number of the digitized ponds were
+found to be intersecting other ponds in the layer.  These intersections were
+resolved manually by examining each occurrence and selecting the pond with the
+better geometry.  The resulting output was stored in a separate file:
+
+    2013/Transformations_and_QAQC/Digitizer/transform/resolved_intersects.shp
+
+
+
+-------------------------------------------------------------------------------
+
+
+
+Final Deliverable
+=================
+
+The final deliverable
