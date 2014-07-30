@@ -1137,6 +1137,8 @@ at least one associated permit was for an unconventional well within years of
 were examined again in FrackFinder 2013 against the 2013 imagery.  This helps
 build a more complete history for any given site.
 
+The task creation method and application were used from 2005-2010.
+
 
 
 Tadpole 2013 Workflow
@@ -1154,7 +1156,8 @@ Tadpole 2013 Workflow
 ----------------
 
 The data was split between two different applications, `public` and `internal`,
-each containing half of the Tadpole input tasks.  Tasks were placed in:
+each containing half of the Tadpole input tasks.  The exported tasks and task
+runs were placed in:
 
     Transformations_and_QAQC/Tadpole/tasks/public/task.json
     Transformations_and_QAQC/Tadpole/tasks/public/task_run.json
@@ -1166,9 +1169,9 @@ each containing half of the Tadpole input tasks.  Tasks were placed in:
 2. Transform Data
 -----------------
 
-Since all tasks were only completed in one location, the data can be combined,
-however we want to be able to know where each task came from, so first we have
-to add a `ST_source` field.
+Since all tasks were only completed in one location the data can be combined,
+however we want to be able to know where each task came from so a classification
+was added in the `ST_source` field.
 
 >       $ ~/GitHub/CrowdProjects/bin/editJSON.py \
 >           -a ST_source=public Transformations_and_QAQC/Tadpole/tasks/public/task.json \
@@ -1246,10 +1249,11 @@ file, a sample size of 5% was selected based on the fact that `93%` of tasks had
 an agreement level greater than or equal to 70%, which justifies sampling the
 entire population rather than a subset.
 
-The random sampling tool in `QGIS` was used, however a bug requires a small
-pre-processing step. For some reason the random sampling tool totally ignores
-any datasource filters, so the data must first be queried and saved to a new file
-before performing the selection.  The queries and output files are as follows:
+The random sampling tool in `QGIS` was used to generate a test dataset, however
+a bug requires a small pre-processing step. For some reason the random sampling
+tool totally ignores any datasource filters, so the data must first be queried
+and saved to a new file before performing the selection.  The queries and output
+files are as follows:
 
     "class" = 'public'   -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-public.shp
     "class" = 'internal' -> Transformations_and_QAQC/Tadpole/sampling/queries/tadpole-internal.shp
@@ -1266,10 +1270,10 @@ whether they were properly classified or not
 
 ### Sampling Results ###
 
-The operator disagreed with 1/106 sample in the public set and 8/106 in the
+The operator disagreed with 1/106 samples in the public set and 8/106 in the
 internal set.  The higher number of disagreements in the internal set is likely
 caused by the redundancy.  The public examined each task 10 times but the internal
-tasks were only examined 3 times, which means that the public crowd's overall
+tasks were only examined 3 times, which means that the public's overall
 selection allowed for a higher level of disagreement.  If 8 out of 10 people in
 the `public` crowd agreed that a site should be classified as a pad, they agreed
 at 80%, but if 2 out of 3 people in the `internal` crowd agreed, their confidence
@@ -1277,9 +1281,9 @@ is only 66%.  The public is much less sensitive to an individual's selection.
 After examining all 8 disagreements, half were found to be totally ambiguous and
 the other half were found to be remediated pads.
 
-The results were examined and show that both the internal and public crowd were 
-overall very confident in their selections.  The input tasks for MoorFrog were
-determined to be as follows:
+The results show that both the internal and public crowd were very confident in
+their selections and the data could be used without any corrections. The input
+tasks for MoorFrog were determined to be as follows:
 
     Transformations_and_QAQC/Tadpole/transform/stats/tadpole-stats.shp
         "p_crd_a >= 66 AND crowd_sel = 'pad' AND class = 'internal'"
@@ -1319,6 +1323,7 @@ the following commands:
 >           Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json \
 >           -query "p_crd_a >= 70 AND crowd_sel = 'pad' AND class = 'public'" \
 >           --add-info-class=public
+>       
 >       $ ~/GitHub/CrowdProjects/bin/mergeFiles.py \
 >           Transformations_and_QAQC/MoorFrog/input_tasks/from_internal.json \
 >           Transformations_and_QAQC/MoorFrog/input_tasks/from_public.json \
@@ -1331,7 +1336,7 @@ the following commands:
 
 Tasks were loaded with the `createTasks.py` utility, which can be found in the
 [pybossa_tools](https://github.com/skytruth/pybossa_tools) repository.  The
-installation procedure is as follows:
+upload command is as follows:
 
 >       $ createTasks.py \
 >           -v -q 3 -n 3 -c \       
@@ -1356,13 +1361,14 @@ The tasks and task runs were transformed using the usual application specific
 `task2shp.py` utility:
 
 >       $ ./2013/Transformations_and_QAQC/MoorFrog/bin/task2shp.py \
->           2013/Transformations_and_QAQC/MoorFrog/output_tasks/task.json \
->           2013/Transformations_and_QAQC/MoorFrog/output_tasks/task_run.json \
->           2013/Transformations_and_QAQC/MoorFrog/transform/layers/
+>               2013/Transformations_and_QAQC/MoorFrog/output_tasks/task.json \
+>               2013/Transformations_and_QAQC/MoorFrog/output_tasks/task_run.json \
+>               2013/Transformations_and_QAQC/MoorFrog/transform/layers/
 
 The resulting dataset was examined in QGIS and it was determined that the best
 course of action was to cluster all clicks and pass the resulting centroids
-into the next application.
+into the next application, which is described in the `Generate Input Tasks`
+section.
 
 
 
@@ -1415,7 +1421,7 @@ clustering too many ponds together into single tasks.
     * Output: 2013/Transformations_and_QAQC/MoorFrog/transform/pond-centroids.shp
 
 4.  Load into QGIS: `2013/Transformations_and_QAQC/MoorFrog/transform/pond-centroids.shp`
-    and use the field calculator to add some attributes:
+    and use the field calculator to add some attributes needed for task generation:
     * Field Name: X
         - Type: Real
         - Width: 10
@@ -1485,7 +1491,7 @@ installation procedure is as follows:
 3. Digitize
 -----------
 
-Digitizing was completed by a SkyTruth employee who as shown a scene centered
+Digitizing was completed by a SkyTruth employee who was shown a scene centered
 around a pond that is suspected to be fracking related.  If the operator
 determines that the pond is indeed fracking related, they draw a polygon around
 the pond and move to the next task.  If they find the pond is clearly not fracking
@@ -1498,7 +1504,8 @@ click "Not sure".
 
 The data was exported and stored in the following location.
 
-	2013/Transformations_and_QAQC/Digitizer/output_tasks
+	2013/Transformations_and_QAQC/Digitizer/output_tasks/task.json
+	2013/Transformations_and_QAQC/Digitizer/output_tasks/task_run.json
 
 
 5.	Transform Data
@@ -1520,14 +1527,3 @@ resolved manually by examining each occurrence and selecting the pond with the
 better geometry.  The resulting output was stored in a separate file:
 
     2013/Transformations_and_QAQC/Digitizer/transform/resolved_intersects.shp
-
-
-
--------------------------------------------------------------------------------
-
-
-
-Final Deliverable
-=================
-
-# TODO: Populate
