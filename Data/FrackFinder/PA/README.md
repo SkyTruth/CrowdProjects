@@ -881,6 +881,11 @@ NOT SAMPLED - See additional notes from `Sample Data` section above
 Digitizer 2005-2010 Workflow
 ============================
 
+
+In order to expedite the process all digitizing was completed internally
+by SkyTruth staff.
+
+
 ##### General Description #####
 
 1. Identify, generate, and load input tasks
@@ -1294,6 +1299,11 @@ tasks for MoorFrog were determined to be as follows:
 MoorFrog 2013 Workflow
 ======================
 
+
+In order to expedite the process all of MoorFrog was completed internally
+by SkyTruth staff.
+
+
 ### General Description ###
 
 1. Generate input tasks
@@ -1375,13 +1385,18 @@ section.
 DartFrog 2013 Workflow
 ======================
 
-DartFrog was skipped for PA 2013.  Instead MoorFrog users were asked to ONLY
-click on ponds that appeared to be fracking related.
+DartFrog was skipped for PA 2013.  Instead MoorFrog users (SkyTruth staff)
+were asked to ONLY click on ponds that appeared to be fracking related.
 
 
 
 Digitizer 2013 WorkFlow
 =======================
+
+
+In order to expedite the process all digitizing was completed internally
+by SkyTruth staff.
+
 
 ##### General Description #####
 
