@@ -264,14 +264,14 @@ The resulting file contains the following fields:
 
 The public started to slow down after they completed about 90% of all  tasks.
 At this point the remaining tasks were exclusively completed by SkyTruth
-employees.  Roughly 350 tasks were examined by an operator who determined whether
+employees.  Roughly 350 tasks were examined by an analyst who determined whether
 or not the crowd's dominant selection was correct.  The data was split into five
-groups based on confidence level, which is the ratio of number of crown reposnes
+groups based on confidence level, which is the ratio of number of crowd responses
 matching the dominant answer to the total number of responses for that task. 
 These groups are: 90% to 100%, 80% to 90%, 70% to 80%, 60% to 70%,
 50% to 60% and < 50%.  Each group was examined to determine the quality of the
-data based on the operator's evaluation of each individual task.  The 70% to 80%
-bin was found to contain unreliable data based on the operator disagreeing with
+data based on the analyst's evaluation of each individual task.  The 70% to 80%
+bin was found to contain unreliable data based on the analyst disagreeing with
 roughly 25% of the tasks in this bin.  All tasks with an agreement level >= 80%
 were passed on to the MoorFrog task generation phase and all tasks with an
 agreement level < 80% were re-examined internally by a SkyTruth employee.  This
@@ -287,7 +287,7 @@ questions about the data and is only included for legacy purposes.
 
 While assembling the final report you are now reading, an additional analysis
 was performed on the data. A random sample of 100 sites was taken from each
-year (2005, 2008, 2010) and manually classified by an operator using QGIS and
+year (2005, 2008, 2010) and manually classified by an analyst using QGIS and
 the same imagery displayed in the PyBossa application.  There is a bug in QGIS's
 random sampling tool that ignores any filters applied to the input datasource
 so the filters must be applied and then the data must be exported to a new file,
@@ -342,7 +342,7 @@ MoorFrog 2005-2010 Workflow
 Input tasks for MoorFrog were generated from the output of Tadpole's
 `Sample Data/QAQC` step.  The data was filtered in Excel to only include tasks
 classified as having a pad and a few additional attributes were added.  Tadpole
-served up tiled imagery but MoorFrog used WMS layers so a new WMS URL was
+served individual tiled scenes but MoorFrog used WMS layers so a new WMS URL was
 assigned to each task.  The imagery was managed at the county level, so for
 logistical reasons each county was exported to its own CSV, converted to JSON
 via `skyconvert.py` and loaded into a PyBossa application via `createTasks.py`
@@ -432,13 +432,13 @@ and is only intended to provide a better idea of the quality of the data.
 When examining a MoorFrog task the user was asked to click on of all the ponds
 located within the bounding box.  In order to determine how well the crowd
 performed a random sample of 100 bounding boxes per year (2005, 2008, 2010) were
-extracted and manually examined by an operator who was looking for missed ponds.
+extracted and manually examined by an analyst who was looking for missed ponds.
 S
 
 Some user's disregarded the directions and clicked on ponds outside of the
 bounding box.  These clicks were thrown away before performing any analysis.
 Any pond (fracking or otherwise) within the bounding box that was not clicked
-on at least was once was considered omitted.  The operator created a new Shapefile
+on at least was once was considered omitted.  The analyst created a new Shapefile
 containing one point per missed pond.
 
 The QGIS bug explained and addressed in the `Tadpole Sample Data` section was
@@ -499,7 +499,7 @@ into a more sane format, otherwise the crowd would be examining each pond about
 MoorFrog's task.json and task_run.json were combined with `mangleresults.py`
 which outputs a single GeoJSON file.  The data is in WGS84 but clustering is
 best performed in a flat plane projection, so the file was loaded into QGIS
-where an operator split the points into two different files, one with points
+where an analyst split the points into two different files, one with points
 falling in UTM 17N and one with points falling in UTM 18N.  These files were
 exported in the proper UTM zone and split again into years, which yields
 several files:
@@ -572,7 +572,7 @@ At one point the crowd appeared to stall on the internal application so a set of
 about 4000 tasks were moved to an application that was only accessible by SkyTruth
 employees.  It was later determined that these tasks were not properly moved
 so each task was completed at least once but may have been completed in multiple
-applications.  There is s known overlap between the public and first internal
+applications.  There is known overlap between the public and first internal
 application, meaning that some tasks were completed (partially or fully) in both
 applications.  In general it is best to interact with the data through the
 utilities provided.  The `Compiled_Output.csv` listed below is the most
@@ -792,7 +792,7 @@ is where we get one polygon representing each pond, but the Digitizer also serve
 as the last location where a human can look at a site and determine whether or
 not it is actually a fracking related pond.  The goal of this round of sampling
 was to identify exactly what should go into the digitizer (without creating too
-much work for the digitizer operator) so some initial data exploration was
+much work for the digitizing analyst) so some initial data exploration was
 performed to determine whether or not the crowd agreement levels could be used
 as a threshold for determining which ponds are loaded into the digitizer.  The
 threshold for the internal applications was determined to be 66% and 80% for the
@@ -925,7 +925,7 @@ JSON file, and uploaded to a new PyBossa application.
 
 The final set of 896 ponds were loaded into a single application for digitizing
 with a redundancy of 1 and 4 actions: draw polygons and submit, skip pond,
-classify as unknown, and classify as not a fracking pond The operator was
+classify as unknown, and classify as not a fracking pond The analyst was
 instructed to digitize and classify tasks with an obvious answer, but skip any
 that were questionable or required a more in depth review.  The ponds marked as
 skipped would then be loaded into a second digitizer and be reviewed by a panel
@@ -935,7 +935,7 @@ At around the 1/3 mark a bug was discovered in the digitizer that prevented
 multiple geometries from being recorded, which is not a problem for single ponds,
 but for multiple ponds in close proximity that are attached to a single clustered
 pond point, only the first drawn polygon was recorded.  The solution to this
-problem involved two things: the operator was instructed to now skip any
+problem involved two things: the analyst was instructed to now skip any
 multi-ponds while a patch was developed and deployed.  The patch was successful
 but introduced an inconsistency in the output data by storing the polygons in a
 slightly different way than the original application. The difference is
@@ -946,7 +946,7 @@ selection from being recorded if the triangle on the submit button was clicked.
 This bug was quickly patched.
 
 After the initial digitizing pass, some ponds required a second pass.  Initially
-this second pass was only expected to include ponds the operator skipped, but
+this second pass was only expected to include ponds the analyst skipped, but
 due to the two discovered bugs, the second pass contained ponds with the
 following characteristics: ponds that were skipped and ponds lacking a selection
 key.  The 181 ponds marked for re-examination were loaded and examined by a
@@ -1109,7 +1109,7 @@ in both the first and final applications and some were digitized twice in a sing
 application.  For ponds that were digitized in both applications the pond
 digitized in the first application was marked for deletion and the pond digitized
 in the second was kept.  For ponds that were digitized twice in a single
-application, an operator examined both to determine which should be kept.
+application, an analyst examined both to determine which should be kept.
 
 
 6. Sample Data
@@ -1270,12 +1270,12 @@ for each layer.  The selections were saved in the following locations:
     Transformations_and_QAQC/Tadpole/sampling/public/tadpole-public-5percent-sample.shp
     Transformations_and_QAQC/Tadpole/sampling/internal/tadpole-internal-5percent-sample.shp
 
-The samples were then examined one at a time by an operator in order to determine
+The samples were then examined one at a time by an analyst in order to determine
 whether they were properly classified or not
 
 ### Sampling Results ###
 
-The operator disagreed with 1/106 samples in the public set and 8/106 in the
+The analyst disagreed with 1/106 samples in the public set and 8/106 in the
 internal set.  The higher number of disagreements in the internal set is likely
 caused by the redundancy.  The public examined each task 10 times but the internal
 tasks were only examined 3 times, which means that the public's overall
@@ -1414,13 +1414,13 @@ by SkyTruth staff.
 The output from MoorFrog contains an inefficient number of points for digitizing
 purposes so they were clustered using a simple nearest neighbor algorithm and
 QGIS.  The buffer distance was determined by trial and error, the goal being to
-reduce the total number of tasks the digitizer operator was given without
+reduce the total number of tasks the digitizer analyst was given without
 clustering too many ponds together into single tasks.
 
 1.  Load into QGIS: `2013/Transformations_and_QAQC/MoorFrog/transform/layers/MoorFrog-clicks.shp`
     and use the built in vector buffer tool:
     * Segments to approximate: 5
-    * Buffer distance: 0.0001
+    * Buffer distance: 0.0001 (input file units are degrees)
     * Dissolve buffer results: True
     * Output: 2013/Transformations_and_QAQC/MoorFrog/transform/buffer-dissolve-clicks.shp
 
@@ -1507,7 +1507,7 @@ installation procedure is as follows:
 -----------
 
 Digitizing was completed by a SkyTruth employee who was shown a scene centered
-around a pond that is suspected to be fracking related.  If the operator
+around a pond that is suspected to be fracking related.  If the analyst
 determines that the pond is indeed fracking related, they draw a polygon around
 the pond and move to the next task.  If they find the pond is clearly not fracking
 related they select "Not fracking related" and move on.  If they can't tell, they
