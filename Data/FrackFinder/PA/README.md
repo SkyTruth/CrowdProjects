@@ -1543,3 +1543,22 @@ resolved manually by examining each occurrence and selecting the pond with the
 better geometry.  The resulting output was stored in a separate file:
 
     2013/Transformations_and_QAQC/Digitizer/transform/resolved_intersects.shp
+
+
+
+Final Deliverable
+=================
+
+All pond files were merged together into a single file containing the
+following attributes `Final_Delivery/Ponds_2005-2013/Ponds_2005-2013.shp`:
+
+    task_id: Integer (10.0)     PyBossa task run ID - unique identifier to link data together
+    state: String (254.0)       Abbreviated state
+    year: String (254.0)        Imagery collection year against which the pond was digitized
+    area_m: Real (254.2)        Pond area in meters
+    county: String (254.0)      County name
+
+County names were joined by location from the same county file used in
+MoorFrog 2013.
+
+The entire final deliverable can be found in `Final_Delivery`
