@@ -269,15 +269,16 @@ or not the crowd's dominant selection was correct.  The data was split into five
 groups based on confidence level, which is the ratio of number of crowd responses
 matching the dominant answer to the total number of responses for that task. 
 These groups are: 90% to 100%, 80% to 90%, 70% to 80%, 60% to 70%,
-50% to 60% and < 50%.  Each group was examined to determine the quality of the
-data based on the analyst's evaluation of each individual task.  The 70% to 80%
-bin was found to contain unreliable data based on the analyst disagreeing with
-roughly 25% of the tasks in this bin.  All tasks with an agreement level >= 80%
-were passed on to the MoorFrog task generation phase and all tasks with an
-agreement level < 80% were re-examined internally by a SkyTruth employee.  This
-yields a single dataset where each task has a classification that was confidently
-assigned by the crowd or a SkyTruth employee.  A report with results from this
-analysis can be found in the documents for Tadpole:
+50% to 60% and < 50%.  Each group of tasks was examined by a SkyTruth analyst to
+determine the quality of the data based on the analyst's evaluation of each
+individual task.  The 70% to 80% bin was found to contain unreliable data based
+on the analyst disagreeing with the crowd's classification of roughly 25% of the
+tasks in this bin.  All tasks with an agreement level >= 80% were passed on to
+the MoorFrog task generation phase and all tasks with an agreement level < 80%
+were re-examined internally by a SkyTruth employee. This yields a single dataset
+where each task has a classification that was confidently assigned by the crowd
+or a SkyTruth employee.  A report with results from this analysis can be found
+in the documents for Tadpole:
 
     2005-2010/Transformations_and_QAQC/Tadpole/documents/2013-07-01-14-01-03-results_analysis.xlsx
 
