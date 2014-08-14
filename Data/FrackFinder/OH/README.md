@@ -21,6 +21,7 @@ processing, so they were removed and the file saved as:
 
 The data was further transformed with the commands listed below.  Information
 about each utility can be found with `$UTILITY --help`:
+\#TODO: add marcellus to commands below and fix file paths
 
 >       ./2010-2013/Tadpole/bin/permits2sites.py \
 >           2010-2013/Tadpole/source_data/Utica_071914_No_Headers.csv \
