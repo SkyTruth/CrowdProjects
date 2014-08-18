@@ -33,3 +33,49 @@ about each utility can be found with `$UTILITY --help`:
 
 NAIP imagery was downloaded from the NRCS Data Gateway for 2010, 2011, and 2013.
 Unfortunately the uncompressed GeoTiff's were not available so SID's were used.
+
+FrackFinder Ohio 2014
+=====================
+
+Tadpole 2014 Workflow
+=====================
+
+##### General Description #####
+
+1. Identify, generate and load tasks
+2. ...
+
+1. Identify, Generate and Load Tasks
+------------------------------------
+
+A WMS layer for LightHawk's 2014 aerial imagery was loaded into QGIS and a vector layer was created, outlining the boundary of the imagery.
+
+	https://mapsengine.google.com/06136759344167181854-11845109403981099587-4/wms/
+	Layer ID: 06136759344167181854-02429742455903582501-4
+
+	2014/Tadpole/transform/2014_aerial_image_boundary.shp
+
+The clustered sites that were used to create tasks for OH padmapper 2010-2013 was loaded into QGIS,  and a spatial query was done to filter tasks within the 2014 aerial image boundary, ensuring that no sites fell on the edge of the boundary. Sites within the boundary were saved in the 2014 directory
+
+/#kevin, do you think further explanation for why I did that will be needed?
+	
+	2010-2013/Tadpole/transform/utica_marcellus_clustered_sites_071914.csv
+
+	2014/Tadpole/transform/utica_marcellus_clustered_sites_071914.csv
+
+Using a following tools and methods, new tasks were created and added to a categorizer-pad app 
+
+	2014/Tadpole/bin/generateTadpoleTasks.py
+
+>		$ ./createTasks.py \
+>           -n 1 -c
+>           -s http://crowd.skytruth.org \
+>           -k "{YOUR_API_KEY}" \
+>           -a digitizer-pond \
+>           -r Digitizer-pond_PA2013_internal-1 \
+>           -t ~/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/Digitizer/input_tasks/input_with_wms.json
+
+The input tasks can be found here
+
+	2014/Tadpole/input_tasks/utica_marcellus_071914_input_tasks.json
+
