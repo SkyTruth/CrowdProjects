@@ -67,13 +67,13 @@ Using a following tools and methods, new tasks were created and added to a categ
 
 	2014/Tadpole/bin/generateTadpoleTasks.py
 
->		$ ./createTasks.py \
->           -n 1 -c
->           -s http://crowd.skytruth.org \
->           -k "{YOUR_API_KEY}" \
->           -a digitizer-pond \
->           -r Digitizer-pond_PA2013_internal-1 \
->           -t ~/CrowdProjects/Data/FrackFinder/PA/2013/Transformations_and_QAQC/Digitizer/input_tasks/input_with_wms.json
+>		$ ./createTasks.py 
+>           -n 10 -c
+>           -s http://crowd.skytruth.org 
+>           -k "{YOUR_API_KEY}" 
+>           -a categorizer-pad 
+>           -r OH-padmapper-2014 
+>           -t ~/CrowdProjects/Data/FrackFinder/OH/2014/Tadpole/transform/input_tasks/utica_marcellus_071914_input_tasks.json
 
 The input tasks can be found here
 
