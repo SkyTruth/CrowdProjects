@@ -95,4 +95,18 @@ Input tasks and task runs were placed in `Tadpole/output_tasks` and aggregated s
                 output_tasks/task.json \
                 output_tasks/task_run.json \
                 transform/output-stats.shp
-                
+
+ 
+Pad Digitizer 2010-2013 Workflow
+================================
+
+Only sites classified as a `pad` are used by the commands listed below.  Only a
+handful of sites had a crowd agreement level `< 70%`, all of which were examined
+manually and all those classified as a pad were found to be correct, even though
+the crowd had a higher level of disagreement.
+
+    $ cd Data/FrackFinder/OH/2010-2013/Pad-Delineator
+    $ ./bin/create_input_tasks.py \
+          ../Tadpole/output_tasks/task.json \
+          ../Tadpole/output_tasks/task_run.json \
+          input_tasks/input_tasks.json
