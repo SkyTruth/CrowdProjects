@@ -102,7 +102,6 @@ def main(args):
 
     # Container for all output tasks
     output_tasks = []
-    allowed_fields = ['info', 'apis', 'county', 'latitude', 'longitude', 'options', 'siteID', 'size', 'state', 'url', 'year']
 
     # Process all site ID's in the input_tasks (task.json)
     progress_total = len(input_tasks)
@@ -129,15 +128,54 @@ def main(args):
             classification = get_classification([tr for tr in input_task_runs[tid] if tr['task_id'] == tid])
             if classification is not None and classification.lower() == 'pad':
 
+                pprint([tr for tr in input_task_runs[tid] if tr['task_id'] == tid])
+                print("")
+                print(len([tr for tr in input_task_runs[tid] if tr['task_id'] == tid]))
+                print("")
+                pprint(task)
+                return 1
+
                 num_output_tasks += 1
 
                 # Strip off all the non-required fields
-                otask = {key: val for key, val in task.copy().items() if key in allowed_fields}
+                otask = {'info': task['info'].copy()}
+
+                # Task modifications
+                del otask['info']['options']
+                del otask['info']['url']
+                otask['info']['question'] = 'Please drag on the edges of the shape to make it fit the drill pad you see in the satellite image'
 
                 # The first two API's are duplicates - force a unique list
                 otask['info']['apis'] = json.dumps(list(set(json.loads(task['info']['apis']))))
+                otask['info']['imagery'] = [
+                    {
+                        'options': {
+                            'layers': '06136759344167181854-11275828430006462017-4'
+                        },
+                        'title': '2013',
+                        'type': 'WMS',
+                        'url': 'https://mapsengine.google.com/06136759344167181854-11845109403981099587-4/wms/'
+                    },
+                    {
+                        'options': {
+                            'layers': '06136759344167181854-08224624193234342065-4'
+                        },
+                        'title': '2011',
+                        'type': 'WMS',
+                        'url': 'https://mapsengine.google.com/06136759344167181854-11845109403981099587-4/wms/'
+                    },
+                    {
+                        'active': 'true',
+                        'options': {
+                            'layers': '06136759344167181854-04770958895915995837-4'
+                        },
+                        'title': '2010',
+                        'type': 'WMS',
+                        'url': 'https://mapsengine.google.com/06136759344167181854-11845109403981099587-4/wms/'
+                    }
+                ]
 
-                output_tasks.append(task)
+                output_tasks.append(otask)
 
     # Done
     with open(pargs.output_tasks, 'w') as f:
