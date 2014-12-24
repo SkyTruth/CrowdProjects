@@ -128,13 +128,6 @@ def main(args):
             classification = get_classification([tr for tr in input_task_runs[tid] if tr['task_id'] == tid])
             if classification is not None and classification.lower() == 'pad':
 
-                pprint([tr for tr in input_task_runs[tid] if tr['task_id'] == tid])
-                print("")
-                print(len([tr for tr in input_task_runs[tid] if tr['task_id'] == tid]))
-                print("")
-                pprint(task)
-                return 1
-
                 num_output_tasks += 1
 
                 # Strip off all the non-required fields
