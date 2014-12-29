@@ -158,7 +158,6 @@ def main(args):
                         'url': 'https://mapsengine.google.com/06136759344167181854-11845109403981099587-4/wms/'
                     },
                     {
-                        'active': 'true',
                         'options': {
                             'layers': '06136759344167181854-04770958895915995837-4'
                         },
@@ -168,9 +167,16 @@ def main(args):
                     }
                 ]
 
+                # The user is supposed to digitize against a specific year.  Make sure the imagery block for that year
+                # contains a key called 'active' that is set to `True'
+                for idx, imagery_tag in enumerate(otask.copy()['info']['imagery']):
+                    if str(imagery_tag['title']) == str(task['info']['year']):
+                        imagery_tag['active'] = True
+                        otask['info']['imagery'][idx] = imagery_tag
+
                 output_tasks.append(otask)
 
-    # Done
+    # Done processing - print report
     with open(pargs.output_tasks, 'w') as f:
         json.dump(output_tasks, f)
     print("Wrote {} output tasks".format(num_output_tasks))
