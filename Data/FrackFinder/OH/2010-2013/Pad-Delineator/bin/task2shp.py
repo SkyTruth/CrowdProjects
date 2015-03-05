@@ -131,7 +131,7 @@ def main(task_json, task_run_json, outfile, driver):
 
     # Update user
     click.echo("Found %s tasks" % len(loaded_tasks))
-    click.echo("Found %s task runs" % len(loaded_task_runs))
+    click.echo("Found %s matching task run ID's" % len(loaded_task_runs))
 
     # Output vector schema
     meta = {
