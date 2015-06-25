@@ -8,6 +8,7 @@ import math
 
 import affine
 import click
+from click import progressbar
 import fiona as fio
 import numpy as np
 import rasterio as rio
@@ -77,11 +78,8 @@ def bbox_from_stack(stack):
         (x_min, y_min, x_max, y_max)
     """
 
-    x_min = None
-    y_min = None
-    x_max = None
-    y_max = None
-    for geom in stack:
+    x_min = y_min = x_max = y_max = None
+    for geom in (f['geometry'] for f in stack):
         g_x_min, g_y_min, g_x_max, g_y_max = shape(geom).bounds
         if x_min is None or g_x_min < x_min:
             x_min = g_x_min
@@ -137,6 +135,7 @@ def geometric_mean(stack, bbox, res, agreement, id):
             default_value=1,
             dtype=data.dtype
         )
+
     data = np.ma.array(data, mask=data == 0)
 
     if agreement == 'mean':
@@ -146,20 +145,6 @@ def geometric_mean(stack, bbox, res, agreement, id):
 
     data[data < breakpoint] = 0
     data[data >= breakpoint] = 1
-
-    if id == 30116:
-        h, w = data.shape
-        _meta = {
-            'count': 1,
-            'height': h,
-            'width': w,
-            'driver': 'GTiff',
-            'crs': 'EPSG:4326',
-            'transform': aff,
-            'dtype': data.dtype
-        }
-        with rio.open('30116.tif', 'w', **_meta) as dst:
-            dst.write(data, indexes=1)
 
     for geom, _ in polygonize(image=data, mask=~(data == 0), transform=aff):
         yield geom
@@ -191,36 +176,57 @@ def main(infile, outfile, agreement, driver, res, tolerance):
     Convert stacks of ponds to a single geometry.
     """
 
+    processed_fids = set()
+
     with fio.open(infile) as src:
         meta = src.meta.copy()
-        src_features = [f for f in src]
+        src_features = []
+        for feat in src:
+            try:
+                _ = shape(feat['geometry']).bounds
+                src_features.append(feat)
+            except Exception as e:
+                click.echo(e, err=True)
+                # Make sure this geometry doesn't get processed again
+                processed_fids.add(feat['id'])
+
+        # We need two copies of all the features
         second_features = copy.deepcopy(src_features)
 
-    click.echo("Processing %s features ..." % len(src_features))
-
-    processed_fids = set()
     meta['schema']['properties'] = {'task_id': 'int:10'}
     meta['driver'] = driver
-    with fio.open(outfile, 'w', **meta) as dst, \
-            click.progressbar(src_features) as input_features:
+
+    with fio.open(outfile, 'w', **meta) as dst, progressbar(src_features) as input_features:
         for idx, feature in enumerate(input_features):
+
             if feature['id'] not in processed_fids:
                 try:
                     geom = shape(feature['geometry'])
                 except Exception as e:
                     geom = None
                     click.echo(e, err=True)
-                if geom is not None:
-                    bbox = geom.bounds
+
+                # Make sure the geometry was parsable
+                if geom:
                     stack = [
                         f for f in second_features
                         if f['properties']['task_id'] == feature['properties']['task_id']
                         and f['id'] not in processed_fids]
+
                     assert len(stack) == len(set([f['id'] for f in stack]))
+
+                    # Make sure these features are marked as being processed
                     for f in stack:
                         processed_fids.add(f['id'])
+
+                    # Compute the mean and write
+                    bbox = bbox_from_stack(stack)
                     for out_geom in geometric_mean(
-                            [f['geometry'] for f in stack], bbox, res=res, agreement=agreement, id=stack[0]['properties']['task_id']):
+                            [f['geometry'] for f in stack],
+                            bbox=bbox,
+                            res=res,
+                            agreement=agreement,
+                            id=stack[0]['properties']['task_id']):
                         dst.write({
                             'type': 'Feature',
                             'properties': {'task_id': feature['properties']['task_id']},
