@@ -1,0 +1,3 @@
+[submodule "frackfinder"]
+	path = frackfinder
+	url = https://github.com/SkyTruth/CrowdProjects-frackfinder.git
